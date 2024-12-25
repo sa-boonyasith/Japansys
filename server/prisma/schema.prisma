@@ -1,0 +1,232 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id            Int    @id @default(autoincrement())
+  firstname     String @db.VarChar(100)
+  lastname      String @db.VarChar(100)
+  job_position  String @db.VarChar(150)
+  salary        Float
+  documents     Json
+  personal_info Json
+
+  phone_number    String   @db.VarChar(20)
+  email           String   @unique @db.VarChar(150)
+  liveby          String
+  birth_date      DateTime @db.Date
+  age             Int
+  ethnicity       String   @db.VarChar(50)
+  nationality     String   @db.VarChar(50)
+  religion        String   @db.VarChar(50)
+  marital_status  String   @db.VarChar(50)
+  military_status String   @db.VarChar(100)
+  role            Role     @default(employee)
+  photo           String
+
+  // Relationships
+  LeaveRequests LeaveRequest[]
+  Meetings      Meetingroom[]
+  RentCars      Rentcar[]
+  Todos         Todo[]
+  Salary        Salary[]
+  attends       attend[]
+  attendhistory attendhistory[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+model JobApplication {
+  job_id           Int      @id @default(autoincrement())
+  application_date DateTime @default(now())
+  firstname        String   @db.VarChar(100)
+  lastname         String   @db.VarChar(100)
+  job_position     String   @db.VarChar(150)
+  expected_salary  Float
+  documents        Json
+  personal_info    Json
+
+  phone_number    String       @db.VarChar(20)
+  email           String       @unique @db.VarChar(150)
+  liveby          String
+  birth_date      DateTime     @db.Date
+  age             Int
+  ethnicity       String       @db.VarChar(50)
+  nationality     String       @db.VarChar(50)
+  religion        String       @db.VarChar(50)
+  marital_status  String       @db.VarChar(50)
+  military_status String       @db.VarChar(100)
+  status          StatusJobapp @default(new)
+  photo           String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model attend {
+  attend_id   Int      @id @default(autoincrement())
+  employee    Employee @relation(fields: [employee_id], references: [id])
+  employee_id Int
+  firstname   String   @db.VarChar(100)
+  lastname    String   @db.VarChar(100)
+
+  check_in_time  DateTime? @default(now())
+  check_out_time DateTime? @default(now())
+  working_hours  Float?
+  status         Attend    @default(not_checked_in)
+}
+
+model LeaveRequest {
+  leave_id    Int      @id @default(autoincrement())
+  employee    Employee @relation(fields: [employee_id], references: [id])
+  employee_id Int
+
+  firstname String   @db.VarChar(100)
+  lastname  String   @db.VarChar(100)
+  leavetype String
+  startdate DateTime @db.Date
+  enddate   DateTime @db.Date
+  action    Action   @default(pending)
+  status    Status   @default(pending)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Meetingroom {
+  meeting_id  Int      @id @default(autoincrement())
+  employee    Employee @relation(fields: [employee_id], references: [id])
+  employee_id Int
+
+  firstname String   @db.VarChar(100)
+  lastname  String   @db.VarChar(100)
+  startdate DateTime @db.Date
+  enddate   DateTime @db.Date
+  timestart String
+  timeend   String
+  status    Status   @default(pending)
+}
+
+model Rentcar {
+  rentcar_id  Int      @id @default(autoincrement())
+  employee    Employee @relation(fields: [employee_id], references: [id])
+  employee_id Int
+
+  firstname String   @db.VarChar(100)
+  lastname  String   @db.VarChar(100)
+  startdate DateTime @db.Date
+  enddate   DateTime @db.Date
+  timestart String
+  timeend   String
+  place     String
+  car       String
+  status    Status   @default(pending)
+}
+
+
+
+model Todo {
+  project_id   Int     @id @default(autoincrement())
+  project_name String
+  desc         String
+  status       todojob @default(mustdo)
+
+  // Relationship with Employee
+  employee    Employee @relation(fields: [employee_id], references: [id])
+  employee_id Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Salary {
+  salary_id   Int      @id @default(autoincrement())
+  employee    Employee @relation(fields: [employee_id], references: [id])
+  employee_id Int
+  firstname   String
+  lastname    String
+
+  salary            Float
+  overtime          Float @default(0)
+  bonus             Float @default(0)
+  salary_total      Float @default(0)
+  Total_working_day Int   @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model attendhistory {
+  id             Int      @id @default(autoincrement())
+  attend_id      Int
+  employee_id    Int
+  firstname      String
+  lastname       String
+  check_in_time  DateTime
+  check_out_time DateTime
+  working_hours  Float
+  status         String
+
+  // Relations if any
+  employee Employee @relation(fields: [employee_id], references: [id])
+}
+
+model user {
+  user_id  Int    @id @default(autoincrement())
+  username String @unique
+  email    String @unique
+  password String
+  role     Role   @default(recruit)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+enum Attend {
+  check_in
+  check_out
+  not_checked_in
+}
+
+enum Role {
+  employee
+  manager
+  admin
+  recruit
+}
+
+enum Action {
+  pending
+  approved
+  rejected
+}
+
+enum todojob {
+  mustdo
+  inprogress
+  finish
+}
+
+enum StatusJobapp {
+  new
+  wait
+  pass
+  reject
+}
+
+enum Status {
+  pending
+  allowed
+  rejected
+}
