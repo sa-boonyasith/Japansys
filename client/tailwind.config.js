@@ -4,8 +4,17 @@ export default {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        background:"#E4DCCF",
+        buttonnonactive:"#576F73",
+        buttonactive:"#7D9D9C"
+      }
+    },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: ["light"], // Choose or customize themes
+  },
 }
 

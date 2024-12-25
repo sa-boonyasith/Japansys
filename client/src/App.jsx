@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './compo/Login';
-import Register from './compo/Register';
+import Login from './Auth/Login';
+import Register from './Auth/Register';
+import JobApplication from './dashboard/JobApplication';
 
 const App = () => {
   return (
@@ -9,6 +10,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/job" element={<JobApplication/>}/>
       </Routes>
     </Router>
   );

@@ -36,7 +36,7 @@ const Login = () => {
       console.log('Login successful:', data);
 
       // Redirect or handle login success (e.g., save token, navigate)
-      navigate('/dashboard'); // Update to your desired path
+      navigate('/job'); // Update to your desired path
     } catch (error) {
       setErrorMessage('An error occurred while logging in');
       console.error('Error:', error);
@@ -62,6 +62,7 @@ const Login = () => {
               type="username"
               id="username"
               name="username"
+              required
               value={formData.username}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
