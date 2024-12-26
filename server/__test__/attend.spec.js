@@ -246,4 +246,8 @@ describe("Attendance API", () => {
       expect(response.body.error).toBe("Failed to remove attendance record");
     });
   });
+  afterAll(() => {
+    jest.clearAllMocks(); // Clear all mocks after tests
+  });
+  
 });
