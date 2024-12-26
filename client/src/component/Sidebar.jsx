@@ -1,12 +1,21 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // ใช้ Link สำหรับการนำทาง
+import { Link, useNavigate } from "react-router-dom"; // ใช้ useNavigate สำหรับการนำทาง
 import logo from "../img/japanlogo.png";
 
 const Sidebar = () => {
   const [activeSection, setActiveSection] = useState(null);
+  const navigate = useNavigate();
 
   const handleSectionClick = (section) => {
     setActiveSection((prev) => (prev === section ? null : section));
+  };
+
+  const handleLogout = () => {
+    // ลบข้อมูล auth token ออกจาก localStorage
+    localStorage.removeItem("authToken");
+
+    // นำทางกลับไปยังหน้า login
+    navigate("/");
   };
 
   return (
@@ -24,7 +33,9 @@ const Sidebar = () => {
           <li>
             <div
               className={`flex items-center justify-center cursor-pointer p-3 border-b hover:bg-buttonactive transition ${
-                activeSection === "workOffice" ? "bg-buttonactive" : "bg-buttonnonactive"
+                activeSection === "workOffice"
+                  ? "bg-buttonactive"
+                  : "bg-buttonnonactive"
               }`}
               onClick={() => handleSectionClick("workOffice")}
               role="button"
@@ -65,7 +76,9 @@ const Sidebar = () => {
           <li>
             <div
               className={`flex items-center justify-center cursor-pointer p-3 border-b hover:bg-buttonactive transition ${
-                activeSection === "customerService" ? "bg-buttonactive" : "bg-buttonnonactive"
+                activeSection === "customerService"
+                  ? "bg-buttonactive"
+                  : "bg-buttonnonactive"
               }`}
               onClick={() => handleSectionClick("customerService")}
               role="button"
@@ -88,7 +101,9 @@ const Sidebar = () => {
           <li>
             <div
               className={`flex items-center justify-center cursor-pointer p-3 border-b hover:bg-buttonactive transition ${
-                activeSection === "financialSystem" ? "bg-buttonactive" : "bg-buttonnonactive"
+                activeSection === "financialSystem"
+                  ? "bg-buttonactive"
+                  : "bg-buttonnonactive"
               }`}
               onClick={() => handleSectionClick("financialSystem")}
               role="button"
@@ -113,7 +128,10 @@ const Sidebar = () => {
 
         {/* Logout Button */}
         <div className="p-4">
-          <button className="btn text-white bg-buttonnonactive w-full hover:bg-buttonactive transition">
+          <button
+            onClick={handleLogout}
+            className="btn text-white bg-buttonnonactive w-full hover:bg-buttonactive transition"
+          >
             Logout
           </button>
         </div>
