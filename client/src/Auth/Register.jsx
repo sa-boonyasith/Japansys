@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 const Register = () => {
   const [formData, setFormData] = useState({
     username: "",
+    firstname: "",
+    lastname: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -20,7 +22,8 @@ const Register = () => {
 
   // Check if form is valid (all fields filled, passwords match, and email is valid)
   useEffect(() => {
-    const { username, email, password, confirmPassword } = formData;
+    const { username, firstname, lastname, email, password, confirmPassword } =
+      formData;
 
     // General email validation using regular expression
     const emailIsValid =
@@ -28,6 +31,8 @@ const Register = () => {
 
     setIsFormValid(
       username &&
+        firstname &&
+        lastname &&
         email &&
         password &&
         confirmPassword &&
@@ -36,11 +41,9 @@ const Register = () => {
     );
 
     if (email && !emailIsValid) {
-      setErrorMessage("Please enter a valid email address");
-    } else if (!email) {
-      setErrorMessage("Email is required");
-    } else if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match");
+      setErrorMessage("Please enter a valid email address.");
+    } else if (password && confirmPassword && password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
     } else {
       setErrorMessage("");
     }
@@ -56,18 +59,20 @@ const Register = () => {
         },
         body: JSON.stringify(formData),
       });
+
       if (!response.ok) {
         const errorData = await response.json();
-        setErrorMessage(errorData.message || "Register failed");
+        setErrorMessage(errorData.message || "Registration failed.");
         return;
       }
-      const data = await response.json();
-      console.log("Register successful:", data);
 
-      // Redirect to home page ('/')
+      const data = await response.json();
+      console.log("Registration successful:", data);
+
+      // Redirect to home page
       navigate("/");
     } catch (error) {
-      setErrorMessage("An error occurred while registering");
+      setErrorMessage("An error occurred while registering.");
       console.error("Error:", error);
     }
   };
@@ -77,7 +82,7 @@ const Register = () => {
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold text-center mb-4">Register</h2>
         <form onSubmit={handleRegister}>
-          <div>
+          <div className="mb-4">
             <label
               htmlFor="username"
               className="block text-gray-700 font-medium mb-2"
@@ -88,10 +93,44 @@ const Register = () => {
               type="text"
               id="username"
               name="username"
-              required
               value={formData.username}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="firstname"
+              className="block text-gray-700 font-medium mb-2"
+            >
+              Firstname
+            </label>
+            <input
+              type="text"
+              id="firstname"
+              name="firstname"
+              value={formData.firstname}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="lastname"
+              className="block text-gray-700 font-medium mb-2"
+            >
+              Lastname
+            </label>
+            <input
+              type="text"
+              id="lastname"
+              name="lastname"
+              value={formData.lastname}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+              required
             />
           </div>
           <div className="mb-4">
@@ -105,10 +144,10 @@ const Register = () => {
               type="email"
               id="email"
               name="email"
-              required
               value={formData.email}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+              required
             />
           </div>
           <div className="mb-4">
@@ -124,8 +163,8 @@ const Register = () => {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+              required
             />
           </div>
           <div className="mb-4">
@@ -141,8 +180,8 @@ const Register = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleInputChange}
-              required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+              required
             />
           </div>
           {errorMessage && (
@@ -150,7 +189,7 @@ const Register = () => {
           )}
           <button
             type="submit"
-            disabled={!isFormValid} // Disable button if form is invalid
+            disabled={!isFormValid}
             className={`w-full py-2 px-4 rounded-lg focus:outline-none ${
               isFormValid
                 ? "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"

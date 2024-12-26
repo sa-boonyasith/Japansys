@@ -10,30 +10,40 @@ exports.create = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Log the input
-    console.log("Input:", { username, password });
-
+    // Find the user in the database
     const user = await prisma.user.findUnique({ where: { username } });
-    console.log("User from DB:", user);
 
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
 
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("Password match:", isMatch);
 
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ userId: user.id }, "your_jwt_secret", {
-      expiresIn: "1h",
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.user_id, role: user.role },
+      process.env.JWT_SECRET, // JWT secret from .env file
+      { expiresIn: "1h" }
+    );
+
+    // Respond with token and user details
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role,
+        username: user.username,  // Include username if necessary
+      },
     });
-    res.json({ message: "Login successful", token });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ error: "An error occurred during login" });
   }
 };
-

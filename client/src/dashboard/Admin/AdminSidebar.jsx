@@ -1,18 +1,28 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // ใช้ useNavigate สำหรับการนำทาง
-import logo from "../dashboard/img/japanlogo.png";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../img/japanlogo.png";
 
-const Sidebar = () => {
+const AdminSidebar = () => {
   const [activeSection, setActiveSection] = useState(null);
+  const [userInfo, setUserInfo] = useState({
+    firstname: "",
+    lastname: "",
+    role: "",
+  });
   const navigate = useNavigate();
+
+
 
   const handleSectionClick = (section) => {
     setActiveSection((prev) => (prev === section ? null : section));
   };
 
   const handleLogout = () => {
-    // ลบข้อมูล auth token ออกจาก localStorage
+    // ลบข้อมูล auth token และ user info ออกจาก localStorage
     localStorage.removeItem("authToken");
+    localStorage.removeItem("firstname");
+    localStorage.removeItem("lastname");
+    localStorage.removeItem("role");
 
     // นำทางกลับไปยังหน้า login
     navigate("/");
@@ -25,6 +35,14 @@ const Sidebar = () => {
         {/* Logo */}
         <div className="flex items-center justify-center bg-background py-3">
           <img src={logo} alt="Logo" className="w-[150px] h-auto" />
+        </div>
+
+        {/* User Info */}
+        <div className="text-white text-center p-4">
+          <p className="text-xl font-semibold">
+            {userInfo.firstname} {userInfo.lastname}
+          </p>
+          <p>{userInfo.role}</p>
         </div>
 
         {/* Menu Items */}
@@ -146,4 +164,5 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;
+

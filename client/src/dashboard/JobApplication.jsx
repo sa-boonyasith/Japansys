@@ -1,7 +1,5 @@
 import React from 'react'
 import Sidebar from '../component/Sidebar'
-import Header from '../component/Header'
-import Columns from '../component/Columns'
 
 
 const JobApplication = () => {
