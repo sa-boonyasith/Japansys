@@ -36,7 +36,7 @@ const Login = () => {
       console.log('Login successful:', data);
 
       // Redirect or handle login success (e.g., save token, navigate)
-      navigate('/job'); // Update to your desired path
+      navigate('/register/Main'); // Update to your desired path
     } catch (error) {
       setErrorMessage('An error occurred while logging in');
       console.error('Error:', error);

@@ -1,25 +1,16 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom"; // ใช้ Link สำหรับการนำทาง
 import logo from "../img/japanlogo.png";
 
 const Sidebar = () => {
-  const [isWorkOfficeOpen, setIsWorkOfficeOpen] = useState(false);
-  const [isCustomerServiceOpen, setIsCustomerServiceOpen] = useState(false);
-  const [isFinancialSystemOpen, setIsFinancialSystemOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState(null);
 
-  const toggleWorkOfficeDropdown = () => {
-    setIsWorkOfficeOpen((prev) => !prev);
-  };
-
-  const toggleCustomerServiceDropdown = () => {
-    setIsCustomerServiceOpen((prev) => !prev);
-  };
-
-  const toggleFinancialSystemDropdown = () => {
-    setIsFinancialSystemOpen((prev) => !prev);
+  const handleSectionClick = (section) => {
+    setActiveSection((prev) => (prev === section ? null : section));
   };
 
   return (
-    <div className="flex h-screen bg-[#B4B2AF] ่">
+    <div className="flex h-screen bg-[#B4B2AF]">
       {/* Sidebar */}
       <aside className="w-80 bg-background shadow-md flex flex-col">
         {/* Logo */}
@@ -32,73 +23,39 @@ const Sidebar = () => {
           {/* Work Office Dropdown */}
           <li>
             <div
-              className={`flex items-center justify-center cursor-pointer p-3 border-b  hover:bg-buttonactive transition ${
-                isWorkOfficeOpen ? "bg-buttonactive" : "bg-buttonnonactive"
+              className={`flex items-center justify-center cursor-pointer p-3 border-b hover:bg-buttonactive transition ${
+                activeSection === "workOffice" ? "bg-buttonactive" : "bg-buttonnonactive"
               }`}
-              onClick={toggleWorkOfficeDropdown}
+              onClick={() => handleSectionClick("workOffice")}
               role="button"
-              aria-expanded={isWorkOfficeOpen}
-              aria-controls="work-office-dropdown"
             >
               <b>Work Office</b>
             </div>
-            {isWorkOfficeOpen && (
-              <ul id="work-office-dropdown" className=" text-center text-sm text-white">
-                <li>
-                  <b
-                    href="#time-tracking"
-                    className="block p-2  border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    ระบบลงเวลาทำงาน
-                  </b>
+            {activeSection === "workOffice" && (
+              <ul className="text-center text-sm text-white">
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/JobApplication">ระบบสมัครงาน</Link>
                 </li>
-                <li>
-                  <b
-                    href="#todo-list"
-                    className="block p-2 border-b  bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    ระบบ To do list
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/time-tracking">ระบบลงเวลาทำงาน</Link>
                 </li>
-                <li>
-                  <b
-                    href="#leave-system"
-                    className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    ระบบลาพนักงาน
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/todo-list">ระบบ To do list</Link>
                 </li>
-                <li>
-                  <b
-                    href="#meeting-room"
-                    className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    ระบบจองห้องประชุม
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/leave-system">ระบบลาพนักงาน</Link>
                 </li>
-                <li>
-                  <b
-                    href="#car-booking"
-                    className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    ระบบจองรถ
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/meeting-room">ระบบจองห้องประชุม</Link>
                 </li>
-                <li>
-                  <b
-                    href="#expense-system"
-                    className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    ระบบเบิกค่าใช้จ่าย
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/car-booking">ระบบจองรถ</Link>
                 </li>
-                <li>
-                  <b
-                    href="#payroll-system"
-                    className="block p-2 border-b   bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    ระบบเงินเดือน
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/expense-system">ระบบเบิกค่าใช้จ่าย</Link>
+                </li>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/payroll-system">ระบบเงินเดือน</Link>
                 </li>
               </ul>
             )}
@@ -107,34 +64,21 @@ const Sidebar = () => {
           {/* Customer Service Dropdown */}
           <li>
             <div
-              className="flex items-center justify-center cursor-pointer p-3 bg-buttonnonactive border-b hover:bg-buttonactive transition"
-              onClick={toggleCustomerServiceDropdown}
+              className={`flex items-center justify-center cursor-pointer p-3 border-b hover:bg-buttonactive transition ${
+                activeSection === "customerService" ? "bg-buttonactive" : "bg-buttonnonactive"
+              }`}
+              onClick={() => handleSectionClick("customerService")}
               role="button"
-              aria-expanded={isCustomerServiceOpen}
-              aria-controls="customer-service-dropdown"
             >
               <b>Customer Service</b>
             </div>
-            {isCustomerServiceOpen && (
-              <ul
-                id="customer-service-dropdown"
-                className="border-b text-sm text-white text-center"
-              >
-                <li>
-                  <b
-                    href="#service-requests"
-                    className="block p-2 border-b  bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    Service Requests
-                  </b>
+            {activeSection === "customerService" && (
+              <ul className="text-center text-sm text-white">
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/service-requests">Service Requests</Link>
                 </li>
-                <li>
-                  <b
-                    href="#feedback"
-                    className="block p-2 border-b  bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    Feedback
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/feedback">Feedback</Link>
                 </li>
               </ul>
             )}
@@ -143,42 +87,24 @@ const Sidebar = () => {
           {/* Financial System Dropdown */}
           <li>
             <div
-              className="flex justify-center items-center cursor-pointer p-3 bg-buttonnonactive border-b hover:bg-buttonactive transition"
-              onClick={toggleFinancialSystemDropdown}
+              className={`flex items-center justify-center cursor-pointer p-3 border-b hover:bg-buttonactive transition ${
+                activeSection === "financialSystem" ? "bg-buttonactive" : "bg-buttonnonactive"
+              }`}
+              onClick={() => handleSectionClick("financialSystem")}
               role="button"
-              aria-expanded={isFinancialSystemOpen}
-              aria-controls="financial-system-dropdown"
             >
               <b>Financial System</b>
             </div>
-            {isFinancialSystemOpen && (
-              <ul
-                id="financial-system-dropdown"
-                className=" text-sm text-white text-center"
-              >
-                <li>
-                  <b
-                    href="#reports"
-                    className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    Reports
-                  </b>
+            {activeSection === "financialSystem" && (
+              <ul className="text-center text-sm text-white">
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/reports">Reports</Link>
                 </li>
-                <li>
-                  <b
-                    href="#invoices"
-                    className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    Invoices
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/invoices">Invoices</Link>
                 </li>
-                <li>
-                  <b
-                    href="#budgets"
-                    className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition"
-                  >
-                    Budgets
-                  </b>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/budgets">Budgets</Link>
                 </li>
               </ul>
             )}
@@ -187,7 +113,7 @@ const Sidebar = () => {
 
         {/* Logout Button */}
         <div className="p-4">
-          <button className="btn text-white bg-buttonnonactive w-full hover:bg-buttonactive transition ">
+          <button className="btn text-white bg-buttonnonactive w-full hover:bg-buttonactive transition">
             Logout
           </button>
         </div>
