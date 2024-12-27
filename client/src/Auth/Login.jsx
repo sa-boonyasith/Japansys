@@ -2,22 +2,21 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFromData] = useState({
     username: "",
     password: "",
   });
-  
+
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFromData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const response = await fetch("http://localhost:8080/api/login", {
         method: "POST",
@@ -39,7 +38,6 @@ const Login = () => {
       // Save the token in localStorage
       localStorage.setItem("authToken", data.token);
 
-      // Redirect based on user role and send user data
       switch (data.user.role) {
         case "admin":
           navigate("/dashboard/admin", { state: { user: data.user } });
@@ -57,20 +55,21 @@ const Login = () => {
           navigate("/dashboard/default", { state: { user: data.user } });
           break;
       }
-    } catch (error) {
+
+    } catch (err) {
       setErrorMessage("An error occurred while logging in");
-      console.error("Error:", error);
+      console.error("Error:", err);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#E4DCCF]">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-4xl font-semibold text-center mb-2 border-b-2">
           Login
         </h2>
         {errorMessage && (
-          <p className="text-red-500 text-center mb-4">{errorMessage}</p>
+          <p className="text-rose-500 text-center mb-4">{errorMessage}</p>
         )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -80,17 +79,15 @@ const Login = () => {
             >
               Username
             </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              required
-              value={formData.username}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            <input type="text"
+            id="username"
+            name="username"
+            required
+            value={formData.username}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300" 
             />
-          </div>
-          <div className="mb-4">
+             <div className="mb-4">
             <label
               htmlFor="password"
               className="block text-gray-700 font-medium mb-2"
@@ -106,6 +103,7 @@ const Login = () => {
               required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
             />
+          </div>
           </div>
           <button
             type="submit"

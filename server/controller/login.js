@@ -2,6 +2,18 @@ const prisma = require("../config/prisma");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+
+
+exports.list = async(req,res)=>{
+  try{
+    const listuser = await prisma.user.findMany()
+    res.json({listuser})
+
+  }catch(err){
+    console.log(err)
+  }
+}
+
 exports.create = async (req, res) => {
   try {
     const { username, password } = req.body;
