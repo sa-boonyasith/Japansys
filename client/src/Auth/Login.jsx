@@ -1,18 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Login = () => {
-  const [formData, setFromData] = useState({
+const Login = ({ onLogin }) => {
+  const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
-
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFromData({ ...formData, [name]: value });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -37,25 +36,29 @@ const Login = () => {
 
       // Save the token in localStorage
       localStorage.setItem("authToken", data.token);
+      localStorage.setItem("isAuthenticated", "true");
 
+      // เรียก onLogin เพื่อบอก App ว่าผู้ใช้เข้าสู่ระบบสำเร็จ
+      if (onLogin) onLogin();
+
+      // Navigate based on user role
       switch (data.user.role) {
         case "admin":
-          navigate("/dashboard/admin", { state: { user: data.user } });
+          navigate("/dashboard/job", { state: { user: data.user } });
           break;
         case "recruit":
-          navigate("/dashboard/recruit", { state: { user: data.user } });
+          navigate("/dashboard/job", { state: { user: data.user } });
           break;
         case "manager":
-          navigate("/dashboard/manager", { state: { user: data.user } });
+          navigate("/dashboard/job", { state: { user: data.user } });
           break;
         case "employee":
-          navigate("/dashboard/employee", { state: { user: data.user } });
+          navigate("/dashboard/job", { state: { user: data.user } });
           break;
         default:
           navigate("/dashboard/default", { state: { user: data.user } });
           break;
       }
-
     } catch (err) {
       setErrorMessage("An error occurred while logging in");
       console.error("Error:", err);
@@ -65,9 +68,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-4xl font-semibold text-center mb-2 border-b-2">
-          Login
-        </h2>
+        <h2 className="text-4xl font-semibold text-center mb-4">Login</h2>
         {errorMessage && (
           <p className="text-rose-500 text-center mb-4">{errorMessage}</p>
         )}
@@ -79,15 +80,17 @@ const Login = () => {
             >
               Username
             </label>
-            <input type="text"
-            id="username"
-            name="username"
-            required
-            value={formData.username}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300" 
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
             />
-             <div className="mb-4">
+          </div>
+          <div className="mb-4">
             <label
               htmlFor="password"
               className="block text-gray-700 font-medium mb-2"
@@ -103,7 +106,6 @@ const Login = () => {
               required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
             />
-          </div>
           </div>
           <button
             type="submit"
