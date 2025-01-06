@@ -34,31 +34,16 @@ const Login = ({ onLogin }) => {
       const data = await response.json();
       console.log("Login successful:", data);
 
-      // Save the token in localStorage
+      // Save user and token in localStorage
       localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("isAuthenticated", "true");
 
-      // เรียก onLogin เพื่อบอก App ว่าผู้ใช้เข้าสู่ระบบสำเร็จ
-      if (onLogin) onLogin();
+      // Call onLogin with user data
+      if (onLogin) onLogin(data.user);
 
-      // Navigate based on user role
-      switch (data.user.role) {
-        case "admin":
-          navigate("/dashboard", { state: { user: data.user } });
-          break;
-        case "recruit":
-          navigate("/dashboard", { state: { user: data.user } });
-          break;
-        case "manager":
-          navigate("/dashboard", { state: { user: data.user } });
-          break;
-        case "employee":
-          navigate("/dashboard", { state: { user: data.user } });
-          break;
-        default:
-          navigate("/dashboard/default", { state: { user: data.user } });
-          break;
-      }
+      // Navigate to dashboard
+      navigate("/dashboard");
     } catch (err) {
       setErrorMessage("An error occurred while logging in");
       console.error("Error:", err);
