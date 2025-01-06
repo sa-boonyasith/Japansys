@@ -1,17 +1,44 @@
 import React, { useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"; // ใช้ useNavigate สำหรับการนำทาง
+import { Link, useLocation, useNavigate } from "react-router-dom"; // ใช้ useNavigate สำหรับการนำทาง
 import logo from "../img/japanlogo.png";
 
-const Sidebar = () => {
+const Sidebar = ({ onToggleJobButtons,  }) => {
   const [activeSection, setActiveSection] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const user = location.state?.user;
 
   const handleSectionClick = (section) => {
     setActiveSection((prev) => (prev === section ? null : section));
   };
 
-  const location = useLocation()
-  const user =location.state?.user
+  const handleSubMenuClick = (menu) => {
+    console.log(`Menu clicked: ${menu}`);
+    
+    if (menu === "Job") {
+      onToggleJobButtons("Job");
+      navigate("/dashboard/job");
+    } else if (menu === "attend") {
+      onToggleJobButtons("attend");
+      navigate("/dashboard/attend");
+    } else if (menu === "todo-list") {
+      onToggleJobButtons("todo-list");
+      navigate("/dashboard/todo-list");
+    } else if (menu === "leave-system") {
+      onToggleJobButtons("leave-system");
+      navigate("/dashboard/leave-system");
+    } else if (menu === "meeting") {
+      onToggleJobButtons("meeting");
+      navigate("/dashboard/meeting");
+    } else if (menu === "trial") { // กรณีที่เลือก "ทดลองงาน"
+      onToggleJobButtons("trial");
+      navigate("/dashboard/Job/trial");  // นำทางไปยังหน้า trial
+    } else {
+      onToggleJobButtons(null); // ซ่อนปุ่ม
+    }
+  };
+  
+  
 
   const handleLogout = () => {
     // ลบข้อมูล auth token ออกจาก localStorage
@@ -23,7 +50,6 @@ const Sidebar = () => {
 
   return (
     <div className="flex h-screen bg-[#B4B2AF]">
-      {/* Sidebar */}
       <aside className="w-80 bg-background shadow-md flex flex-col">
         {/* Logo */}
         <div className="flex items-center justify-center bg-background py-3">
@@ -47,20 +73,39 @@ const Sidebar = () => {
             </div>
             {activeSection === "workOffice" && (
               <ul className="text-center text-sm text-white">
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/Job">ระบบสมัครงาน</Link>
+                <li
+                  className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                  onClick={() => handleSubMenuClick("Job")}
+                  role="button"
+                >
+                  ระบบสมัครงาน
                 </li>
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/attend">ระบบลงเวลาทำงาน</Link>
+                <li
+                  className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                  onClick={() => handleSubMenuClick("attend")}
+                  role="button"
+                >
+                  ระบบลงเวลาทำงาน
                 </li>
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/todo-list">ระบบ To do list</Link>
+
+                <li
+                  className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                  onClick={() => handleSubMenuClick("todo-list")}
+                  role="button"
+                >
+                  ระบบ Todo-List
                 </li>
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/leave-system">ระบบลาพนักงาน</Link>
+                <li 
+                onClick={()=> handleSubMenuClick("leave-system")}
+                role="button"
+                className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                 ระบบลาพนักงาน
                 </li>
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/meeting">ระบบจองห้องประชุม</Link>
+                <li 
+                onClick={()=> handleSubMenuClick("meeting")}
+                role="button"
+                className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  ระบบจองห้องประชุม
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
                   <Link to="/dashboard/car-booking">ระบบจองรถ</Link>
@@ -91,7 +136,7 @@ const Sidebar = () => {
             {activeSection === "customerService" && (
               <ul className="text-center text-sm text-white">
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/service-requests">Service Requests</Link>
+                  <Link to="/dashboard/service-requests">Service Requests</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
                   <Link to="/register/feedback">Feedback</Link>
@@ -139,7 +184,6 @@ const Sidebar = () => {
           </button>
         </div>
       </aside>
-
     </div>
   );
 };

@@ -16,10 +16,16 @@ import Meeting from "./pages/Meeting";
 import Salary from "./pages/Salary";
 import Carbooking from "./pages/Carbooking";
 import ExpenseSystem from "./pages/ExpenseSystem";
+import Trial from "./pages/Trial"
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [activeMenu, setActiveMenu] = useState(null);
+
+  const handleToggleJobButtons = (menu) => {
+    setActiveMenu(menu); // อัพเดตค่า activeMenu
+  };
 
   // Load auth status and user data from localStorage
   useEffect(() => {
@@ -49,7 +55,14 @@ const App = () => {
         {isAuthenticated ? (
           <Route
             path="/dashboard"
-            element={<DashboardLayout user={user} onLogout={handleLogout} />}
+            element={
+              <DashboardLayout
+                user={user}
+                onLogout={handleLogout}
+                activeMenu={activeMenu} // ส่ง activeMenu ไปที่ DashboardLayout
+                onToggleJobButtons={handleToggleJobButtons} // ส่งฟังก์ชันเพื่ออัพเดตเมนูที่เลือก
+              />
+            }
           >
             <Route path="job" element={<Job />} />
             <Route path="attend" element={<Attend />} />
@@ -59,6 +72,8 @@ const App = () => {
             <Route path="car-booking" element={<Carbooking />} />
             <Route path="expense-system" element={<ExpenseSystem />} />
             <Route path="salary" element={<Salary />} />
+            <Route path="Job/trial" element={<Trial />} />
+            
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/" />} />
