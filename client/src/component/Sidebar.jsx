@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"; // ใช้ useNavigate สำหรับการนำทาง
-import logo from "../dashboard/img/japanlogo.png";
+import logo from "../img/japanlogo.png";
 
 const Sidebar = () => {
   const [activeSection, setActiveSection] = useState(null);
@@ -51,25 +51,25 @@ const Sidebar = () => {
                   <Link to="/dashboard/Job">ระบบสมัครงาน</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/time-tracking">ระบบลงเวลาทำงาน</Link>
+                  <Link to="/dashboard/attend">ระบบลงเวลาทำงาน</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/todo-list">ระบบ To do list</Link>
+                  <Link to="/dashboard/todo-list">ระบบ To do list</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/leave-system">ระบบลาพนักงาน</Link>
+                  <Link to="/dashboard/leave-system">ระบบลาพนักงาน</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/meeting-room">ระบบจองห้องประชุม</Link>
+                  <Link to="/dashboard/meeting-room">ระบบจองห้องประชุม</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/car-booking">ระบบจองรถ</Link>
+                  <Link to="/dashboard/car-booking">ระบบจองรถ</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/expense-system">ระบบเบิกค่าใช้จ่าย</Link>
+                  <Link to="/dashboard/expense-system">ระบบเบิกค่าใช้จ่าย</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/payroll-system">ระบบเงินเดือน</Link>
+                  <Link to="/dashboard/payroll-system">ระบบเงินเดือน</Link>
                 </li>
               </ul>
             )}
@@ -141,7 +141,7 @@ const Sidebar = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 w-screen">
+      {/* <main className="flex-1 p-6 w-screen">
         {user ? (
           <div>
             <p>Welcome, {user.firstname}!</p>
@@ -152,7 +152,7 @@ const Sidebar = () => {
           <p>No user data available.</p>
         )}
         
-      </main>
+      </main> */}
     </div>
   );
 };

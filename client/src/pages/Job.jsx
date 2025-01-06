@@ -1,9 +1,12 @@
-import React from 'react'
+import React from "react";
 
 const Job = () => {
   return (
-    <div>Job</div>
-  )
-}
+    <div>
+      <h1>Job Management System</h1>
+      <p>Manage job applications and workflows here.</p>
+    </div>
+  );
+};
 
-export default Job
+export default Job;

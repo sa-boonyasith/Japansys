@@ -44,16 +44,16 @@ const Login = ({ onLogin }) => {
       // Navigate based on user role
       switch (data.user.role) {
         case "admin":
-          navigate("/dashboard/job", { state: { user: data.user } });
+          navigate("/dashboard", { state: { user: data.user } });
           break;
         case "recruit":
-          navigate("/dashboard/job", { state: { user: data.user } });
+          navigate("/dashboard", { state: { user: data.user } });
           break;
         case "manager":
-          navigate("/dashboard/job", { state: { user: data.user } });
+          navigate("/dashboard", { state: { user: data.user } });
           break;
         case "employee":
-          navigate("/dashboard/job", { state: { user: data.user } });
+          navigate("/dashboard", { state: { user: data.user } });
           break;
         default:
           navigate("/dashboard/default", { state: { user: data.user } });
