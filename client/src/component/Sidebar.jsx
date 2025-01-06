@@ -140,19 +140,6 @@ const Sidebar = () => {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      {/* <main className="flex-1 p-6 w-screen">
-        {user ? (
-          <div>
-            <p>Welcome, {user.firstname}!</p>
-            <p>Lastname, {user.lastname}</p>
-            <p>Role: {user.role}</p>
-          </div>
-        ) : (
-          <p>No user data available.</p>
-        )}
-        
-      </main> */}
     </div>
   );
 };

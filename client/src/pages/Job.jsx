@@ -2,7 +2,7 @@ import React from 'react'
 
 const Job = () => {
   return (
-    <div>kuy</div>
+    <div>Job</div>
   )
 }
 
