@@ -17,7 +17,7 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
     
     if (menu === "Job") {
       onToggleJobButtons("Job");
-      navigate("/dashboard/job");
+      navigate("/dashboard/Job");
     } else if (menu === "attend") {
       onToggleJobButtons("attend");
       navigate("/dashboard/attend");
@@ -32,8 +32,19 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
       navigate("/dashboard/meeting");
     } else if (menu === "trial") { // กรณีที่เลือก "ทดลองงาน"
       onToggleJobButtons("trial");
-      navigate("/dashboard/Job/trial");  // นำทางไปยังหน้า trial
-    } else {
+      navigate("/dashboard/trial");  // นำทางไปยังหน้า trial
+    } else if (menu ==="progress") {
+      onToggleJobButtons("progress")
+      navigate("/dashboard/progress") 
+    } else if (menu ==="leave-system") {
+      onToggleJobButtons("leave-system")
+      navigate("/dashboard/leave-system") 
+    } else if (menu ==="leave-status") {
+      onToggleJobButtons("leave-status")
+      navigate("/dashboard/leave-status")
+    } 
+    
+    else {
       onToggleJobButtons(null); // ซ่อนปุ่ม
     }
   };
@@ -107,14 +118,23 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
                 className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
                   ระบบจองห้องประชุม
                 </li>
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/car-booking">ระบบจองรถ</Link>
+                <li
+                onClick={()=> handleSubMenuClick("carbooking")}
+                role="button"
+                className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  ระบบจองรถ
                 </li>
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/expense-system">ระบบเบิกค่าใช้จ่าย</Link>
+                <li
+                onClick={()=> handleSubMenuClick("expensesystem")}
+                role="button"
+                className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  ระบบเบิกค่าใช้จ่าย
                 </li>
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/salary">ระบบเงินเดือน</Link>
+                <li
+                onClick={()=> handleSubMenuClick("salary")}
+                role="button"
+                className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  ระบบเงินเดือน
                 </li>
               </ul>
             )}

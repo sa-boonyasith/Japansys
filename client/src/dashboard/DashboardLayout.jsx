@@ -1,21 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../component/Sidebar";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => {
-  // ตั้งค่าเริ่มต้นให้ปุ่มแรกของเมนู "Job" เป็น active
-  const [activeButton, setActiveButton] = useState("สมัครงาน");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ตั้งค่า activeButton เริ่มต้นตามเส้นทางปัจจุบัน
+  const [activeButton, setActiveButton] = useState("");
+
+  useEffect(() => {
+    // ตรวจสอบ `pathname` แล้วตั้งค่า `activeButton`
+    const menuMapping = {
+      "/dashboard/Job": "สมัครงาน",
+      "/dashboard/trial": "ทดลองงาน",
+      "/dashboard/attend": "เวลาเข้า",
+      "/dashboard/checkout": "เวลาออก",
+      "/dashboard/todo-list": "todo",
+      "/dashboard/progress": "progress",
+      "/dashboard/leave-system": "leave-system",
+      "/dashboard/leave-status": "leave-status",
+    };
+
+    const currentPath = Object.keys(menuMapping).find((key) =>
+      location.pathname.includes(key)
+    );
+
+    setActiveButton(menuMapping[currentPath] || "");
+  }, [location.pathname]);
 
   const handleButtonClick = (button) => {
-    setActiveButton(button); // ตั้งค่า activeButton
-    if (button === "สมัครงาน") {
-      navigate("/dashboard/Job"); // เปลี่ยนไปยังเส้นทางย่อยของ Job
-    } else if (button === "ทดลองงาน") {
-      navigate("/dashboard/Job/trial"); // เปลี่ยนไปยังเส้นทางย่อยของ Job
-    }
+    setActiveButton(button);
+
+    const buttonMapping = {
+      "สมัครงาน": "/dashboard/Job",
+      "ทดลองงาน": "/dashboard/trial",
+      "เวลาเข้า": "/dashboard/attend",
+      "เวลาออก": "/dashboard/checkout",
+      "todo": "/dashboard/todo-list",
+      "progress": "/dashboard/progress",
+      "leave-system": "/dashboard/leave-system",
+      "leave-status": "/dashboard/leave-status",
+    };
+
+    navigate(buttonMapping[button] || "/dashboard");
   };
-  
 
   return (
     <div className="grid grid-cols-[300px_1fr] h-screen">
@@ -33,7 +62,6 @@ const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => 
 
         {/* ปุ่มเมนู */}
         <div className="dashboard-container">
-          {/* Render ปุ่มเฉพาะตามเมนูที่ active */}
           {activeMenu === "Job" && (
             <div className="job-buttons">
               <button
@@ -58,59 +86,59 @@ const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => 
             <div className="attend-buttons">
               <button
                 className={`p-2 rounded-t-lg ${
-                  activeButton === "ลงเวลาเข้างาน" ? "bg-white" : "bg-gray-300"
+                  activeButton === "เวลาเข้า" ? "bg-white" : "bg-gray-300"
                 }`}
-                onClick={() => handleButtonClick("ลงเวลาเข้างาน")}
+                onClick={() => handleButtonClick("เวลาเข้า")}
               >
-                ลงเวลาเข้างาน
+                เวลาเข้า
               </button>
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
-                  activeButton === "ลงเวลางานเลิก" ? "bg-white" : "bg-gray-300"
+                  activeButton === "เวลาออก" ? "bg-white" : "bg-gray-300"
                 }`}
-                onClick={() => handleButtonClick("ลงเวลางานเลิก")}
+                onClick={() => handleButtonClick("เวลาออก")}
               >
-                ลงเวลางานเลิก
+                เวลาออก
               </button>
             </div>
           )}
           {activeMenu === "todo-list" && (
-            <div className="todo-list-buttons">
+            <div className="todo-buttons">
               <button
                 className={`p-2 rounded-t-lg ${
-                  activeButton === "งานโง่ๆ" ? "bg-white" : "bg-gray-300"
+                  activeButton === "todo" ? "bg-white" : "bg-gray-300"
                 }`}
-                onClick={() => handleButtonClick("งานโง่ๆ")}
+                onClick={() => handleButtonClick("todo")}
               >
-                งานโง่ๆ
+                โปรเจ็ค
               </button>
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
-                  activeButton === "ไอสัส" ? "bg-white" : "bg-gray-300"
+                  activeButton === "progress" ? "bg-white" : "bg-gray-300"
                 }`}
-                onClick={() => handleButtonClick("ไอสัส")}
+                onClick={() => handleButtonClick("progress")}
               >
-                ไอสัส
+                ความคืบหน้า
               </button>
             </div>
           )}
           {activeMenu === "leave-system" && (
-            <div className="list-system-buttons">
+            <div className="leave-buttons">
               <button
                 className={`p-2 rounded-t-lg ${
-                  activeButton === "ลา" ? "bg-white" : "bg-gray-300"
+                  activeButton === "leave-system" ? "bg-white" : "bg-gray-300"
                 }`}
-                onClick={() => handleButtonClick("ลา")}
+                onClick={() => handleButtonClick("leave-system")}
               >
-                ลา
+                ระบบการลา
               </button>
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
-                  activeButton === "ก่อย" ? "bg-white" : "bg-gray-300"
+                  activeButton === "leave-status" ? "bg-white" : "bg-gray-300"
                 }`}
-                onClick={() => handleButtonClick("ก่อย")}
+                onClick={() => handleButtonClick("leave-status")}
               >
-                ก่อย
+                สถานะการลา
               </button>
             </div>
           )}

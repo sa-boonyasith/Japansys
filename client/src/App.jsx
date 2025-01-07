@@ -17,6 +17,9 @@ import Salary from "./pages/Salary";
 import Carbooking from "./pages/Carbooking";
 import ExpenseSystem from "./pages/ExpenseSystem";
 import Trial from "./pages/Trial"
+import Checkout from "./pages/Checkout";
+import Progress from "./pages/Progress";
+import Status from "./pages/Status";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,13 +30,30 @@ const App = () => {
     setActiveMenu(menu); // อัพเดตค่า activeMenu
   };
 
-  // Load auth status and user data from localStorage
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const authStatus = localStorage.getItem("isAuthenticated") === "true";
     const storedUser = localStorage.getItem("user");
-    setIsAuthenticated(authStatus);
-    if (storedUser) setUser(JSON.parse(storedUser));
+  
+    if (authStatus && storedUser) {
+      setIsAuthenticated(true);
+      setUser(JSON.parse(storedUser));
+    }
+  
+    setLoading(false); // การโหลดสถานะเสร็จสมบูรณ์
   }, []);
+  
+  if (loading) {
+    return <div>Loading...</div>; // แสดงหน้าจอโหลดระหว่างโหลดสถานะ
+  }
+  const PrivateRoute = ({ children }) => {
+    if (!isAuthenticated && !loading) {
+      return <Navigate to="/" />;
+    }
+    return children;
+  };
+    
 
   const handleLogin = (userData) => {
     setIsAuthenticated(true);
@@ -72,7 +92,10 @@ const App = () => {
             <Route path="car-booking" element={<Carbooking />} />
             <Route path="expense-system" element={<ExpenseSystem />} />
             <Route path="salary" element={<Salary />} />
-            <Route path="Job/trial" element={<Trial />} />
+            <Route path="trial" element={<Trial />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="progress" element={<Progress />} />
+            <Route path="leave-status" element={<Status />} />
             
           </Route>
         ) : (
