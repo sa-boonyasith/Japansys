@@ -39,11 +39,6 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    // แปลง birth_date ให้เป็น yyyy-mm-dd (และเวลาเป็น 00:00:00)
-    const formattedBirthDate = birth_date
-      ? new Date(birth_date).toISOString().split("T")[0] + "T00:00:00.000Z"
-      : null;
-
     // Create new job application
     const newJobApplication = await prisma.jobApplication.create({
       data: {
@@ -56,14 +51,14 @@ exports.create = async (req, res) => {
         phone_number,
         email,
         liveby,
-        birth_date: formattedBirthDate, // ส่งเฉพาะ yyyy-mm-dd
+        birth_date, // ส่งเฉพาะ yyyy-mm-dd
         age,
         ethnicity,
         nationality,
         religion,
         marital_status,
         military_status,
-        photo
+        photo,
       },
     });
 
@@ -100,9 +95,6 @@ exports.update = async (req, res) => {
       status,
     } = req.body;
 
-    const formattedBirthDate = birth_date
-      ? new Date(birth_date).toISOString().split("T")[0] + "T00:00:00.000Z"
-      : null;
 
     const update = await prisma.jobApplication.update({
       where: {
@@ -118,7 +110,7 @@ exports.update = async (req, res) => {
         phone_number,
         email,
         liveby,
-        birth_date: formattedBirthDate,
+        birth_date,
         age,
         ethnicity,
         nationality,
@@ -128,7 +120,6 @@ exports.update = async (req, res) => {
         status,
       },
     });
-
 
     const validStatus = ["new", "wait", "pass", "reject"];
     if (status && !validStatus.includes(status)) {
@@ -142,15 +133,15 @@ exports.update = async (req, res) => {
 };
 exports.remove = async (req, res) => {
   try {
-    const {id} = req.params
+    const { id } = req.params;
     const deleted = await prisma.jobApplication.delete({
-      where : {
-        job_id : Number(id),
+      where: {
+        job_id: Number(id),
       },
-    })
+    });
 
-    res.json({message: "Deleted succesfully",deleted});
+    res.json({ message: "Deleted succesfully", deleted });
   } catch (err) {
-    console.error("Error deleting jobaaplication",err.message)
+    console.error("Error deleting jobaaplication", err.message);
   }
 };

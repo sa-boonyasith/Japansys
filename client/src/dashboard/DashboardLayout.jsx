@@ -145,7 +145,7 @@ const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => 
         </div>
 
         {/* Content Area */}
-        <div className="h-full p-4 bg-white">
+        <div className="h-full p-4 bg-white overflow-y-auto">
           <Outlet />
         </div>
       </div>

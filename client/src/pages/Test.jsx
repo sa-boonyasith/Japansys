@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const Job = () => {
+const Test = () => {
   const [applications, setApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null); // state สำหรับเก็บข้อมูลผู้สมัครที่เลือก
+  const [isModalOpen, setIsModalOpen] = useState(false); // state สำหรับเปิด/ปิด modal
 
+  // ดึงข้อมูลจาก API
   useEffect(() => {
-    axios.get('http://localhost:8080/api/jobaplication')
+    axios.get('http://localhost:8080/api/jobaplication')  // ตรวจสอบ URL ของ API
       .then((response) => {
-        setApplications(response.data.listjobaplication);
+        setApplications(response.data.listjobaplication);  // ตั้งค่า state ด้วยข้อมูลที่ได้จาก backend
       })
       .catch((error) => {
         console.error('Error fetching applications:', error);
       });
   }, []);
 
+  // ฟังก์ชันสำหรับแก้ไขสถานะ
   const handleEditStatus = (id, newStatus) => {
     axios.put(`http://localhost:8080/api/jobaplication/${id}`, { status: newStatus })
       .then((response) => {
@@ -29,6 +31,7 @@ const Job = () => {
       });
   };
 
+  // ฟังก์ชันสำหรับลบข้อมูล
   const handleDelete = (id) => {
     axios.delete(`http://localhost:8080/api/jobaplication/${id}`)
       .then(() => {
@@ -39,41 +42,18 @@ const Job = () => {
       });
   };
 
+  // ฟังก์ชันกรองข้อมูลตามสถานะ
   const filterByStatus = (status) => applications.filter((app) => app.status === status);
 
+  // ฟังก์ชันสำหรับแสดงข้อมูลผู้สมัคร
   const handleViewDetails = (app) => {
-    setSelectedApplication(app);
-    setIsModalOpen(true);
+    setSelectedApplication(app); // ตั้งค่า state ด้วยข้อมูลของผู้สมัครที่เลือก
+    setIsModalOpen(true); // เปิด modal
   };
 
+  // ฟังก์ชันสำหรับปิด modal
   const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const renderDocuments = (documents) => {
-    const documentList = [
-      { label: 'บัตรประชาชน', value: documents.id_card },
-      { label: 'ทะเบียนบ้าน', value: documents.house_registration },
-      { label: 'วุฒิการศึกษา', value: documents.certificate },
-      { label: 'สลิปเงินเดือน', value: documents.bank_statement },
-      { label: 'เอกสารอื่นๆ', value: documents.other }
-    ];
-
-    return (
-      <ul className="list-none">
-        {documentList.map((doc, index) => (
-          <li key={index} className="flex items-center">
-            <input
-              type="checkbox"
-              checked={doc.value}
-              readOnly
-              className="mr-2"
-            />
-            {doc.label}
-          </li>
-        ))}
-      </ul>
-    );
+    setIsModalOpen(false); // ปิด modal
   };
 
   return (
@@ -93,13 +73,14 @@ const Job = () => {
                   <div>
                     <p
                       className="font-medium cursor-pointer text-blue-500"
-                      onClick={() => handleViewDetails(app)}
+                      onClick={() => handleViewDetails(app)} // คลิกเพื่อดูข้อมูล
                     >
                       {app.firstname} {app.lastname}
                     </p>
                     <p className="text-sm text-gray-600">ตำแหน่ง: {app.job_position}</p>
                   </div>
                   <div className="flex space-x-2">
+                    {/* ปุ่มแก้ไขสถานะ */}
                     <select
                       value={app.status}
                       onChange={(e) => handleEditStatus(app.job_id, e.target.value)}
@@ -109,6 +90,7 @@ const Job = () => {
                       <option value="wait">รอสัมภาษณ์</option>
                       <option value="pass">ผ่านสัมภาษณ์</option>
                     </select>
+                    {/* ปุ่มลบ */}
                     <button
                       onClick={() => handleDelete(app.job_id)}
                       className="bg-red-500 text-white px-2 py-1 rounded-md text-sm"
@@ -126,27 +108,16 @@ const Job = () => {
         ))}
       </div>
 
+      {/* Modal Popup สำหรับแสดงข้อมูลผู้สมัคร */}
       {isModalOpen && selectedApplication && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h3 className="text-xl font-semibold mb-4">รายละเอียดผู้สมัคร</h3>
-            <p><strong>สถานะ:</strong> {selectedApplication.status === 'new' ? 'ผู้สมัครใหม่' : selectedApplication.status === 'wait' ? 'รอสัมภาษณ์' : 'ผ่านสัมภาษณ์'}</p>
             <p><strong>ชื่อ:</strong> {selectedApplication.firstname} {selectedApplication.lastname}</p>
             <p><strong>ตำแหน่งที่สมัคร:</strong> {selectedApplication.job_position}</p>
-            <p><strong>เงินเดือนที่คาดหวัง:</strong> {selectedApplication.expected_salary} บาท/เดือน</p>
-            <p><strong>เอกสารที่ใช้ประกอบการสมัครงาน:</strong></p>
-            {renderDocuments(selectedApplication.documents)}
-            <b>Personal Information (ประวัติส่วนตัว)</b>
-            <p><strong>ที่อยู่ปัจจุบัน : </strong> {selectedApplication.personal_info.address}</p>
-            <p><strong>ประเทศ : </strong>{selectedApplication.personal_info.city}</p>
-            <p><strong>รหัสไปรษณีย์ : </strong>{selectedApplication.personal_info.zip_code}</p>
             <p><strong>อายุ:</strong> {selectedApplication.age} ปี</p>
             <p><strong>อีเมล:</strong> {selectedApplication.email}</p>
-            <p><strong>เบอร์โทร:</strong> {selectedApplication.phone_number}</p>
-            <p><strong>วัน/เดือน/ปีเกิด: </strong>{selectedApplication.birth_date}</p>
-            <p><strong>ศาสนา:</strong> {selectedApplication.religion}</p>
-            <p><strong>สถานะทางทหาร:</strong> {selectedApplication.military_status}</p>
-            
+            <p><strong>สถานะ:</strong> {selectedApplication.status === 'new' ? 'ผู้สมัครใหม่' : selectedApplication.status === 'wait' ? 'รอสัมภาษณ์' : 'ผ่านสัมภาษณ์'}</p>
             <div className="mt-4 flex justify-end">
               <button
                 onClick={handleCloseModal}
@@ -162,4 +133,4 @@ const Job = () => {
   );
 };
 
-export default Job;
+export default Test;

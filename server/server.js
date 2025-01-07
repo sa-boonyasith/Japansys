@@ -8,6 +8,9 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cors());
 
+app.use(cors({ origin: 'http://localhost:5173' })); // ถ้ารัน React ที่พอร์ต 3000
+
+
 // Dynamically load routes
 readdirSync('routes')
   .map((c) => app.use('/api', require('./routes/' + c)));
