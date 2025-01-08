@@ -82,7 +82,7 @@ model JobApplication {
   marital_status  String?       @db.VarChar(50)
   military_status String?       @db.VarChar(100)
   status          StatusJobapp @default(new)
-  photo           String?
+  photo           String? @db.Text
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

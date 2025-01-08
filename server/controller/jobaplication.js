@@ -93,10 +93,37 @@ exports.update = async (req, res) => {
       marital_status,
       military_status,
       status,
+      photo,
     } = req.body;
 
+    // ตรวจสอบสถานะก่อนการอัปเดต
+    const validStatus = ["new", "wait", "pass", "reject"];
+    if (status && !validStatus.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
 
-    const update = await prisma.jobApplication.update({
+    // ตรวจสอบว่า jobApplication ที่ต้องการอัปเดตมีอยู่หรือไม่
+    const existingApplication = await prisma.jobApplication.findUnique({
+      where: {
+        job_id: Number(id),
+      },
+    });
+
+    if (!existingApplication) {
+      return res
+        .status(404)
+        .json({ message: "Job application not found with the provided ID" });
+    }
+
+    // Validation รูปภาพ (photo) ถ้ามีการอัปเดต
+    if (photo && !photo.startsWith("http")) {
+      return res
+        .status(400)
+        .json({ message: "Invalid photo URL, must be a valid link" });
+    }
+
+    // อัปเดตข้อมูล jobApplication
+    const updatedApplication = await prisma.jobApplication.update({
       where: {
         job_id: Number(id),
       },
@@ -118,19 +145,32 @@ exports.update = async (req, res) => {
         marital_status,
         military_status,
         status,
+        photo,
       },
     });
 
-    const validStatus = ["new", "wait", "pass", "reject"];
-    if (status && !validStatus.includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
+    // ส่งผลลัพธ์กลับไปยัง client
+    res.status(200).json({
+      message: "Job application updated successfully",
+      application: updatedApplication,
+    });
+  } catch (err) {
+    console.error("Error updating job application:", err.message);
+
+    // ตรวจสอบข้อผิดพลาดของ Prisma
+    if (err.code === "P2025") {
+      return res
+        .status(404)
+        .json({ message: "Job application not found for update" });
     }
 
-    res.json({ message: "jobApplication Updated successfully", update });
-  } catch (err) {
-    console.error("Error updating jobapplication:", err.message);
+    // ข้อผิดพลาดทั่วไป
+    res
+      .status(500)
+      .json({ message: "Server error, please try again later" });
   }
 };
+
 exports.remove = async (req, res) => {
   try {
     const { id } = req.params;
