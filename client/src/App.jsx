@@ -20,8 +20,8 @@ import Trial from "./pages/Trial"
 import Checkout from "./pages/Checkout";
 import Progress from "./pages/Progress";
 import Status from "./pages/Status";
-import Job2 from "./pages/Jobappli";
 import Test from "./pages/Test";
+import Test2 from "./pages/Test2";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -73,7 +73,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/123" element={<Job2 />} />
+        <Route path="/test2" element={<Test2 />} />
         <Route path="/test" element={<Test />} />
 
         

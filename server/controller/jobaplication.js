@@ -118,13 +118,6 @@ exports.update = async (req, res) => {
         .json({ message: "Job application not found with the provided ID" });
     }
 
-    // Validation รูปภาพ (photo) ถ้ามีการอัปเดต
-    if (photo && !photo.startsWith("http")) {
-      return res
-        .status(400)
-        .json({ message: "Invalid photo URL, must be a valid link" });
-    }
-
     // อัปเดตข้อมูล jobApplication
     const updatedApplication = await prisma.jobApplication.update({
       where: {

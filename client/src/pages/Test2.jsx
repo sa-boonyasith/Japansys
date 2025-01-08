@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const Job = () => {
+const Test2 = () => {
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -228,4 +228,4 @@ const Job = () => {
   );
 };
 
-export default Job;
+export default Test2;
