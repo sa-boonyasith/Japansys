@@ -7,6 +7,7 @@ const AddJobApplication = () => {
     lastname: "",
     job_position: "",
     expected_salary: "",
+    age: "",
     phone_number: "",
     email: "",
     liveby: "",
@@ -111,6 +112,7 @@ const AddJobApplication = () => {
         lastname: "",
         job_position: "",
         expected_salary: "",
+        age : "",
         phone_number: "",
         email: "",
         liveby: "",
@@ -158,6 +160,7 @@ const AddJobApplication = () => {
               type="text"
               name="firstname"
               value={formData.firstname}
+              placeholder="อัศวิน"
               onChange={handleChange}
               required
               className="w-full p-2 border rounded"
@@ -169,6 +172,7 @@ const AddJobApplication = () => {
               type="text"
               name="lastname"
               value={formData.lastname}
+              placeholder="รัตติกาล"
               onChange={handleChange}
               required
               className="w-full p-2 border rounded"
@@ -179,6 +183,7 @@ const AddJobApplication = () => {
             <input
               type="text"
               name="job_position"
+              placeholder="นอนทั้งวัน"
               value={formData.job_position}
               onChange={handleChange}
               required
@@ -186,11 +191,133 @@ const AddJobApplication = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium">E-mail</label>
+            <label className="block text-sm font-medium">อีเมล</label>
             <input
               type="text"
               name="email"
+              placeholder="เมลโง่@gmail.com"
               value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">เบอโทรศัพท์</label>
+            <input
+              type="text"
+              name="phone_number]"
+              placeholder="087เป็ดเย็ดไก่"
+              value={formData.phone_number}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">วัน/เดือน/ปี</label>
+            <input
+              type="text"
+              name="birth_date]"
+              value={formData.birth_date}
+              onChange={handleChange}
+              placeholder="02/12/2000"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">อายุ</label>
+            <input
+              type="text"
+              name="age"
+              value={formData.age}
+              onChange={handleChange}
+              placeholder="18มาเป็นสาวรำวง"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">เชื้อชาติ</label>
+            <input
+              type="text"
+              name="age"
+              value={formData.ethnicity}
+              onChange={handleChange}
+              placeholder="เกาเหลา"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">สัญชาติ</label>
+            <input
+              type="text"
+              name="age"
+              value={formData.nationality}
+              onChange={handleChange}
+              placeholder="เกาเหลา"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">ศาสนา</label>
+            <input
+              type="text"
+              name="age"
+              value={formData.religion}
+              onChange={handleChange}
+              placeholder="Jesus"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium">ที่อยู่ปัจจุบัน</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.personal_info.address}
+              placeholder="ดงแฮ ซอย 9"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">อาศัย</label>
+            <input
+              type="text"
+              name="age"
+              value={formData.liveby}
+              onChange={handleChange}
+              placeholder="อยู่กับครอบครัว,คอนโด,บ้านเช่า,บ้านตัวเอง"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">ประเทศ</label>
+            <input
+              type="text"
+              name="city"
+              value={formData.personal_info.city}
+              placeholder="เกาเหลา"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">ไปรษณีย์</label>
+            <input
+              type="text"
+              name="zip_code"
+              value={formData.personal_info.zip_code}
+              placeholder="11111"
               onChange={handleChange}
               required
               className="w-full p-2 border rounded"
