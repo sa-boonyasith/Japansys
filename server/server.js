@@ -1,25 +1,28 @@
 const express = require('express');
 const morgan = require('morgan');
-const app = express();
 const cors = require('cors');
+const path = require('path'); // ใช้สำหรับจัดการ path
 const { readdirSync } = require('fs');
 
+const app = express();
+
+// Middleware
 app.use(morgan('dev'));
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:5173' }));
 
-app.use(cors({ origin: 'http://localhost:5173' })); // ถ้ารัน React ที่พอร์ต 3000
-
+// เสิร์ฟไฟล์ในโฟลเดอร์ uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Dynamically load routes
-readdirSync('routes')
-  .map((c) => app.use('/api', require('./routes/' + c)));
+readdirSync('routes').map((file) => {
+  app.use('/api', require('./routes/' + file));
+});
 
-// Start the server only if not in the test environment
 if (process.env.NODE_ENV !== 'test') {
   app.listen(8080, () => {
     console.log('Server is running on port 8080');
   });
 }
 
-module.exports = app;  // Export the app for testing purposes
+module.exports = app;

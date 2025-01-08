@@ -27,50 +27,53 @@ exports.create = async (req, res) => {
       religion,
       marital_status,
       military_status,
-      photo,
     } = req.body;
 
-    // Check if email already exists
+    // ดึงข้อมูลไฟล์ที่อัปโหลด
+    const photo = req.file ? `/uploads/${req.file.filename}` : null;
+
+    // ตรวจสอบว่า email ซ้ำหรือไม่
     const checkemail = await prisma.jobApplication.findUnique({
       where: { email },
     });
 
     if (checkemail) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
-    // Create new job application
+    // สร้างข้อมูลใหม่
     const newJobApplication = await prisma.jobApplication.create({
       data: {
         firstname,
         lastname,
         job_position,
-        expected_salary,
+        expected_salary: parseFloat(expected_salary), // แปลงค่าเงินเดือนเป็น Float
         documents,
         personal_info,
         phone_number,
         email,
         liveby,
-        birth_date, // ส่งเฉพาะ yyyy-mm-dd
-        age,
+        birth_date,
+        age: parseInt(age), // แปลงอายุเป็น Int
         ethnicity,
         nationality,
         religion,
         marital_status,
         military_status,
-        photo,
+        photo, // บันทึก URL รูปภาพ
       },
     });
 
     res.status(201).json({
-      message: "Job application created successfully",
+      message: 'Job application created successfully',
       newJobApplication,
     });
   } catch (err) {
-    console.error("Error creating Job application:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('Error creating job application:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 exports.update = async (req, res) => {
   try {
