@@ -19,7 +19,9 @@ const Job = () => {
 
   const handleEditStatus = (id, newStatus) => {
     axios
-      .put(`http://localhost:8080/api/jobaplication/${id}`, { status: newStatus })
+      .put(`http://localhost:8080/api/jobaplication/${id}`, {
+        status: newStatus,
+      })
       .then(() => {
         // ดึงข้อมูลใหม่
         return axios.get("http://localhost:8080/api/jobaplication");
@@ -32,8 +34,6 @@ const Job = () => {
         alert("เกิดข้อผิดพลาด กรุณาลองอีกครั้ง");
       });
   };
-  
-  
 
   const handleDelete = (id) => {
     axios
@@ -146,7 +146,7 @@ const Job = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg w-[800px]">
             <h3 className="text-xl font-semibold mb-4">รายละเอียดผู้สมัคร</h3>
             {/* แสดงรูปจากฐานข้อมูล */}
-            {/* {selectedApplication.photo ? (
+            {selectedApplication.photo ? (
               <img
                 src={selectedApplication.photo}
                 alt="Profile"
@@ -154,7 +154,7 @@ const Job = () => {
               />
             ) : (
               <p className="text-gray-500">ไม่มีรูปภาพ</p>
-            )} */}
+            )}
 
             <p>
               <strong>สถานะ:</strong>{" "}
@@ -207,7 +207,8 @@ const Job = () => {
               <strong>อายุ:</strong> {selectedApplication.age} ปี
             </p>
             <p>
-              <strong>เชื้อชาติ :</strong>{selectedApplication.ethnicity}
+              <strong>เชื้อชาติ :</strong>
+              {selectedApplication.ethnicity}
             </p>
             <p>
               <strong>ศาสนา:</strong> {selectedApplication.religion}

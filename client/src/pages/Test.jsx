@@ -1,167 +1,246 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
-const Test = () => {
-  const [applications, setApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null); // state สำหรับเก็บข้อมูลผู้สมัครที่เลือก
-  const [isModalOpen, setIsModalOpen] = useState(false); // state สำหรับเปิด/ปิด modal
+const AddJobApplication = () => {
+  const [formData, setFormData] = useState({
+    firstname: "",
+    lastname: "",
+    job_position: "",
+    expected_salary: "",
+    phone_number: "",
+    email: "",
+    liveby: "",
+    birth_date: "",
+    ethnicity: "",
+    nationality: "",
+    religion: "",
+    marital_status: "",
+    military_status: "",
+    documents: {
+      id_card: false,
+      house_registration: false,
+      certificate: false,
+      bank_statement: false,
+      other: false,
+    },
+    personal_info: {
+      address: "",
+      city: "",
+      zip_code: "",
+    },
+  });
 
-  // ดึงข้อมูลจาก API
-  useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/jobaplication") // ตรวจสอบ URL ของ API
-      .then((response) => {
-        setApplications(response.data.listjobaplication); // ตั้งค่า state ด้วยข้อมูลที่ได้จาก backend
-      })
-      .catch((error) => {
-        console.error("Error fetching applications:", error);
-      });
-  }, []);
+  const [fileUploads, setFileUploads] = useState({
+    id_card: null,
+    house_registration: null,
+    certificate: null,
+    bank_statement: null,
+    other: null,
+    photo: null,
+  });
 
-  // ฟังก์ชันสำหรับแก้ไขสถานะ
-  const handleEditStatus = (id, newStatus) => {
-    axios
-      .put(`http://localhost:8080/api/jobaplication/${id}`, { status: newStatus })
-      .then(() => {
-        // ดึงข้อมูลใหม่
-        return axios.get("http://localhost:8080/api/jobaplication");
-      })
-      .then((response) => {
-        setApplications(response.data.listjobaplication);
-      })
-      .catch((error) => {
-        console.error("Error updating or fetching applications:", error);
-        alert("เกิดข้อผิดพลาด กรุณาลองอีกครั้ง");
-      });
-  };
-  
-
-  // ฟังก์ชันสำหรับลบข้อมูล
-  const handleDelete = (id) => {
-    axios
-      .delete(`http://localhost:8080/api/jobaplication/${id}`)
-      .then(() => {
-        setApplications((prev) => prev.filter((app) => app.job_id !== id));
-      })
-      .catch((error) => {
-        console.error("Error deleting application:", error);
-      });
-  };
-
-  // ฟังก์ชันกรองข้อมูลตามสถานะ
-  const filterByStatus = (status) =>
-    applications.filter((app) => app.status === status);
-
-  // ฟังก์ชันสำหรับแสดงข้อมูลผู้สมัคร
-  const handleViewDetails = (app) => {
-    setSelectedApplication(app); // ตั้งค่า state ด้วยข้อมูลของผู้สมัครที่เลือก
-    setIsModalOpen(true); // เปิด modal
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  // ฟังก์ชันสำหรับปิด modal
-  const handleCloseModal = () => {
-    setIsModalOpen(false); // ปิด modal
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    const file = files[0];
+    setFileUploads((prev) => ({
+      ...prev,
+      [name]: file,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [name]: !!file, // ถ้ามีไฟล์ให้เป็น true
+      },
+    }));
+  };
+
+  const handlePersonalInfoChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      personal_info: {
+        ...prev.personal_info,
+        [name]: value,
+      },
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formDataToSend = new FormData();
+
+    // เพิ่มข้อมูลทั่วไปใน FormData
+    Object.entries(formData).forEach(([key, value]) => {
+      if (typeof value === "object") {
+        formDataToSend.append(key, JSON.stringify(value)); // แปลง object เป็น string
+      } else {
+        formDataToSend.append(key, value);
+      }
+    });
+
+    // เพิ่มไฟล์ใน FormData
+    Object.entries(fileUploads).forEach(([key, file]) => {
+      if (file) {
+        formDataToSend.append(key, file);
+      }
+    });
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/jobaplication",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      alert("เพิ่มผู้สมัครสำเร็จ!");
+      // รีเซ็ตฟอร์ม
+      setFormData({
+        firstname: "",
+        lastname: "",
+        job_position: "",
+        expected_salary: "",
+        phone_number: "",
+        email: "",
+        liveby: "",
+        birth_date: "",
+        ethnicity: "",
+        nationality: "",
+        religion: "",
+        marital_status: "",
+        military_status: "",
+        documents: {
+          id_card: false,
+          house_registration: false,
+          certificate: false,
+          bank_statement: false,
+          other: false,
+        },
+        personal_info: {
+          address: "",
+          city: "",
+          zip_code: "",
+        },
+      });
+      setFileUploads({
+        id_card: null,
+        house_registration: null,
+        certificate: null,
+        bank_statement: null,
+        other: null,
+        photo: null,
+      });
+    } catch (error) {
+      console.error("Error adding application:", error);
+      alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+    }
   };
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">ระบบจัดการผู้สมัครงาน</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {["new", "wait", "pass"].map((status) => (
-          <div key={status} className="bg-white shadow-md p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              {status === "new" && "ผู้สมัครใหม่"}
-              {status === "wait" && "รอสัมภาษณ์"}
-              {status === "pass" && "ผ่านสัมภาษณ์"}
-            </h2>
-            <ul>
-              {filterByStatus(status).map((app) => (
-                <li
-                  key={app.job_id}
-                  className="flex items-center justify-between mb-2"
-                >
-                  <div>
-                    <p
-                      className="font-medium cursor-pointer text-blue-500"
-                      onClick={() => handleViewDetails(app)} // คลิกเพื่อดูข้อมูล
-                    >
-                      {app.firstname} {app.lastname}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      ตำแหน่ง: {app.job_position}
-                    </p>
-                  </div>
-                  <div className="flex space-x-2">
-                    {/* ปุ่มแก้ไขสถานะ */}
-                    <select
-                      value={app.status}
-                      onChange={(e) =>
-                        handleEditStatus(app.job_id, e.target.value)
-                      }
-                      className="p-1 text-sm border rounded-md"
-                    >
-                      <option value="new">ใหม่</option>
-                      <option value="wait">รอสัมภาษณ์</option>
-                      <option value="pass">ผ่านสัมภาษณ์</option>
-                    </select>
-                    {/* ปุ่มลบ */}
-                    <button
-                      onClick={() => handleDelete(app.job_id)}
-                      className="bg-red-500 text-white px-2 py-1 rounded-md text-sm"
-                    >
-                      ลบ
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {filterByStatus(status).length === 0 && (
-                <p className="text-sm text-gray-500">ไม่มีข้อมูล</p>
-              )}
-            </ul>
+      <h1 className="text-2xl font-bold mb-6">เพิ่มข้อมูลผู้สมัคร</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium">ชื่อ</label>
+            <input
+              type="text"
+              name="firstname"
+              value={formData.firstname}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
           </div>
-        ))}
-      </div>
+          <div>
+            <label className="block text-sm font-medium">นามสกุล</label>
+            <input
+              type="text"
+              name="lastname"
+              value={formData.lastname}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">ตำแหน่งที่ต้องการ</label>
+            <input
+              type="text"
+              name="job_position"
+              value={formData.job_position}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">E-mail</label>
+            <input
+              type="text"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          
 
-      {/* Modal Popup สำหรับแสดงข้อมูลผู้สมัคร */}
-      {isModalOpen && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4">รายละเอียดผู้สมัคร</h3>
-            <p>
-              <strong>ชื่อ:</strong> {selectedApplication.firstname}{" "}
-              {selectedApplication.lastname}
-            </p>
-            <p>
-              <strong>ตำแหน่งที่สมัคร:</strong>{" "}
-              {selectedApplication.job_position}
-            </p>
-            <p>
-              <strong>อายุ:</strong> {selectedApplication.age} ปี
-            </p>
-            <p>
-              <strong>อีเมล:</strong> {selectedApplication.email}
-            </p>
-            <p>
-              <strong>สถานะ:</strong>{" "}
-              {selectedApplication.status === "new"
-                ? "ผู้สมัครใหม่"
-                : selectedApplication.status === "wait"
-                ? "รอสัมภาษณ์"
-                : "ผ่านสัมภาษณ์"}
-            </p>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleCloseModal}
-                className="bg-gray-500 text-white px-4 py-2 rounded-md"
-              >
-                ปิด
-              </button>
-            </div>
+
+
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">เอกสารที่เกี่ยวข้อง</label>
+          <div className="space-y-2">
+            {["id_card", "house_registration", "certificate", "bank_statement", "other"].map(
+              (doc) => (
+                <div key={doc}>
+                  <label className="block text-sm font-medium capitalize">
+                    {doc.replace("_", " ")}
+                  </label>
+                  <input
+                    type="file"
+                    name={doc}
+                    onChange={handleFileChange}
+                    className="p-2"
+                  />
+                </div>
+              )
+            )}
           </div>
         </div>
-      )}
+        <div>
+          <label className="block text-sm font-medium">รูปภาพ (โปรไฟล์)</label>
+          <input
+            type="file"
+            name="photo"
+            onChange={handleFileChange}
+            className="p-2"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded-md"
+        >
+          เพิ่มข้อมูล
+        </button>
+      </form>
     </div>
   );
 };
 
-export default Test;
+export default AddJobApplication;
