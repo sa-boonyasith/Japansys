@@ -249,6 +249,10 @@ const Test = () => {
               <strong>สถานะทางทหาร:</strong>{" "}
               {selectedApplication.military_status}
             </p>
+            <p>
+              <strong>สถานภาพ</strong> {" "}
+              {selectedApplication.marital_status}
+            </p>
 
             <div className="mt-4 flex justify-end">
               <button

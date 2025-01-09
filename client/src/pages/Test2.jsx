@@ -389,10 +389,10 @@ const Test2 = () => {
               className="w-full p-2 border rounded"
             >
               <option value="">-- เลือกสถานภาพ --</option>
-              <option value="single">โสด</option>
-              <option value="married">แต่งงาน</option>
-              <option value="divorced">หย่าร้าง</option>
-              <option value="widowed">หม้าย</option>
+              <option value="โสด">โสด</option>
+              <option value="แต่งงาน">แต่งงาน</option>
+              <option value="หย่าร้าง">หย่าร้าง</option>
+              <option value="หม้าย">หม้าย</option>
             </select>
           </div>
           <div>
@@ -405,9 +405,9 @@ const Test2 = () => {
               className="w-full p-2 border rounded"
             >
               <option value="">-- เลือกภาวะทางการทหาร --</option>
-              <option value="exempted">ได้รับการยกเว้น</option>
-              <option value="reserve">ปลดเป็นทหารกองหนุน</option>
-              <option value="not_served">ยังไม่ได้รับการเกณฑ์</option>
+              <option value="ได้รับการยกเว้น">ได้รับการยกเว้น</option>
+              <option value="ปลดเป็นทหารกองหนุน">ปลดเป็นทหารกองหนุน</option>
+              <option value="ยังไม่ได้รับการเกณฑ์">ยังไม่ได้รับการเกณฑ์</option>
             </select>
           </div>
         </div>
