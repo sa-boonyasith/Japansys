@@ -75,9 +75,6 @@ const App = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/test2" element={<Test2 />} />
         <Route path="/test" element={<Test />} />
-
-        
-
         {isAuthenticated ? (
           <Route
             path="/dashboard"

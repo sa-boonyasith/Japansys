@@ -1,229 +1,460 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
 const Test2 = () => {
-  const [applications, setApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    firstname: "",
+    lastname: "",
+    job_position: "",
+    expected_salary: "",
+    age: "",
+    phone_number: "",
+    email: "",
+    liveby: "",
+    birth_date: "",
+    ethnicity: "",
+    nationality: "",
+    religion: "",
+    marital_status: "",
+    military_status: "",
+    documents: {
+      id_card: false,
+      house_registration: false,
+      certificate: false,
+      bank_statement: false,
+      other: false,
+    },
+    personal_info: {
+      address: "",
+      city: "",
+      zip_code: "",
+    },
+  });
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/jobaplication")
-      .then((response) => {
-        setApplications(response.data.listjobaplication);
-      })
-      .catch((error) => {
-        console.error("Error fetching applications:", error);
+  const [fileUploads, setFileUploads] = useState({
+    id_card: null,
+    house_registration: null,
+    certificate: null,
+    bank_statement: null,
+    other: null,
+    photo: null,
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "phone_number") {
+      // ลบตัวอักษรที่ไม่ใช่ตัวเลข
+      const numericValue = value.replace(/\D/g, "");
+      // จำกัดตัวเลขไม่เกิน 10 ตัว
+      const limitedValue = numericValue.slice(0, 10);
+      // จัดรูปแบบเบอร์โทรศัพท์
+      const formattedValue = limitedValue.replace(
+        /(\d{3})(\d{3})(\d{0,4})/,
+        (_, p1, p2, p3) => {
+          return `${p1}-${p2}${p3 ? `-${p3}` : ""}`;
+        }
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        phone_number: formattedValue, // อัปเดตเบอร์โทรศัพท์ในฟอร์แมต
+      }));
+    } else if (name.startsWith("personal_info.")) {
+      const field = name.split(".")[1]; // ดึง key หลัง "personal_info."
+      setFormData((prev) => ({
+        ...prev,
+        personal_info: {
+          ...prev.personal_info,
+          [field]: value,
+        },
+      }));
+    } else if (name === "personal_info.zip_code") {
+      // ลบตัวอักษรที่ไม่ใช่ตัวเลข
+      const numericValue = value.replace(/\D/g, "");
+      // จำกัดตัวเลขไม่เกิน 5 ตัว
+      const limitedValue = numericValue.slice(0, 5);
+
+      setFormData((prev) => ({
+        ...prev,
+        personal_info: {
+          ...prev.personal_info,
+          zip_code: limitedValue, // อัปเดต zip_code ที่จำกัดให้มีแค่ 5 ตัว
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    const file = files[0];
+    setFileUploads((prev) => ({
+      ...prev,
+      [name]: file,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [name]: !!file, // ถ้ามีไฟล์ให้เป็น true
+      },
+    }));
+  };
+
+  const handlePersonalInfoChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      personal_info: {
+        ...prev.personal_info,
+        [name]: value,
+      },
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formDataToSend = new FormData();
+
+    // เพิ่มข้อมูลทั่วไปใน FormData
+    Object.entries(formData).forEach(([key, value]) => {
+      if (typeof value === "object") {
+        formDataToSend.append(key, JSON.stringify(value)); // แปลง object เป็น string
+      } else {
+        formDataToSend.append(key, value);
+      }
+    });
+
+    // เพิ่มไฟล์ใน FormData
+    Object.entries(fileUploads).forEach(([key, file]) => {
+      if (file) {
+        formDataToSend.append(key, file);
+      }
+    });
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/jobaplication",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      alert("เพิ่มผู้สมัครสำเร็จ!");
+      // รีเซ็ตฟอร์ม
+      setFormData({
+        firstname: "",
+        lastname: "",
+        job_position: "",
+        expected_salary: "",
+        age : "",
+        phone_number: "",
+        email: "",
+        liveby: "",
+        birth_date: "",
+        ethnicity: "",
+        nationality: "",
+        religion: "",
+        marital_status: "",
+        military_status: "",
+        documents: {
+          id_card: false,
+          house_registration: false,
+          certificate: false,
+          bank_statement: false,
+          other: false,
+        },
+        personal_info: {
+          address: "",
+          city: "",
+          zip_code: "",
+        },
       });
-  }, []);
-
-  const handleEditStatus = (id, newStatus) => {
-    axios
-      .put(`http://localhost:8080/api/jobaplication/${id}`, {
-        status: newStatus,
-      })
-      .then(() => {
-        // ดึงข้อมูลใหม่
-        return axios.get("http://localhost:8080/api/jobaplication");
-      })
-      .then((response) => {
-        setApplications(response.data.listjobaplication);
-      })
-      .catch((error) => {
-        console.error("Error updating or fetching applications:", error);
-        alert("เกิดข้อผิดพลาด กรุณาลองอีกครั้ง");
+      setFileUploads({
+        id_card: null,
+        house_registration: null,
+        certificate: null,
+        bank_statement: null,
+        other: null,
+        photo: null,
       });
-  };
-
-  const handleDelete = (id) => {
-    axios
-      .delete(`http://localhost:8080/api/jobaplication/${id}`)
-      .then(() => {
-        setApplications((prev) => prev.filter((app) => app.job_id !== id));
-      })
-      .catch((error) => {
-        console.error("Error deleting application:", error);
-      });
-  };
-
-  const filterByStatus = (status) =>
-    applications.filter((app) => app.status === status);
-
-  const handleViewDetails = (app) => {
-    setSelectedApplication(app);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const renderDocuments = (documents) => {
-    const documentList = [
-      { label: "บัตรประชาชน", value: documents.id_card },
-      { label: "ทะเบียนบ้าน", value: documents.house_registration },
-      { label: "วุฒิการศึกษา", value: documents.certificate },
-      { label: "สลิปเงินเดือน", value: documents.bank_statement },
-      { label: "เอกสารอื่นๆ", value: documents.other },
-    ];
-
-    return (
-      <ul className="list-none">
-        {documentList.map((doc, index) => (
-          <li key={index} className="flex items-center">
-            <input
-              type="checkbox"
-              checked={doc.value}
-              readOnly
-              className="mr-2"
-            />
-            {doc.label}
-          </li>
-        ))}
-      </ul>
-    );
+    } catch (error) {
+      console.error("Error adding application:", error);
+      alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+    }
   };
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">ระบบจัดการผู้สมัครงาน</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {["new", "wait", "pass"].map((status) => (
-          <div key={status} className="bg-white shadow-md p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              {status === "new" && "ผู้สมัครใหม่"}
-              {status === "wait" && "รอสัมภาษณ์"}
-              {status === "pass" && "ผ่านสัมภาษณ์"}
-            </h2>
-            <ul>
-              {filterByStatus(status).map((app) => (
-                <li
-                  key={app.job_id}
-                  className="flex items-center justify-between mb-2"
-                >
-                  <div>
-                    <p
-                      className="font-medium cursor-pointer text-blue-500"
-                      onClick={() => handleViewDetails(app)}
-                    >
-                      {app.firstname} {app.lastname}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      ตำแหน่ง: {app.job_position}
-                    </p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <select
-                      value={app.status}
-                      onChange={(e) =>
-                        handleEditStatus(app.job_id, e.target.value)
-                      }
-                      className="p-1 text-sm border rounded-md"
-                    >
-                      <option value="new">ใหม่</option>
-                      <option value="wait">รอสัมภาษณ์</option>
-                      <option value="pass">ผ่านสัมภาษณ์</option>
-                    </select>
-                    <button
-                      onClick={() => handleDelete(app.job_id)}
-                      className="bg-red-500 text-white px-2 py-1 rounded-md text-sm"
-                    >
-                      ลบ
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {filterByStatus(status).length === 0 && (
-                <p className="text-sm text-gray-500">ไม่มีข้อมูล</p>
-              )}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      {isModalOpen && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-auto">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[800px]">
-            <h3 className="text-xl font-semibold mb-4">รายละเอียดผู้สมัคร</h3>
-            <img
-              src={`http://localhost:8080${selectedApplication.photo}`}
-              alt="Profile"
-              className="w-32 h-32 rounded-full mb-4"
+      <h1 className="text-2xl font-bold mb-6">เพิ่มข้อมูลผู้สมัคร</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium">ชื่อ</label>
+            <input
+              type="text"
+              name="firstname"
+              value={formData.firstname}
+              placeholder="อัศวิน"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">นามสกุล</label>
+            <input
+              type="text"
+              name="lastname"
+              value={formData.lastname}
+              placeholder="รัตติกาล"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">เงินเดือนที่คาดหวัง</label>
+            <input
+              type="text"
+              name="expected_salary"
+              value={formData.expected_salary}
+              placeholder="xxx,xxx"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">
+              ตำแหน่งที่ต้องการ
+            </label>
+            <input
+              type="text"
+              name="job_position"
+              placeholder="Developer"
+              value={formData.job_position}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">อีเมล</label>
+            <input
+              type="text"
+              name="email"
+              placeholder="dasd@gmail.com"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">เบอโทรศัพท์</label>
+            <input
+              type="text"
+              name="phone_number"
+              placeholder="087-000-0000"
+              value={formData.phone_number}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">วัน/เดือน/ปี</label>
+            <input
+              type="date"
+              name="birth_date"
+              value={formData.birth_date}
+              onChange={handleChange}
+              placeholder="02/12/2000"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">อายุ</label>
+            <input
+              type="text"
+              name="age"
+              value={formData.age}
+              onChange={handleChange}
+              placeholder="18มาเป็นสาวรำวง"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">เชื้อชาติ</label>
+            <input
+              type="text"
+              name="ethnicity"
+              value={formData.ethnicity}
+              onChange={handleChange}
+              placeholder="เชื้อชาติ"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">สัญชาติ</label>
+            <input
+              type="text"
+              name="nationality"
+              value={formData.nationality}
+              onChange={handleChange}
+              placeholder="สัญชาติ"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">ศาสนา</label>
+            <input
+              type="text"
+              name="religion"
+              value={formData.religion}
+              onChange={handleChange}
+              placeholder="Jesus"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
 
-            <p>
-              <strong>สถานะ:</strong>{" "}
-              {selectedApplication.status === "new"
-                ? "ผู้สมัครใหม่"
-                : selectedApplication.status === "wait"
-                ? "รอสัมภาษณ์"
-                : "ผ่านสัมภาษณ์"}
-            </p>
-            <p>
-              <strong>ชื่อ:</strong> {selectedApplication.firstname}{" "}
-              {selectedApplication.lastname}
-            </p>
-            <p>
-              <strong>ตำแหน่งที่สมัคร:</strong>{" "}
-              {selectedApplication.job_position}
-            </p>
-            <p>
-              <strong>เงินเดือนที่คาดหวัง:</strong>{" "}
-              {selectedApplication.expected_salary} บาท/เดือน
-            </p>
-            <p>
-              <strong>เอกสารที่ใช้ประกอบการสมัครงาน:</strong>
-            </p>
-            {renderDocuments(selectedApplication.documents)}
-            <b>Personal Information (ประวัติส่วนตัว)</b>
-            <p>
-              <strong>ที่อยู่ปัจจุบัน : </strong>{" "}
-              {selectedApplication.personal_info.address}
-            </p>
-            <p>
-              <strong>ประเทศ : </strong>
-              {selectedApplication.personal_info.city}
-            </p>
-            <p>
-              <strong>รหัสไปรษณีย์ : </strong>
-              {selectedApplication.personal_info.zip_code}
-            </p>
-            <p>
-              <strong>อีเมล:</strong> {selectedApplication.email}
-            </p>
-            <p>
-              <strong>เบอร์โทร:</strong> {selectedApplication.phone_number}
-            </p>
-            <p>
-              <strong>วัน/เดือน/ปีเกิด: </strong>
-              {selectedApplication.birth_date}
-            </p>
-            <p>
-              <strong>อายุ:</strong> {selectedApplication.age} ปี
-            </p>
-            <p>
-              <strong>เชื้อชาติ :</strong>
-              {selectedApplication.ethnicity}
-            </p>
-            <p>
-              <strong>ศาสนา:</strong> {selectedApplication.religion}
-            </p>
-            <p>
-              <strong>สถานะทางทหาร:</strong>{" "}
-              {selectedApplication.military_status}
-            </p>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleCloseModal}
-                className="bg-gray-500 text-white px-4 py-2 rounded-md"
-              >
-                ปิด
-              </button>
-            </div>
+          <div>
+            <label className="block text-sm font-medium">ที่อยู่ปัจจุบัน</label>
+            <input
+              type="text"
+              name="personal_info.address"
+              value={formData.personal_info.address}
+              placeholder="ดงแฮ ซอย 9"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">อาศัย</label>
+            <input
+              type="text"
+              name="liveby"
+              value={formData.liveby}
+              onChange={handleChange}
+              placeholder="อยู่กับครอบครัว,คอนโด,บ้านเช่า,บ้านตัวเอง"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">จังหวัด</label>
+            <input
+              type="text"
+              name="personal_info.city"
+              value={formData.personal_info.city}
+              placeholder="กรุงเทพ"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">ไปรษณีย์</label>
+            <input
+              type="number"
+              name="personal_info.zip_code"
+              value={formData.personal_info.zip_code}
+              placeholder="11111"
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">ภาวะทางการทหาร</label>
+            <select
+              name="marital_status"
+              value={formData.marital_status}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            >
+              <option value="">-- เลือกสถานภาพ --</option>
+              <option value="single">โสด</option>
+              <option value="married">แต่งงาน</option>
+              <option value="divorced">หย่าร้าง</option>
+              <option value="widowed">หม้าย</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium">สภานภาพ</label>
+            <select
+              name="military_status"
+              value={formData.military_status}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            >
+              <option value="">-- เลือกภาวะทางการทหาร --</option>
+              <option value="exempted">ได้รับการยกเว้น</option>
+              <option value="reserve">ปลดเป็นทหารกองหนุน</option>
+              <option value="not_served">ยังไม่ได้รับการเกณฑ์</option>
+            </select>
           </div>
         </div>
-      )}
+
+        <div>
+          <label className="block text-sm font-medium p-2">
+            <strong>เอกสารที่เกี่ยวข้อง</strong>
+          </label>
+          <div className="space-y-2 ">
+            {[
+              "สำเนาบัตรประชาชน",
+              "สำเนาทำเบียนบ้าน",
+              "สำเนาใบประกาศนียบัตร",
+              "สำเนาหน้าสมุดธนาคารกสิกร",
+              "อื่นๆ (ถ้ามี)",
+            ].map((doc) => (
+              <div key={doc}>
+                <label className="block text-sm font-medium capitalize">
+                  {doc.replace("_", " ")}
+                </label>
+                <input
+                  type="file"
+                  name={doc}
+                  onChange={handleFileChange}
+                  className="p-2"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium">รูปภาพ (โปรไฟล์)</label>
+          <input
+            type="file"
+            name="photo"
+            onChange={handleFileChange}
+            className="p-2"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded-md"
+        >
+          เพิ่มข้อมูล
+        </button>
+      </form>
     </div>
   );
 };
