@@ -9,10 +9,10 @@ const initialTasks = {
   done: [],
 };
 
-const todo = () => {
+const Todo = () => {
   const [tasks, setTasks] = useState(initialTasks);
   const [newTask, setNewTask] = useState({ title: "", details: "" });
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for controlling Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const moveTask = (id, from, to) => {
     const task = tasks[from].find((task) => task.id === id);
@@ -20,6 +20,13 @@ const todo = () => {
       ...tasks,
       [from]: tasks[from].filter((task) => task.id !== id),
       [to]: [...tasks[to], task],
+    });
+  };
+
+  const deleteTask = (id, from) => {
+    setTasks({
+      ...tasks,
+      [from]: tasks[from].filter((task) => task.id !== id),
     });
   };
 
@@ -37,8 +44,8 @@ const todo = () => {
         { id: newTaskId, title: newTask.title, details: newTask.details },
       ],
     });
-    setNewTask({ title: "", details: "" }); // Reset form fields
-    setIsModalOpen(false); // Close Modal after adding task
+    setNewTask({ title: "", details: "" });
+    setIsModalOpen(false);
   };
 
   return (
@@ -114,6 +121,12 @@ const todo = () => {
                 >
                   เริ่มทำ
                 </button>
+                <button
+                  className="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-700"
+                  onClick={() => deleteTask(task.id, "todo")}
+                >
+                  ลบ
+                </button>
               </div>
             </div>
           ))}
@@ -135,6 +148,12 @@ const todo = () => {
                   onClick={() => moveTask(task.id, "inProgress", "done")}
                 >
                   เสร็จ
+                </button>
+                <button
+                  className="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-700"
+                  onClick={() => deleteTask(task.id, "inProgress")}
+                >
+                  ลบ
                 </button>
               </div>
             </div>
@@ -158,6 +177,12 @@ const todo = () => {
                 >
                   แก้ไข
                 </button>
+                <button
+                  className="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-700"
+                  onClick={() => deleteTask(task.id, "done")}
+                >
+                  ลบ
+                </button>
               </div>
             </div>
           ))}
@@ -167,4 +192,4 @@ const todo = () => {
   );
 };
 
-export default todo;
+export default Todo;

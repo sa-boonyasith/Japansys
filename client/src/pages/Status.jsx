@@ -38,6 +38,8 @@ const Status = () => {
     endDate: null,
   });
 
+  const [editModal, setEditModal] = useState({ isOpen: false, leave: null });
+
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
@@ -46,8 +48,17 @@ const Status = () => {
     setFilters({ ...filters, [name]: date });
   };
 
-  const handleEdit = (id) => {
-    alert(`Edit leave ID: ${id}`);
+  const handleEdit = (leave) => {
+    setEditModal({ isOpen: true, leave });
+  };
+
+  const handleSaveEdit = () => {
+    setLeaves(
+      leaves.map((l) =>
+        l.id === editModal.leave.id ? { ...editModal.leave } : l
+      )
+    );
+    setEditModal({ isOpen: false, leave: null });
   };
 
   const handleDelete = (id) => {
@@ -56,21 +67,28 @@ const Status = () => {
     }
   };
 
+  const handleEditChange = (e) => {
+    setEditModal({
+      ...editModal,
+      leave: { ...editModal.leave, [e.target.name]: e.target.value },
+    });
+  };
+
   return (
-    <div className="p-6  min-h-screen">
+    <div className="p-6 min-h-screen">
       {/* Search and Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex gap-4 mb-6">
         <input
           type="text"
           name="search"
           placeholder="Search for Name"
-          className="border border-gray-300 p-2 rounded w-full md:w-1/4"
+          className="border border-gray-300 p-2 rounded w-full md:w-1/2"
           value={filters.search}
           onChange={handleFilterChange}
         />
         <select
           name="leaveType"
-          className="border border-gray-300 p-2 rounded w-full md:w-1/4"
+          className="border border-gray-300 p-2 rounded w-full md:w-[500px]"
           value={filters.leaveType}
           onChange={handleFilterChange}
         >
@@ -81,7 +99,7 @@ const Status = () => {
         </select>
         <select
           name="status"
-          className="border border-gray-300 p-2 rounded w-full md:w-1/4"
+          className="border border-gray-300 p-2 rounded w-full md:w-[500px]"
           value={filters.status}
           onChange={handleFilterChange}
         >
@@ -135,7 +153,7 @@ const Status = () => {
               <td className="border border-gray-300 p-2 text-center">
                 <button
                   className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
-                  onClick={() => handleEdit(leave.id)}
+                  onClick={() => handleEdit(leave)}
                 >
                   Edit
                 </button>
@@ -150,6 +168,88 @@ const Status = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Edit Modal */}
+      {editModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4">Edit Leave</h2>
+            <div className="flex flex-col space-y-4">
+              <input
+                type="text"
+                name="employeeName"
+                placeholder="Employee Name"
+                value={editModal.leave.employeeName}
+                onChange={handleEditChange}
+                className="border border-gray-300 p-2 rounded"
+              />
+              <select
+                name="leaveType"
+                value={editModal.leave.leaveType}
+                onChange={handleEditChange}
+                className="border border-gray-300 p-2 rounded"
+              >
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Private Leave">Private Leave</option>
+                <option value="Annual Leave">Annual Leave</option>
+              </select>
+              <div className="flex gap-2">
+                <DatePicker
+                  selected={new Date(editModal.leave.startDate)}
+                  onChange={(date) =>
+                    setEditModal({
+                      ...editModal,
+                      leave: {
+                        ...editModal.leave,
+                        startDate: date.toISOString().split("T")[0],
+                      },
+                    })
+                  }
+                  dateFormat="yyyy-MM-dd"
+                  className="border border-gray-300 p-2 rounded flex-1"
+                />
+                <DatePicker
+                  selected={new Date(editModal.leave.endDate)}
+                  onChange={(date) =>
+                    setEditModal({
+                      ...editModal,
+                      leave: {
+                        ...editModal.leave,
+                        endDate: date.toISOString().split("T")[0],
+                      },
+                    })
+                  }
+                  dateFormat="yyyy-MM-dd"
+                  className="border border-gray-300 p-2 rounded flex-1"
+                />
+              </div>
+              <select
+                name="status"
+                value={editModal.leave.status}
+                onChange={handleEditChange}
+                className="border border-gray-300 p-2 rounded"
+              >
+                <option value="Allowed">Allowed</option>
+                <option value="Not Allowed">Not Allowed</option>
+              </select>
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                className="bg-gray-300 text-black px-4 py-2 rounded mr-2"
+                onClick={() => setEditModal({ isOpen: false, leave: null })}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={handleSaveEdit}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

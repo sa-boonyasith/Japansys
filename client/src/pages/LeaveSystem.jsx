@@ -48,7 +48,7 @@ const LeaveSystem = () => {
   return (
     <div className="p-6  min-h-screen">
       {/* Search and Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex  gap-4 mb-6">
         <input
           type="text"
           name="search"
