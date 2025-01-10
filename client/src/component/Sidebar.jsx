@@ -30,6 +30,15 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
     } else if (menu === "meeting") {
       onToggleJobButtons("meeting");
       navigate("/dashboard/meeting");
+    }else if (menu === "car-booking") {
+      onToggleJobButtons("car-booking");
+      navigate("/dashboard/car-booking");
+    }else if (menu === "expense-system") {
+      onToggleJobButtons("expense-system");
+      navigate("/dashboard/expense-system");
+    }else if (menu === "salary") {
+      onToggleJobButtons("salary");
+      navigate("/dashboard/salary");
     } else if (menu === "trial") { // กรณีที่เลือก "ทดลองงาน"
       onToggleJobButtons("trial");
       navigate("/dashboard/trial");  // นำทางไปยังหน้า trial
@@ -119,13 +128,13 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
                   ระบบจองห้องประชุม
                 </li>
                 <li
-                onClick={()=> handleSubMenuClick("carbooking")}
+                onClick={()=> handleSubMenuClick("car-booking")}
                 role="button"
                 className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
                   ระบบจองรถ
                 </li>
                 <li
-                onClick={()=> handleSubMenuClick("expensesystem")}
+                onClick={()=> handleSubMenuClick("expense-system")}
                 role="button"
                 className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
                   ระบบเบิกค่าใช้จ่าย

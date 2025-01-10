@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../component/Sidebar";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import Bubble from "./Bubble";
 
-const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => {
+const DashboardLayout = ({
+  user,
+  onLogout,
+  activeMenu,
+  onToggleJobButtons,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,6 +26,7 @@ const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => 
       "/dashboard/progress": "progress",
       "/dashboard/leave-system": "leave-system",
       "/dashboard/leave-status": "leave-status",
+      "/dashboard/meeting": "meeting",
     };
 
     const currentPath = Object.keys(menuMapping).find((key) =>
@@ -33,14 +40,15 @@ const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => 
     setActiveButton(button);
 
     const buttonMapping = {
-      "สมัครงาน": "/dashboard/Job",
-      "ทดลองงาน": "/dashboard/trial",
-      "เวลาเข้า": "/dashboard/attend",
-      "เวลาออก": "/dashboard/checkout",
-      "todo": "/dashboard/todo-list",
-      "progress": "/dashboard/progress",
+      สมัครงาน: "/dashboard/Job",
+      ทดลองงาน: "/dashboard/trial",
+      เวลาเข้า: "/dashboard/attend",
+      เวลาออก: "/dashboard/checkout",
+      todo: "/dashboard/todo-list",
+      progress: "/dashboard/progress",
       "leave-system": "/dashboard/leave-system",
       "leave-status": "/dashboard/leave-status",
+      meeting: "/dashboard/meeting",
     };
 
     navigate(buttonMapping[button] || "/dashboard");
@@ -142,10 +150,15 @@ const DashboardLayout = ({ user, onLogout, activeMenu, onToggleJobButtons }) => 
               </button>
             </div>
           )}
+          {activeMenu === "meeting" && (
+            <div className="mb-4">
+              <Bubble />
+            </div>
+          )}
         </div>
 
         {/* Content Area */}
-        <div className="h-full p-4 bg-white overflow-y-auto">
+        <div className="h-[530px] p-2 bg-white overflow-y-auto">
           <Outlet />
         </div>
       </div>
