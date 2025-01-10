@@ -106,16 +106,6 @@ const Test2 = () => {
     }));
   };
 
-  const handlePersonalInfoChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      personal_info: {
-        ...prev.personal_info,
-        [name]: value,
-      },
-    }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -124,11 +114,25 @@ const Test2 = () => {
     // เพิ่มข้อมูลทั่วไปใน FormData
     Object.entries(formData).forEach(([key, value]) => {
       if (typeof value === "object") {
-        formDataToSend.append(key, JSON.stringify(value)); // แปลง object เป็น string
+        // แปลง object เป็น string แล้วค่อย append
+        const jsonString = JSON.stringify(value);
+        formDataToSend.append(key, jsonString);
+      } else if (typeof value === "string" && value.startsWith("{") && value.endsWith("}")) {
+        // กรณี value เป็น JSON string (เอา \ ออก)
+        try {
+          const parsedObject = JSON.parse(value); // แปลง JSON string เป็น object
+          const cleanedString = JSON.stringify(parsedObject); // แปลงกลับเป็น string ที่ไม่มี \
+          formDataToSend.append(key, cleanedString);
+        } catch (error) {
+          console.error("Error parsing JSON string:", error);
+          formDataToSend.append(key, value); // หาก parsing ไม่สำเร็จ ใช้ค่าเดิม
+        }
       } else {
+        // ค่าอื่นๆ ที่ไม่ใช่ object หรือ JSON string
         formDataToSend.append(key, value);
       }
     });
+    
 
     // เพิ่มไฟล์ใน FormData
     Object.entries(fileUploads).forEach(([key, file]) => {

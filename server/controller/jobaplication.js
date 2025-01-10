@@ -15,8 +15,6 @@ exports.create = async (req, res) => {
       lastname,
       job_position,
       expected_salary,
-      documents,
-      personal_info,
       phone_number,
       email,
       liveby,
@@ -28,6 +26,10 @@ exports.create = async (req, res) => {
       marital_status,
       military_status,
     } = req.body;
+
+    // แปลง JSON string ให้เป็น object
+    const documents = req.body.documents ? JSON.parse(req.body.documents) : null;
+    const personal_info = req.body.personal_info ? JSON.parse(req.body.personal_info) : null;
 
     // ดึงข้อมูลไฟล์ที่อัปโหลด
     const photo = req.file ? `/uploads/${req.file.filename}` : null;
@@ -73,6 +75,7 @@ exports.create = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 
 exports.update = async (req, res) => {
