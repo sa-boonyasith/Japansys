@@ -49,6 +49,7 @@ const DashboardLayout = ({
       "leave-system": "/dashboard/leave-system",
       "leave-status": "/dashboard/leave-status",
       meeting: "/dashboard/meeting",
+      carbooking: "/dashboard/car-booking",
     };
 
     navigate(buttonMapping[button] || "/dashboard");
@@ -151,6 +152,11 @@ const DashboardLayout = ({
             </div>
           )}
           {activeMenu === "meeting" && (
+            <div className="mb-4">
+              <Bubble />
+            </div>
+          )}
+          {activeMenu === "car-booking" && (
             <div className="mb-4">
               <Bubble />
             </div>
