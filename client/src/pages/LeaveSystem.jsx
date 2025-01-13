@@ -58,6 +58,7 @@ const LeaveSystem = () => {
           onChange={handleFilterChange}
         />
         <select
+        
           name="leaveType"
           className="border border-gray-300 p-2 rounded w-full md:w-1/4"
           value={filters.leaveType}

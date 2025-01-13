@@ -33,7 +33,7 @@ cron.schedule("0 0 * * *", async () => {
 exports.list = async (req, res) => {
   try {
     const listAttend = await prisma.attend.findMany();
-    res.json({ listAttend });
+    res.json( listAttend );
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Failed to retrieve attendance records" });

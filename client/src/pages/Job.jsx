@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Test2 from "./Test2";
 
 const Job = () => {
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [addModalOpen,setAddModalOpen] = useState(false)
 
   useEffect(() => {
     axios
@@ -54,6 +56,14 @@ const Job = () => {
     setIsModalOpen(true);
   };
 
+  const handleOpenAddModal = ()=>{
+    setAddModalOpen(true)
+  }
+  const handleCloseAddModal = ()=>{
+    setAddModalOpen(false)
+  }
+
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
@@ -87,6 +97,13 @@ const Job = () => {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">ระบบจัดการผู้สมัครงาน</h1>
+      <div className="">
+      <button 
+      onClick={handleOpenAddModal}
+      className="ml-[960px] mb-3 bg-green-500 text-white px-6 py-2  rounded-md shadow-md">
+      +
+    </button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {["new", "wait", "pass"].map((status) => (
           <div key={status} className="bg-white shadow-md p-4 rounded-lg">
@@ -99,7 +116,7 @@ const Job = () => {
               {filterByStatus(status).map((app) => (
                 <li
                   key={app.job_id}
-                  className="flex items-center justify-between mb-2"
+                  className="flex items-center  justify-between mb-2"
                 >
                   <div>
                     <p
@@ -140,6 +157,26 @@ const Job = () => {
           </div>
         ))}
       </div>
+
+      {addModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[1000px] overflow-y-auto max-h-[500px]">
+            <h3 className="text-xl font-semibold mb-4">เพิ่มข้อมูล</h3>
+            <Test2/>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handleCloseAddModal}
+                className="bg-gray-500 text-white px-4 py-2 rounded-md"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        
+
+
 
       {isModalOpen && selectedApplication && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-auto">
@@ -211,6 +248,10 @@ const Job = () => {
             <p>
               <strong>สถานะทางทหาร:</strong>{" "}
               {selectedApplication.military_status}
+            </p>
+            <p>
+              <strong>สถานภาพ</strong> {" "}
+              {selectedApplication.marital_status}
             </p>
 
             <div className="mt-4 flex justify-end">

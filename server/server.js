@@ -9,7 +9,7 @@ const app = express();
 // Middleware
 app.use(morgan('dev'));
 app.use(express.json());
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors());
 
 // เสิร์ฟไฟล์ในโฟลเดอร์ uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
