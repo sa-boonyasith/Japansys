@@ -54,17 +54,26 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: "Project not found" });
     }
 
+    // Prepare the data for update
+    const updateData = {
+      project_name: project_name || undefined,
+      desc: desc || undefined,
+      status: status || undefined,
+    };
+
+    // If employee_id is provided, update the relation
+    if (employee_id) {
+      updateData.employee = {
+        connect: { id: Number(employee_id) }, // Connect to the new employee
+      };
+    }
+
     // อัปเดตข้อมูลในฐานข้อมูล
     const updatedProject = await prisma.todo.update({
       where: {
         project_id: Number(id),
       },
-      data: {
-        project_name,
-        desc,
-        status,
-        employee_id: Number(employee_id), // อัปเดต employee_id หากต้องการ
-      },
+      data: updateData,
     });
 
     res.status(200).json({
@@ -82,6 +91,7 @@ exports.update = async (req, res) => {
     res.status(500).json({ error: "Failed to update project" });
   }
 };
+
 
 exports.remove = async (req, res) => {
   try {

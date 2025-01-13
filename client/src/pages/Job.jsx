@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Test2 from "./Test2";
+import AddJob from "./AddJob";
 
 const Job = () => {
   const [applications, setApplications] = useState([]);
@@ -162,7 +162,7 @@ const Job = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[1000px] overflow-y-auto max-h-[500px]">
             <h3 className="text-xl font-semibold mb-4">เพิ่มข้อมูล</h3>
-            <Test2/>
+            <AddJob/>
             <div className="mt-4 flex justify-end">
               <button
                 onClick={handleCloseAddModal}
