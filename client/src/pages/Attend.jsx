@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const AttendList = () => {
+const Attend = () => {
   const [attend, setAttend] = useState([]);
   const [error, setError] = useState(null);
 
@@ -20,45 +20,63 @@ const AttendList = () => {
     fetchAttendance();
   }, []);
 
+  // ฟังก์ชันสำหรับเพิ่มข้อมูล (เช็คอิน)
+  const handleAdd = async () => {
+    try {
+      const employeeId = prompt('Enter Employee ID:'); // รับ ID จากผู้ใช้
+      if (!employeeId) {
+        alert('Employee ID is required');
+        return;
+      }
+
+      const response = await axios.post('http://localhost:8080/api/attend', {
+        employee_id: parseInt(employeeId),
+      });
+
+      alert(response.data.message || 'Added successfully');
+
+      // อัปเดตข้อมูลในตาราง
+      setAttend((prevAttend) => [...prevAttend, response.data.newAttend]);
+    } catch (err) {
+      console.error('Failed to add attendance record', err);
+      alert('Failed to add attendance record');
+    }
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-xl font-semibold mb-4">Attendance Records</h1>
       {error && <div className="text-red-500">{error}</div>}
-      {!error && attend.length === 0 && <div>Loading...</div>}
-      {attend.length > 0 && (
-        <table className="table-auto w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-4 py-2">ID</th>
-              <th className="border border-gray-300 px-4 py-2">Firstname</th>
-              <th className="border border-gray-300 px-4 py-2">Lastname</th>
-              <th className="border border-gray-300 px-4 py-2">Check In</th>
-              <th className="border border-gray-300 px-4 py-2">Check Out</th>
-              <th className="border border-gray-300 px-4 py-2">Working Hours</th>
-              <th className="border border-gray-300 px-4 py-2">Status</th>
+      <button
+        className="bg-green-500 text-white px-4 py-2 rounded mb-4"
+        onClick={handleAdd}
+      >
+        Add Attendance
+      </button>
+      <table className="table-auto w-full border-collapse border border-gray-300">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border border-gray-300 px-4 py-2">ID</th>
+            <th className="border border-gray-300 px-4 py-2">Firstname</th>
+            <th className="border border-gray-300 px-4 py-2">Lastname</th>
+            <th className="border border-gray-300 px-4 py-2">Check In</th>
+          </tr>
+        </thead>
+        <tbody>
+          {attend.map((record) => (
+            <tr key={record.attend_id} className="text-center">
+              <td className="border border-gray-300 px-4 py-2">{record.attend_id}</td>
+              <td className="border border-gray-300 px-4 py-2">{record.firstname}</td>
+              <td className="border border-gray-300 px-4 py-2">{record.lastname}</td>
+              <td className="border border-gray-300 px-4 py-2">
+                {new Date(record.check_in_time).toLocaleString()}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {attend.map((attend) => (
-              <tr key={attend.attend_id} className="text-center">
-                <td className="border border-gray-300 px-4 py-2">{attend.attend_id}</td>
-                <td className="border border-gray-300 px-4 py-2">{attend.firstname}</td>
-                <td className="border border-gray-300 px-4 py-2">{attend.lastname}</td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {new Date(attend.check_in_time).toLocaleString()}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {new Date(attend.check_out_time).toLocaleString()}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">{attend.working_hours || '-'}</td>
-                <td className="border border-gray-300 px-4 py-2">{attend.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-export default AttendList;
+export default Attend;
