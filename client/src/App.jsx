@@ -9,7 +9,7 @@ import Login from "./Auth/Login";
 import Register from "./Auth/Register";
 import Todo from "./pages/todo";
 import Job from "./pages/Job";
-import Attend from "./pages/attend";
+import Attend from "./pages/Attend";
 import LeaveSystem from "./pages/LeaveSystem";
 import DashboardLayout from "./dashboard/DashboardLayout";
 import Meeting from "./pages/Meeting";
