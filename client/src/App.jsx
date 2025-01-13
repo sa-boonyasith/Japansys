@@ -20,6 +20,8 @@ import Trial from "./pages/Trial"
 import Checkout from "./pages/Checkout";
 import Progress from "./pages/Progress";
 import Status from "./pages/Status";
+import Test from "./pages/test";
+
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -71,6 +73,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/1" element={<Test />} />
         {isAuthenticated ? (
           <Route
             path="/dashboard"

@@ -1,271 +1,179 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import Test2 from "./Test2";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+
+const ITEM_TYPE = 'TASK';
+
+const Task = ({ task, onDrop, statusColor }) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: ITEM_TYPE,
+    item: { id: task.project_id, currentStatus: task.status },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }));
+
+  return (
+    <div
+      ref={drag}
+      className={`p-4 border border-gray-300 rounded shadow-sm bg-white ${isDragging ? 'opacity-50' : ''}`}
+    >
+      <h2 className="font-semibold text-lg mb-2">{task.project_name}</h2>
+      <p className="text-sm text-gray-700 mb-2">{task.desc || 'No description'}</p>
+      <span className={`px-2 py-1 rounded ${statusColor}`}>{task.status}</span>
+    </div>
+  );
+};
+
+const TaskColumn = ({ status, tasks, statusColor, onDrop }) => {
+  const [, drop] = useDrop(() => ({
+    accept: ITEM_TYPE,
+    drop: (item) => onDrop(item, status),
+  }));
+
+  return (
+    <div ref={drop} className="space-y-4 p-4 bg-gray-100 rounded min-h-[300px]">
+      <h2 className="text-xl font-bold mb-4">
+        {status === 'mustdo' ? 'งานที่ต้องทำ' : status === 'inprogress' ? 'งานที่กำลังทำ' : 'งานที่เสร็จแล้ว'}
+      </h2>
+      {tasks.map((task) => (
+        <Task key={task.project_id} task={task} statusColor={statusColor} />
+      ))}
+    </div>
+  );
+};
 
 const Test = () => {
-  const [applications, setApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [addModalOpen,setAddModalOpen] = useState(false)
+  const [todo, setTodo] = useState([]);
+  const [error, setError] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [newTask, setNewTask] = useState({ project_name: '', desc: '' });
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/jobaplication")
-      .then((response) => {
-        setApplications(response.data.listjobaplication);
-      })
-      .catch((error) => {
-        console.error("Error fetching applications:", error);
-      });
+    fetchTodo();
   }, []);
 
-  const handleEditStatus = (id, newStatus) => {
-    axios
-      .put(`http://localhost:8080/api/jobaplication/${id}`, {
-        status: newStatus,
-      })
-      .then(() => {
-        // ดึงข้อมูลใหม่
-        return axios.get("http://localhost:8080/api/jobaplication");
-      })
-      .then((response) => {
-        setApplications(response.data.listjobaplication);
-      })
-      .catch((error) => {
-        console.error("Error updating or fetching applications:", error);
-        alert("เกิดข้อผิดพลาด กรุณาลองอีกครั้ง");
-      });
+  const fetchTodo = async () => {
+    try {
+      const res = await axios.get('http://localhost:8080/api/todo');
+      setTodo(res.data.listproject); // Assuming API returns { listproject: [...] }
+    } catch (err) {
+      setError('Failed to fetch tasks');
+      console.error(err);
+    }
   };
 
-  const handleDelete = (id) => {
-    axios
-      .delete(`http://localhost:8080/api/jobaplication/${id}`)
-      .then(() => {
-        setApplications((prev) => prev.filter((app) => app.job_id !== id));
-      })
-      .catch((error) => {
-        console.error("Error deleting application:", error);
-      });
+  const handleAdd = async () => {
+    try {
+      await axios.post('http://localhost:8080/api/todo', newTask);
+      fetchTodo(); // Refresh tasks after adding
+      setModalOpen(false);
+      setNewTask({ project_name: '', desc: '' });
+    } catch (err) {
+      setError('Failed to create task');
+      console.error(err);
+    }
   };
 
-  const filterByStatus = (status) =>
-    applications.filter((app) => app.status === status);
-
-  const handleViewDetails = (app) => {
-    setSelectedApplication(app);
-    setIsModalOpen(true);
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await axios.put(`http://localhost:8080/api/todo/${id}`, { status: newStatus });
+      fetchTodo(); // Refresh tasks after updating
+    } catch (err) {
+      setError('Failed to update task status');
+      console.error(err);
+    }
   };
 
-  const handleOpenAddModal = ()=>{
-    setAddModalOpen(true)
-  }
-  const handleCloseAddModal = ()=>{
-    setAddModalOpen(false)
-  }
-
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleDrop = (item, newStatus) => {
+    if (item.currentStatus !== newStatus) {
+      handleUpdateStatus(item.id, newStatus);
+    }
   };
 
-  const renderDocuments = (documents) => {
-    const documentList = [
-      { label: "บัตรประชาชน", value: documents.id_card },
-      { label: "ทะเบียนบ้าน", value: documents.house_registration },
-      { label: "วุฒิการศึกษา", value: documents.certificate },
-      { label: "สลิปเงินเดือน", value: documents.bank_statement },
-      { label: "เอกสารอื่นๆ", value: documents.other },
-    ];
-
-    return (
-      <ul className="list-none">
-        {documentList.map((doc, index) => (
-          <li key={index} className="flex items-center">
-            <input
-              type="checkbox"
-              checked={doc.value}
-              readOnly
-              className="mr-2"
-            />
-            {doc.label}
-          </li>
-        ))}
-      </ul>
-    );
+  // Group todos by status
+  const groupedTodos = {
+    mustdo: todo.filter((item) => item.status === 'mustdo'),
+    inprogress: todo.filter((item) => item.status === 'inprogress'),
+    finish: todo.filter((item) => item.status === 'finish'),
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">ระบบจัดการผู้สมัครงาน</h1>
-      <div className="">
-      <button 
-      onClick={handleOpenAddModal}
-      className="ml-[1410px] mb-3 bg-green-500 text-white px-6 py-2  rounded-md shadow-md">
-      +
-    </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {["new", "wait", "pass"].map((status) => (
-          <div key={status} className="bg-white shadow-md p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              {status === "new" && "ผู้สมัครใหม่"}
-              {status === "wait" && "รอสัมภาษณ์"}
-              {status === "pass" && "ผ่านสัมภาษณ์"}
-            </h2>
-            <ul>
-              {filterByStatus(status).map((app) => (
-                <li
-                  key={app.job_id}
-                  className="flex items-center  justify-between mb-2"
+    <DndProvider backend={HTML5Backend}>
+      <div className="p-4">
+        {/* Error message */}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
+
+        {/* Create Task Button */}
+        <div className="mb-6 flex justify-end">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+          >
+            สร้าง Task
+          </button>
+        </div>
+
+        {/* Modal for creating a task */}
+        {modalOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded shadow-lg">
+              <h2 className="text-lg font-bold mb-4">เพิ่ม Task ใหม่</h2>
+              <input
+                type="text"
+                placeholder="ชื่อ Task"
+                value={newTask.project_name}
+                onChange={(e) => setNewTask({ ...newTask, project_name: e.target.value })}
+                className="w-full p-2 mb-4 border rounded"
+              />
+              <textarea
+                placeholder="รายละเอียด"
+                value={newTask.desc}
+                onChange={(e) => setNewTask({ ...newTask, desc: e.target.value })}
+                className="w-full p-2 mb-4 border rounded"
+              ></textarea>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
                 >
-                  <div>
-                    <p
-                      className="font-medium cursor-pointer text-blue-500"
-                      onClick={() => handleViewDetails(app)}
-                    >
-                      {app.firstname} {app.lastname}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      ตำแหน่ง: {app.job_position}
-                    </p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <select
-                      value={app.status}
-                      onChange={(e) =>
-                        handleEditStatus(app.job_id, e.target.value)
-                      }
-                      className="p-1 text-sm border rounded-md"
-                    >
-                      <option value="new">ใหม่</option>
-                      <option value="wait">รอสัมภาษณ์</option>
-                      <option value="pass">ผ่านสัมภาษณ์</option>
-                    </select>
-                    <button
-                      onClick={() => handleDelete(app.job_id)}
-                      className="bg-red-500 text-white px-2 py-1 rounded-md text-sm"
-                    >
-                      ลบ
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {filterByStatus(status).length === 0 && (
-                <p className="text-sm text-gray-500">ไม่มีข้อมูล</p>
-              )}
-            </ul>
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleAdd}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  บันทึก
+                </button>
+              </div>
+            </div>
           </div>
-        ))}
+        )}
+
+        {/* Task Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <TaskColumn
+            status="mustdo"
+            tasks={groupedTodos.mustdo}
+            statusColor="bg-red-500 text-white"
+            onDrop={handleDrop}
+          />
+          <TaskColumn
+            status="inprogress"
+            tasks={groupedTodos.inprogress}
+            statusColor="bg-yellow-500 text-white"
+            onDrop={handleDrop}
+          />
+          <TaskColumn
+            status="finish"
+            tasks={groupedTodos.finish}
+            statusColor="bg-green-500 text-white"
+            onDrop={handleDrop}
+          />
+        </div>
       </div>
-
-      {addModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[1000px] overflow-y-auto max-h-[500px]">
-            <h3 className="text-xl font-semibold mb-4">เพิ่มข้อมูล</h3>
-            <Test2/>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleCloseAddModal}
-                className="bg-gray-500 text-white px-4 py-2 rounded-md"
-              >
-                ปิด
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-        
-
-
-
-      {isModalOpen && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-auto">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[800px]">
-            <h3 className="text-xl font-semibold mb-4">รายละเอียดผู้สมัคร</h3>
-            <img
-              src={`http://localhost:8080${selectedApplication.photo}`}
-              alt="Profile"
-              className="w-32 h-32 rounded-full mb-4"
-            />
-
-            <p>
-              <strong>สถานะ:</strong>{" "}
-              {selectedApplication.status === "new"
-                ? "ผู้สมัครใหม่"
-                : selectedApplication.status === "wait"
-                ? "รอสัมภาษณ์"
-                : "ผ่านสัมภาษณ์"}
-            </p>
-            <p>
-              <strong>ชื่อ:</strong> {selectedApplication.firstname}{" "}
-              {selectedApplication.lastname}
-            </p>
-            <p>
-              <strong>ตำแหน่งที่สมัคร:</strong>{" "}
-              {selectedApplication.job_position}
-            </p>
-            <p>
-              <strong>เงินเดือนที่คาดหวัง:</strong>{" "}
-              {selectedApplication.expected_salary} บาท/เดือน
-            </p>
-            <p>
-              <strong>เอกสารที่ใช้ประกอบการสมัครงาน:</strong>
-            </p>
-            {renderDocuments(selectedApplication.documents)}
-            <b>Personal Information (ประวัติส่วนตัว)</b>
-            <p>
-              <strong>ที่อยู่ปัจจุบัน : </strong>{" "}
-              {selectedApplication.personal_info.address}
-            </p>
-            <p>
-              <strong>ประเทศ : </strong>
-              {selectedApplication.personal_info.city}
-            </p>
-            <p>
-              <strong>รหัสไปรษณีย์ : </strong>
-              {selectedApplication.personal_info.zip_code}
-            </p>
-            <p>
-              <strong>อีเมล:</strong> {selectedApplication.email}
-            </p>
-            <p>
-              <strong>เบอร์โทร:</strong> {selectedApplication.phone_number}
-            </p>
-            <p>
-              <strong>วัน/เดือน/ปีเกิด: </strong>
-              {selectedApplication.birth_date}
-            </p>
-            <p>
-              <strong>อายุ:</strong> {selectedApplication.age} ปี
-            </p>
-            <p>
-              <strong>เชื้อชาติ :</strong>
-              {selectedApplication.ethnicity}
-            </p>
-            <p>
-              <strong>ศาสนา:</strong> {selectedApplication.religion}
-            </p>
-            <p>
-              <strong>สถานะทางทหาร:</strong>{" "}
-              {selectedApplication.military_status}
-            </p>
-            <p>
-              <strong>สถานภาพ</strong> {" "}
-              {selectedApplication.marital_status}
-            </p>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleCloseModal}
-                className="bg-gray-500 text-white px-4 py-2 rounded-md"
-              >
-                ปิด
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </DndProvider>
   );
 };
 
