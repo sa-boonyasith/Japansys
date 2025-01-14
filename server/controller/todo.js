@@ -11,7 +11,7 @@ exports.list = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     // รับค่า employee_id จาก request body (หรือจาก user authentication)
-    const { project_name, desc, employee_id } = req.body;
+    const { project_name, desc, employee_id , todo } = req.body;
 
     // ตรวจสอบว่ามีการส่งค่า employee_id มาหรือไม่
     if (!employee_id || isNaN(employee_id)) {
@@ -22,6 +22,7 @@ exports.create = async (req, res) => {
     const newproject = await prisma.todo.create({
       data: {
         project_name,
+        todo,
         desc,
         employee_id: Number(employee_id), // แปลงให้เป็นตัวเลข
       },
@@ -41,7 +42,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params; // รับ project_id จาก URL
-    const { project_name, desc, status, employee_id } = req.body; // รับข้อมูลจาก body
+    const { project_name, desc, status, employee_id,todo } = req.body; // รับข้อมูลจาก body
 
     // ตรวจสอบว่ามี project_id อยู่ในฐานข้อมูลหรือไม่
     const existingTodo = await prisma.todo.findUnique({
@@ -57,6 +58,7 @@ exports.update = async (req, res) => {
     // Prepare the data for update
     const updateData = {
       project_name: project_name || undefined,
+      todo : todo ||undefined,
       desc: desc || undefined,
       status: status || undefined,
     };

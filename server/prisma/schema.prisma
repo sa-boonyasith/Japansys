@@ -62,7 +62,7 @@ model Employee {
 }
 
 model JobApplication {
-  job_id           Int      @id @default(autoincrement())
+  job_id           Int       @id @default(autoincrement())
   application_date DateTime? @default(now())
   firstname        String?   @db.VarChar(100)
   lastname         String?   @db.VarChar(100)
@@ -71,18 +71,18 @@ model JobApplication {
   documents        Json?
   personal_info    Json?
 
-  phone_number    String?       @db.VarChar(20)
-  email           String      @unique @db.VarChar(150)
+  phone_number    String?      @db.VarChar(20)
+  email           String       @unique @db.VarChar(150)
   liveby          String?
-  birth_date      String?     
+  birth_date      String?
   age             Int?
-  ethnicity       String?       @db.VarChar(50)
-  nationality     String?       @db.VarChar(50)
+  ethnicity       String?      @db.VarChar(50)
+  nationality     String?      @db.VarChar(50)
   religion        String?      @db.VarChar(50)
-  marital_status  String?       @db.VarChar(50)
-  military_status String?       @db.VarChar(100)
+  marital_status  String?      @db.VarChar(50)
+  military_status String?      @db.VarChar(100)
   status          StatusJobapp @default(new)
-  photo           String? @db.Text
+  photo           String?      @db.Text
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -151,6 +151,7 @@ model Rentcar {
 model Todo {
   project_id   Int     @id @default(autoincrement())
   project_name String
+  todo         String
   desc         String
   status       todojob @default(mustdo)
 
@@ -193,8 +194,6 @@ model attendhistory {
   // Relations if any
   employee Employee @relation(fields: [employee_id], references: [id])
 }
-
-
 
 enum Attend {
   check_in
