@@ -110,55 +110,45 @@ const AddJob = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formDataToSend = new FormData();
-
+  
     // เพิ่มข้อมูลทั่วไปใน FormData
     Object.entries(formData).forEach(([key, value]) => {
-      if (typeof value === "object") {
-        // แปลง object เป็น string แล้วค่อย append
-        const jsonString = JSON.stringify(value);
-        formDataToSend.append(key, jsonString);
-      } else if (typeof value === "string" && value.startsWith("{") && value.endsWith("}")) {
-        // กรณี value เป็น JSON string (เอา \ ออก)
-        try {
-          const parsedObject = JSON.parse(value); // แปลง JSON string เป็น object
-          const cleanedString = JSON.stringify(parsedObject); // แปลงกลับเป็น string ที่ไม่มี \
-          formDataToSend.append(key, cleanedString);
-        } catch (error) {
-          console.error("Error parsing JSON string:", error);
-          formDataToSend.append(key, value); // หาก parsing ไม่สำเร็จ ใช้ค่าเดิม
-        }
+      if (typeof value === "object" && value !== null) {
+        // แปลง Object เป็น JSON String
+        formDataToSend.append(key, JSON.stringify(value));
       } else {
-        // ค่าอื่นๆ ที่ไม่ใช่ object หรือ JSON string
+        // เพิ่มค่าอื่นๆ เช่น string หรือ number
         formDataToSend.append(key, value);
       }
     });
-    
-
+  
     // เพิ่มไฟล์ใน FormData
     Object.entries(fileUploads).forEach(([key, file]) => {
       if (file) {
         formDataToSend.append(key, file);
       }
     });
-
+  
+    // Debug: ดูข้อมูลใน FormData ก่อนส่ง
+    console.log("FormData preview:");
+    for (let [key, value] of formDataToSend.entries()) {
+      console.log(`${key}:`, value);
+    }
+  
     try {
       const response = await axios.post(
         "http://localhost:8080/api/jobaplication",
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formDataToSend // FormData ที่จัดการแล้ว
       );
       alert("เพิ่มผู้สมัครสำเร็จ!");
+  
       // รีเซ็ตฟอร์ม
       setFormData({
         firstname: "",
         lastname: "",
         job_position: "",
         expected_salary: "",
-        age : "",
+        age: "",
         phone_number: "",
         email: "",
         liveby: "",
@@ -181,6 +171,7 @@ const AddJob = () => {
           zip_code: "",
         },
       });
+  
       setFileUploads({
         id_card: null,
         house_registration: null,
@@ -190,10 +181,11 @@ const AddJob = () => {
         photo: null,
       });
     } catch (error) {
-      console.error("Error adding application:", error);
-      alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+      console.error("Error adding application:", error.response?.data || error.message);
+      alert("เกิดข้อผิดพลาด: " + (error.response?.data?.message || "ไม่ทราบสาเหตุ"));
     }
   };
+  
 
   return (
     <div className="p-8">
