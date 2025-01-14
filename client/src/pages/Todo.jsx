@@ -164,9 +164,23 @@ const Todo = () => {
                 <h2 className="text-lg font-bold mb-4">{editingTask ? 'แก้ไข Task' : 'เพิ่ม Task ใหม่'}</h2>
                 <input
                   type="text"
+                  placeholder="ไอดี พนักงานที่จะมอบหมาย"
+                  value={newTask.employee_id}
+                  onChange={(e) => setNewTask({ ...newTask, employee_id: e.target.value })}
+                  className="w-full p-2 mb-4 border rounded"
+                />
+                <input
+                  type="text"
                   placeholder="ชื่อ Task"
                   value={newTask.project_name}
                   onChange={(e) => setNewTask({ ...newTask, project_name: e.target.value })}
+                  className="w-full p-2 mb-4 border rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="ชื่อสิ่งที่ต้องทำ"
+                  value={newTask.todo}
+                  onChange={(e) => setNewTask({ ...newTask, todo: e.target.value })}
                   className="w-full p-2 mb-4 border rounded"
                 />
                 <textarea

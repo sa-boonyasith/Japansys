@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import Login from "./Auth/Login";
 import Register from "./Auth/Register";
-import Todo from "./pages/todo";
+import Todo from "./pages/Todo";
 import Job from "./pages/Job";
 import Attend from "./pages/Attend";
 import LeaveSystem from "./pages/LeaveSystem";
@@ -20,7 +20,8 @@ import Trial from "./pages/Trial"
 import Checkout from "./pages/Checkout";
 import Progress from "./pages/Progress";
 import Status from "./pages/Status";
-import Test from "./pages/test";
+import Test from "./pages/Test"
+import Test2 from "./pages/Test2"
 
 
 const App = () => {
@@ -74,6 +75,7 @@ const App = () => {
         <Route path="/" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/1" element={<Test />} />
+        <Route path="/2" element={<Test2/>}></Route>
         {isAuthenticated ? (
           <Route
             path="/dashboard"
