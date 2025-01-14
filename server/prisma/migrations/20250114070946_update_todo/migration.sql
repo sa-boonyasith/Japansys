@@ -1,4 +1,21 @@
 -- CreateTable
+CREATE TABLE `user` (
+    `user_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `username` VARCHAR(191) NOT NULL,
+    `firstname` VARCHAR(191) NOT NULL,
+    `lastname` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NOT NULL,
+    `role` ENUM('employee', 'manager', 'admin', 'recruit') NOT NULL DEFAULT 'recruit',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `user_username_key`(`username`),
+    UNIQUE INDEX `user_email_key`(`email`),
+    PRIMARY KEY (`user_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Employee` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `firstname` VARCHAR(100) NOT NULL,
@@ -24,6 +41,35 @@ CREATE TABLE `Employee` (
 
     UNIQUE INDEX `Employee_email_key`(`email`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `JobApplication` (
+    `job_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `application_date` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `firstname` VARCHAR(100) NULL,
+    `lastname` VARCHAR(100) NULL,
+    `job_position` VARCHAR(150) NULL,
+    `expected_salary` DOUBLE NULL,
+    `documents` JSON NULL,
+    `personal_info` JSON NULL,
+    `phone_number` VARCHAR(20) NULL,
+    `email` VARCHAR(150) NOT NULL,
+    `liveby` VARCHAR(191) NULL,
+    `birth_date` VARCHAR(191) NULL,
+    `age` INTEGER NULL,
+    `ethnicity` VARCHAR(50) NULL,
+    `nationality` VARCHAR(50) NULL,
+    `religion` VARCHAR(50) NULL,
+    `marital_status` VARCHAR(50) NULL,
+    `military_status` VARCHAR(100) NULL,
+    `status` ENUM('new', 'wait', 'pass', 'reject') NOT NULL DEFAULT 'new',
+    `photo` TEXT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `JobApplication_email_key`(`email`),
+    PRIMARY KEY (`job_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -90,38 +136,10 @@ CREATE TABLE `Rentcar` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `JobApplication` (
-    `job_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `application_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `firstname` VARCHAR(100) NOT NULL,
-    `lastname` VARCHAR(100) NOT NULL,
-    `job_position` VARCHAR(150) NOT NULL,
-    `expected_salary` DOUBLE NOT NULL,
-    `documents` JSON NOT NULL,
-    `personal_info` JSON NOT NULL,
-    `phone_number` VARCHAR(20) NOT NULL,
-    `email` VARCHAR(150) NOT NULL,
-    `liveby` VARCHAR(191) NOT NULL,
-    `birth_date` DATE NOT NULL,
-    `age` INTEGER NOT NULL,
-    `ethnicity` VARCHAR(50) NOT NULL,
-    `nationality` VARCHAR(50) NOT NULL,
-    `religion` VARCHAR(50) NOT NULL,
-    `marital_status` VARCHAR(50) NOT NULL,
-    `military_status` VARCHAR(100) NOT NULL,
-    `status` ENUM('new', 'wait', 'pass', 'reject') NOT NULL DEFAULT 'new',
-    `photo` VARCHAR(191) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL,
-
-    UNIQUE INDEX `JobApplication_email_key`(`email`),
-    PRIMARY KEY (`job_id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `Todo` (
     `project_id` INTEGER NOT NULL AUTO_INCREMENT,
     `project_name` VARCHAR(191) NOT NULL,
+    `todo` VARCHAR(191) NOT NULL,
     `desc` VARCHAR(191) NOT NULL,
     `status` ENUM('mustdo', 'inprogress', 'finish') NOT NULL DEFAULT 'mustdo',
     `employee_id` INTEGER NOT NULL,
@@ -145,6 +163,7 @@ CREATE TABLE `Salary` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `Salary_employee_id_key`(`employee_id`),
     PRIMARY KEY (`salary_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -161,21 +180,6 @@ CREATE TABLE `attendhistory` (
     `status` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `user` (
-    `user_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `username` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) NOT NULL,
-    `password` VARCHAR(191) NOT NULL,
-    `role` ENUM('employee', 'manager', 'admin', 'recruit') NOT NULL DEFAULT 'recruit',
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL,
-
-    UNIQUE INDEX `user_username_key`(`username`),
-    UNIQUE INDEX `user_email_key`(`email`),
-    PRIMARY KEY (`user_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
