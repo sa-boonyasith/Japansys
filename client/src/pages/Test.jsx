@@ -8,12 +8,14 @@ const Test = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState(1);
   const [newTask, setNewTask] = useState({
     project_name: "",
     name: "",
     desc: "",
   });
+  const [editingTask, setEditingTask] = useState(null);
 
   const fetchTodos = async () => {
     try {
@@ -37,7 +39,7 @@ const Test = () => {
 
       const payload = {
         project_name: taskToUpdate.project_name,
-        employee_id: 1,
+        employee_id: employeeId,
         todo: [
           {
             todo_id: taskToUpdate.todo_id,
@@ -83,7 +85,54 @@ const Test = () => {
       });
     } catch (err) {
       console.error("Error adding task:", err);
-      alert("Failed to create task: " + err.response?.data?.message || err.message);
+      alert(
+        "Failed to create task: " + err.response?.data?.message || err.message
+      );
+    }
+  };
+
+  const handleEditTask = async () => {
+    try {
+      const payload = {
+        project_name: editingTask.project_name,  // ชื่อโปรเจกต์ใหม่
+        employee_id: employeeId,
+        todo: [
+          {
+            todo_id: editingTask.todo_id,
+            name: editingTask.name,
+            desc: editingTask.desc,
+          },
+        ],
+      };
+  
+      await axios.put("http://localhost:8080/api/todo", payload);  // ตรวจสอบ URL API ให้ถูกต้อง
+  
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) =>
+          todo.todo_id === editingTask.todo_id ? editingTask : todo
+        )
+      );
+  
+      setIsEditModalOpen(false);
+      setEditingTask(null);
+    } catch (err) {
+      console.error("Error editing task:", err);
+      alert(
+        "Failed to edit task: " + (err.response?.data?.message || err.message)
+      );
+    }
+  };
+  
+
+  const handleDeleteTask = async (todo_id) => {
+    try {
+      await axios.delete(`http://localhost:8080/api/todo/${todo_id}`);
+      setTodos((prevTodos) =>
+        prevTodos.filter((todo) => todo.todo_id !== todo_id)
+      );
+    } catch (err) {
+      console.error("Error deleting task:", err);
+      alert("Failed to delete task: " + err.message);
     }
   };
 
@@ -110,67 +159,23 @@ const Test = () => {
         </button>
 
         {isModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white w-1/3 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">เพิ่ม Task</h2>
-              <div className="mb-4">
-                <label className="block font-medium mb-2">ชื่อโปรเจกต์</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={newTask.project_name}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, project_name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block font-medium mb-2">ชื่อ Task</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={newTask.name}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block font-medium mb-2">รายละเอียด</label>
-                <textarea
-                  className="w-full px-4 py-2 border rounded-lg"
-                  rows="4"
-                  value={newTask.desc}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, desc: e.target.value })
-                  }
-                ></textarea>
-              </div>
-              <div className="mb-4">
-                <label className="block font-medium mb-2">Employee ID</label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
-                  onClick={handleAddTask}
-                >
-                  บันทึก
-                </button>
-              </div>
-            </div>
-          </div>
+          <TaskModal
+            title="เพิ่ม Task"
+            task={newTask}
+            setTask={setNewTask}
+            onSave={handleAddTask}
+            onClose={() => setIsModalOpen(false)}
+          />
+        )}
+
+        {isEditModalOpen && (
+          <TaskModal
+            title="แก้ไข Task"
+            task={editingTask}
+            setTask={setEditingTask}
+            onSave={handleEditTask}
+            onClose={() => setIsEditModalOpen(false)}
+          />
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -178,16 +183,31 @@ const Test = () => {
             title="งานที่ต้องทำ"
             tasks={tasksToDo}
             onDrop={(todo_id) => updateTaskStatus(todo_id, "mustdo")}
+            onEdit={(task) => {
+              setEditingTask(task);
+              setIsEditModalOpen(true);
+            }}
+            onDelete={handleDeleteTask}
           />
           <TaskColumn
             title="งานที่กำลังทำ"
             tasks={tasksInProgress}
             onDrop={(todo_id) => updateTaskStatus(todo_id, "inprogress")}
+            onEdit={(task) => {
+              setEditingTask(task);
+              setIsEditModalOpen(true);
+            }}
+            onDelete={handleDeleteTask}
           />
           <TaskColumn
             title="งานเสร็จแล้ว"
             tasks={tasksDone}
-            onDrop={(todo_id) => updateTaskStatus(todo_id,"finish")}
+            onDrop={(todo_id) => updateTaskStatus(todo_id, "finish")}
+            onEdit={(task) => {
+              setEditingTask(task);
+              setIsEditModalOpen(true);
+            }}
+            onDelete={handleDeleteTask}
           />
         </div>
       </div>
@@ -195,7 +215,7 @@ const Test = () => {
   );
 };
 
-const TaskColumn = ({ title, tasks, onDrop }) => {
+const TaskColumn = ({ title, tasks, onDrop, onEdit, onDelete }) => {
   const [, drop] = useDrop({
     accept: "task",
     drop: (item) => onDrop && onDrop(item.todo_id),
@@ -205,13 +225,18 @@ const TaskColumn = ({ title, tasks, onDrop }) => {
     <div ref={drop} className="bg-gray-100 p-4 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold text-center mb-4">{title}</h2>
       {tasks.map((task) => (
-        <Task key={task.todo_id} task={task} />
+        <Task
+          key={task.todo_id}
+          task={task}
+          onEdit={() => onEdit(task)}
+          onDelete={() => onDelete(task.todo_id)}
+        />
       ))}
     </div>
   );
 };
 
-const Task = ({ task }) => {
+const Task = ({ task, onEdit, onDelete }) => {
   const [{ isDragging }, drag] = useDrag({
     type: "task",
     item: { todo_id: task.todo_id },
@@ -236,8 +261,80 @@ const Task = ({ task }) => {
       <p>
         <strong>รายละเอียด:</strong> {task.desc}
       </p>
+      <div className="flex justify-end space-x-2 mt-4">
+        <button
+          className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
+          onClick={onEdit}
+        >
+          แก้ไข
+        </button>
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          onClick={onDelete}
+        >
+          ลบ
+        </button>
+      </div>
     </div>
   );
 };
+
+const TaskModal = ({ title, task, setTask, onSave, onClose }) => (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white w-1/3 p-6 rounded-lg shadow-lg">
+      <h2 className="text-xl font-bold mb-4">{title}</h2>
+      <div className="mb-4">
+        <label className="block font-medium mb-2">ชื่อโปรเจกต์</label>
+        <input
+          type="text"
+          className="w-full px-4 py-2 border rounded-lg"
+          value={task.project_name}
+          onChange={(e) => setTask({ ...task, project_name: e.target.value })}
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-2">ชื่อ Task</label>
+        <input
+          type="text"
+          className="w-full px-4 py-2 border rounded-lg"
+          value={task.name}
+          onChange={(e) => setTask({ ...task, name: e.target.value })}
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-2">รายละเอียด</label>
+        <textarea
+          className="w-full px-4 py-2 border rounded-lg"
+          rows="4"
+          value={task.desc}
+          onChange={(e) => setTask({ ...task, desc: e.target.value })}
+        ></textarea>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-2">Employee ID</label>
+        <input
+          type="number"
+          className="w-full px-4 py-2 border rounded-lg"
+          value={task.employee_id}
+          onChange={(e) => setTask({ ...task, employee_id: e.target.value })}
+        />
+      </div>
+      <div className="flex justify-end space-x-2">
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          onClick={onClose}
+        >
+          ยกเลิก
+        </button>
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+          onClick={onSave}
+        >
+          บันทึก
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 export default Test;

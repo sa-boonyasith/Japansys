@@ -124,46 +124,76 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const { project_name, employee_id, todo } = req.body;
+    const { project_name, employee_id, todo = [] } = req.body;
 
-    // ตรวจสอบว่า project_name มีค่าหรือไม่
+    // Validate project_name
     if (!project_name) {
       return res.status(400).json({ error: "Project name is required" });
     }
 
-    // ดึง project_id จาก project_name
-    const project = await prisma.project.findUnique({
+    let project = await prisma.project.findUnique({
       where: { project_name },
     });
 
+    // If project doesn't exist, create it
     if (!project) {
-      return res.status(404).json({ error: "Project not found" });
-    }
+      if (!employee_id) {
+        return res.status(400).json({
+          error: "Employee ID is required to create a new project",
+        });
+      }
 
-    // หากมี employee_id ให้เชื่อมโยงกับพนักงานใหม่
-    if (employee_id) {
       const employeeExists = await prisma.employee.findUnique({
         where: { id: Number(employee_id) },
       });
+
       if (!employeeExists) {
         return res.status(404).json({ error: "Employee not found" });
       }
-      // อัปเดต employee_id ของโปรเจกต์
-      await prisma.project.update({
+
+      project = await prisma.project.create({
+        data: {
+          project_name,
+          employee_id: Number(employee_id),
+          progress: 0,
+          progress_circle: 0,
+        },
+      });
+    } else if (employee_id) {
+      // Update the project with a new employee if provided
+      const employeeExists = await prisma.employee.findUnique({
+        where: { id: Number(employee_id) },
+      });
+
+      if (!employeeExists) {
+        return res.status(404).json({ error: "Employee not found" });
+      }
+
+      project = await prisma.project.update({
         where: { project_name },
         data: { employee_id: Number(employee_id) },
       });
     }
 
+    // Handle tasks (todos) - Update all tasks in the project
     let updatedTodos = [];
-    if (todo && Array.isArray(todo)) {
-      // อัปเดตแต่ละ task ที่เชื่อมโยงกับโปรเจกต์
+    if (Array.isArray(todo) && todo.length > 0) {
       updatedTodos = await Promise.all(
         todo.map(async (task) => {
           if (!task.todo_id) {
-            throw new Error("Each task must have a 'todo_id'");
+            // Create a new task if todo_id is not provided
+            return prisma.todo.create({
+              data: {
+                name: task.name || "Untitled Task",
+                desc: task.desc || "No description provided",
+                status: task.status || "mustdo",
+                project_id: project.project_id,
+                employee_id: Number(employee_id),
+              },
+            });
           }
 
+          // Validate and update existing task
           const existingTodo = await prisma.todo.findUnique({
             where: { todo_id: task.todo_id },
           });
@@ -172,12 +202,17 @@ exports.update = async (req, res) => {
             throw new Error(`Task with todo_id ${task.todo_id} not found`);
           }
 
+          // Reassign the task to the new project if needed
           if (existingTodo.project_id !== project.project_id) {
-            throw new Error(
-              `Task with todo_id ${task.todo_id} does not belong to project ${project_name}`
-            );
+            await prisma.todo.update({
+              where: { todo_id: task.todo_id },
+              data: {
+                project_id: project.project_id, // Reassign to the new project
+              },
+            });
           }
 
+          // Update the task details
           return prisma.todo.update({
             where: { todo_id: task.todo_id },
             data: {
@@ -190,15 +225,16 @@ exports.update = async (req, res) => {
       );
     }
 
+    // Recalculate progress and progress_circle after tasks are added or updated
     const allTodos = await prisma.todo.findMany({
       where: { project_id: project.project_id },
     });
 
     const finishCount = allTodos.filter((task) => task.status === "finish").length;
     const totalTasks = allTodos.length;
-
     const progressPercentage = totalTasks > 0 ? (finishCount / totalTasks) * 100 : 0;
 
+    // Update project progress
     const finalProject = await prisma.project.update({
       where: { project_name },
       data: {
@@ -207,21 +243,29 @@ exports.update = async (req, res) => {
       },
     });
 
+    // Delete projects without matching todos
+    await prisma.project.deleteMany({
+      where: {
+        project_id: {
+          notIn: await prisma.todo.findMany({
+            select: { project_id: true },
+            distinct: ['project_id'],
+          }).then((todos) => todos.map((todo) => todo.project_id)),
+        },
+      },
+    });
+
+    // Response
     res.status(200).json({
       message: "Project and tasks updated successfully",
-      updatedProject: finalProject,
-      updatedTodos,
+      updatedProject: finalProject, // Returning updated project
+      updatedTodos, // Returning updated tasks
     });
   } catch (err) {
     console.error("Error updating project and tasks:", err);
     res.status(500).json({ error: err.message || "Failed to update project and tasks" });
   }
 };
-
-
-
-
-
 
 
 exports.remove = async (req, res) => {
