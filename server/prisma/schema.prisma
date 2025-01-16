@@ -56,6 +56,7 @@ model Employee {
   Salary        Salary[]
   attends       attend[]
   attendhistory attendhistory[]
+  projects      Project[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -148,19 +149,29 @@ model Rentcar {
   status    Status   @default(pending)
 }
 
-model Todo {
-  project_id   Int     @id @default(autoincrement())
-  project_name String
-  todo         String
-  desc         String
-  status       todojob @default(mustdo)
+model Project {
+  project_id      Int      @id @default(autoincrement())
+  project_name    String   @unique
+  progress        Int
+  progress_circle Int      @default(0)
+  employee_id     Int
+  employee        Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  todos           Todo[]   @relation("ProjectTodos")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
 
-  // Relationship with Employee
+model Todo {
+  todo_id     Int      @id @default(autoincrement())
+  name        String
+  desc        String
+  status      todojob  @default(mustdo)
+  project     Project  @relation("ProjectTodos", fields: [project_id], references: [project_id])
+  project_id  Int
   employee    Employee @relation(fields: [employee_id], references: [id])
   employee_id Int
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 }
 
 model Salary {

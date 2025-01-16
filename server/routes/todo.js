@@ -1,11 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const {create,list,update,remove} = require('../controller/todo')
+const {create,list,update,remove, listproject} = require('../controller/todo')
 
 router.get('/todo',list)
 router.post('/todo',create)
-router.put('/todo/:id',update)
+router.put('/todo',update)
 router.delete('/todo/:id',remove)
+router.get("/project",listproject)
 
 
 

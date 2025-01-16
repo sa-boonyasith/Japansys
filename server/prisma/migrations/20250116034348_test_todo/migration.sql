@@ -136,17 +136,31 @@ CREATE TABLE `Rentcar` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Todo` (
+CREATE TABLE `Project` (
     `project_id` INTEGER NOT NULL AUTO_INCREMENT,
     `project_name` VARCHAR(191) NOT NULL,
-    `todo` VARCHAR(191) NOT NULL,
-    `desc` VARCHAR(191) NOT NULL,
-    `status` ENUM('mustdo', 'inprogress', 'finish') NOT NULL DEFAULT 'mustdo',
+    `progress` INTEGER NOT NULL,
+    `progress_circle` INTEGER NOT NULL DEFAULT 0,
     `employee_id` INTEGER NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `Project_project_name_key`(`project_name`),
     PRIMARY KEY (`project_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Todo` (
+    `todo_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `desc` VARCHAR(191) NOT NULL,
+    `status` ENUM('mustdo', 'inprogress', 'finish') NOT NULL DEFAULT 'mustdo',
+    `project_id` INTEGER NOT NULL,
+    `employee_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`todo_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -193,6 +207,12 @@ ALTER TABLE `Meetingroom` ADD CONSTRAINT `Meetingroom_employee_id_fkey` FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE `Rentcar` ADD CONSTRAINT `Rentcar_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Project` ADD CONSTRAINT `Project_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Todo` ADD CONSTRAINT `Todo_project_id_fkey` FOREIGN KEY (`project_id`) REFERENCES `Project`(`project_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Todo` ADD CONSTRAINT `Todo_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
