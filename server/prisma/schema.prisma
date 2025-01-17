@@ -113,7 +113,7 @@ model LeaveRequest {
   startdate DateTime @db.Date
   enddate   DateTime @db.Date
   action    Action   @default(pending)
-  status    Status   @default(pending)
+  status    String   @default("Pending")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
