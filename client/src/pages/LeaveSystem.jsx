@@ -13,10 +13,15 @@ const LeaveSystem = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editData, setEditData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newLeave, setNewLeave] = useState({
+    firstname: "",
+    lastname: "",
+    leavetype: "",
+    startdate: "",
+    enddate: "",
+  });
 
-  // Fetch leave data from API
   useEffect(() => {
     const fetchLeaves = async () => {
       try {
@@ -25,7 +30,7 @@ const LeaveSystem = () => {
         );
         if (Array.isArray(response.data.listLeaveRequest)) {
           setLeaves(response.data.listLeaveRequest);
-          setFilteredLeaves(response.data.listLeaveRequest); // Set initial filtered data
+          setFilteredLeaves(response.data.listLeaveRequest);
         } else {
           setError(
             "Expected an array of leave requests, but got something else."
@@ -94,89 +99,47 @@ const LeaveSystem = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-GB"); // Format: DD/MM/YYYY
+    return new Date(dateString).toLocaleDateString("en-GB");
   };
 
-  const handleDelete = async (leaveId) => {
-    if (window.confirm("Are you sure you want to delete this record?")) {
-      try {
-        await axios.delete(`http://localhost:8080/api/leaverequest/${leaveId}`);
-        setLeaves(leaves.filter((leave) => leave.leave_id !== leaveId));
-        setFilteredLeaves(
-          filteredLeaves.filter((leave) => leave.leave_id !== leaveId)
-        );
-      } catch (error) {
-        alert("Failed to delete the record.");
-      }
-    }
+  const handleAddChange = (e) => {
+    setNewLeave({ ...newLeave, [e.target.name]: e.target.value });
   };
 
-  const handleEdit = (leave) => {
-    setEditData(leave);
-    setIsEditModalOpen(true);
-  };
-
-  const handleEditChange = (e) => {
-    setEditData({ ...editData, [e.target.name]: e.target.value });
-  };
-
-  const saveEdit = async () => {
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
     try {
-      if (!editData || !editData.leave_id) {
-        console.error("No leave data or leave_id found.");
-        alert("Invalid leave data.");
-        return; // Stop execution if no data
+      const response = await axios.post(
+        "http://localhost:8080/api/leaverequest",
+        newLeave
+      );
+  
+      // Ensure the response contains the new leave request
+      if (response.data && response.data.newRequest) {
+        const addedLeave = response.data.newRequest;
+  
+        // Update the leaves and filteredLeaves states
+        setLeaves((prevLeaves) => [...prevLeaves, addedLeave]);
+        setFilteredLeaves((prevFiltered) => [...prevFiltered, addedLeave]);
+  
+        // Reset the form fields
+        setNewLeave({
+          employee_id:"",
+          leavetype: "",
+          startdate: "",
+          enddate: "",
+        });
+  
+        // Close the modal
+        setIsModalOpen(false);
+      } else {
+        throw new Error("Unexpected response structure");
       }
-  
-      console.log("Saving...", editData); // Debug: Log the editData being saved
-  
-      // Send the PUT request to update the leave
-      const response = await axios.put(
-        `http://localhost:8080/api/leaverequest/${editData.leave_id}`,
-        editData
-      );
-  
-      console.log("Response:", response.data); // Debug: Log the entire API response
-  
-      // Get the leaveRequest from the response
-      const updatedLeave = response.data.leaveRequest;
-  
-      // Check if the updatedLeave is valid
-      if (!updatedLeave || !updatedLeave.leave_id) {
-        console.error("Updated leave is invalid. Response data:", response.data);
-        alert("Error: Unable to update leave.");
-        return;
-      }
-  
-      // Update the leaves list
-      setLeaves((prevLeaves) =>
-        prevLeaves.map((leave) =>
-          leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
-        )
-      );
-  
-      // Update the filtered leaves list
-      setFilteredLeaves((prevFilteredLeaves) =>
-        prevFilteredLeaves.map((leave) =>
-          leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
-        )
-      );
-  
-      // Close the modal and reset edit data
-      setIsEditModalOpen(false);
-      setEditData(null);
-  
     } catch (error) {
-      // Log the error in case of failure
-      console.error("Error saving:", error);
-      alert("Failed to save changes.");
+      console.error("Failed to add new leave request:", error);
+      alert("Failed to add new leave request. Please try again.");
     }
   };
-  
-  
-  
-  
-  
   
 
   if (loading) return <p>Loading...</p>;
@@ -227,7 +190,78 @@ const LeaveSystem = () => {
         >
           Reset
         </button>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          เพิ่มรายชื่อการลา
+        </button>
       </div>
+
+      {/* Add New Leave Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">Add New Leave Request</h2>
+            <form onSubmit={handleAddSubmit}>
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  name="employee_id"
+                  placeholder="Employee ID"
+                  className="border border-gray-300 p-2 rounded"
+                  value={newLeave.employee_id}
+                  onChange={handleAddChange}
+                  required
+                />
+                <select
+                  name="leavetype"
+                  className="border border-gray-300 p-2 rounded"
+                  value={newLeave.leavetype}
+                  onChange={handleAddChange}
+                  required
+                >
+                  <option value="">Select Leave Type</option>
+                  <option value="Sick Leave">Sick Leave</option>
+                  <option value="Private Leave">Private Leave</option>
+                  <option value="Annual Leave">Annual Leave</option>
+                </select>
+                <input
+                  type="date"
+                  name="startdate"
+                  className="border border-gray-300 p-2 rounded"
+                  value={newLeave.startdate}
+                  onChange={handleAddChange}
+                  required
+                />
+                <input
+                  type="date"
+                  name="enddate"
+                  className="border border-gray-300 p-2 rounded"
+                  value={newLeave.enddate}
+                  onChange={handleAddChange}
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Add Leave Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Leave Table */}
       <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
@@ -256,7 +290,6 @@ const LeaveSystem = () => {
           ))}
         </tbody>
       </table>
-
     </div>
   );
 };

@@ -12,42 +12,47 @@ exports.create = async (req, res) => {
   try {
     const { employee_id, leavetype, startdate, enddate } = req.body;
 
+    // Validate employee_id
+    if (!employee_id || isNaN(Number(employee_id))) {
+      return res.status(400).json({ error: "Invalid or missing employee_id" });
+    }
+
     // Validate that startdate and enddate are valid dates
     const validStartDate =
       startdate && !isNaN(new Date(startdate).getTime())
         ? new Date(startdate)
         : null;
     const validEndDate =
-      enddate && !isNaN(new Date(enddate).getTime()) ? new Date(enddate) : null;
+      enddate && !isNaN(new Date(enddate).getTime())
+        ? new Date(enddate)
+        : null;
 
-    
     if (!validStartDate || !validEndDate) {
       return res.status(400).json({ error: "Invalid startdate or enddate" });
     }
 
-   
+    // Format dates to include time
     const formattedStartDate =
       validStartDate.toISOString().split("T")[0] + "T00:00:00.000Z";
     const formattedEndDate =
       validEndDate.toISOString().split("T")[0] + "T23:59:59.000Z";
 
-    
+    // Check if the employee exists
     const employee = await prisma.employee.findUnique({
-      where: { id: employee_id },
+      where: { id: Number(employee_id) },
       select: { firstname: true, lastname: true },
     });
 
-  
     if (!employee) {
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    
+    // Create the leave request
     const newRequest = await prisma.leaveRequest.create({
       data: {
-        employee_id, 
-        firstname: employee.firstname, 
-        lastname: employee.lastname, 
+        employee_id: Number(employee_id),
+        firstname: employee.firstname,
+        lastname: employee.lastname,
         leavetype,
         startdate: formattedStartDate,
         enddate: formattedEndDate,
@@ -64,6 +69,7 @@ exports.create = async (req, res) => {
     res.status(500).json({ error: "Failed to create leave request" });
   }
 };
+
 
 
 exports.update = async (req, res) => {
