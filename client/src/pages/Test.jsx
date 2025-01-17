@@ -120,59 +120,60 @@ const LeaveSystem = () => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
 
-  const saveEdit = async () => {
-    try {
-      if (!editData || !editData.leave_id) {
-        console.error("No leave data or leave_id found.");
-        alert("Invalid leave data.");
-        return; // Stop execution if no data
-      }
-  
-      console.log("Saving...", editData); // Debug: Log the editData being saved
-  
-      // Send the PUT request to update the leave
-      const response = await axios.put(
-        `http://localhost:8080/api/leaverequest/${editData.leave_id}`,
-        editData
-      );
-  
-      console.log("Response:", response.data); // Debug: Log the entire API response
-  
-      // Get the leaveRequest from the response
-      const updatedLeave = response.data.leaveRequest;
-  
-      // Check if the updatedLeave is valid
-      if (!updatedLeave || !updatedLeave.leave_id) {
-        console.error("Updated leave is invalid. Response data:", response.data);
-        alert("Error: Unable to update leave.");
-        return;
-      }
-  
-      // Update the leaves list
-      setLeaves((prevLeaves) =>
-        prevLeaves.map((leave) =>
-          leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
-        )
-      );
-  
-      // Update the filtered leaves list
-      setFilteredLeaves((prevFilteredLeaves) =>
-        prevFilteredLeaves.map((leave) =>
-          leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
-        )
-      );
-  
-      // Close the modal and reset edit data
-      setIsEditModalOpen(false);
-      setEditData(null);
-  
-    } catch (error) {
-      // Log the error in case of failure
-      console.error("Error saving:", error);
-      alert("Failed to save changes.");
+const saveEdit = async () => {
+  try {
+    if (!editData || !editData.leave_id) {
+      console.error("No leave data or leave_id found.");
+      alert("Invalid leave data.");
+      return; // Stop execution if no data
     }
-  };
-  
+
+    console.log("Saving...", editData); // Debug: Log the editData being saved
+
+    // Send the PUT request to update the leave
+    const response = await axios.put(
+      `http://localhost:8080/api/leaverequest/${editData.leave_id}`,
+      editData
+    );
+
+    console.log("Response:", response.data); // Debug: Log the entire API response
+
+    // Get the leaveRequest from the response
+    const updatedLeave = response.data.leaveRequest;
+
+    // Check if the updatedLeave is valid
+    if (!updatedLeave || !updatedLeave.leave_id) {
+      console.error("Updated leave is invalid. Response data:", response.data);
+      alert("Error: Unable to update leave.");
+      return;
+    }
+
+    // Update the leaves list
+    setLeaves((prevLeaves) =>
+      prevLeaves.map((leave) =>
+        leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
+      )
+    );
+
+    // Update the filtered leaves list
+    setFilteredLeaves((prevFilteredLeaves) =>
+      prevFilteredLeaves.map((leave) =>
+        leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
+      )
+    );
+
+    // Close the modal and reset edit data
+    setIsEditModalOpen(false);
+    setEditData(null);
+
+  } catch (error) {
+    // Log the error in case of failure
+    console.error("Error saving:", error);
+    alert("Failed to save changes.");
+  }
+};
+
+
   
   
   
