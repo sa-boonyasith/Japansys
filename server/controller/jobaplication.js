@@ -8,6 +8,46 @@ exports.list = async (req, res) => {
     console.error("Error fetching employees: ", err.message);
   }
 };
+
+exports.listspecific = async (req,res) =>{
+  const id = parseInt(req.params.id);
+
+  try {
+    const application = await prisma.jobApplication.findUnique({
+      where: { job_id: id },
+      select: {
+        firstname: true,
+        lastname: true,
+        job_position: true,
+        expected_salary: true,
+        phone_number: true,
+        email: true,
+        personal_info: true,
+        documents: true,
+        liveby: true,
+        birth_date: true,
+        age: true,
+        ethnicity: true,
+        nationality: true,
+        religion: true,
+        marital_status: true,
+        military_status: true,
+        status: true,
+        photo: true,
+      },
+    });
+
+    if (!application) {
+      return res.status(404).json({ message: 'Job application not found' });
+    }
+
+    res.json(application);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching job application' });
+  }
+};
+
 exports.create = async (req, res) => {
   try {
     const {
