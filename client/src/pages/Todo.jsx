@@ -75,7 +75,7 @@ const Todo = () => {
           },
         ],
       });
-
+  
       setTodos((prevTodos) => [...prevTodos, ...response.data.tasks]);
       setIsModalOpen(false);
       setNewTask({
@@ -86,10 +86,11 @@ const Todo = () => {
     } catch (err) {
       console.error("Error adding task:", err);
       alert(
-        "Failed to create task: " + err.response?.data?.message || err.message
+        "Failed to create task: " + (err.response?.data?.message || err.message)
       );
     }
   };
+  
 
   const handleEditTask = async () => {
     try {
@@ -149,8 +150,7 @@ const Todo = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold text-center mb-6">Todo List</h1>
+      <div className="container mx-auto p-2 ">
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 mb-6"
           onClick={() => setIsModalOpen(true)}
@@ -178,7 +178,7 @@ const Todo = () => {
           />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
           <TaskColumn
             title="งานที่ต้องทำ"
             tasks={tasksToDo}
@@ -222,8 +222,8 @@ const TaskColumn = ({ title, tasks, onDrop, onEdit, onDelete }) => {
   });
 
   return (
-    <div ref={drop} className="bg-gray-100 p-4 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold text-center mb-4">{title}</h2>
+    <div ref={drop} className="bg-gray-100 p-4 rounded-lg shadow-md max-h-[430px] overflow-y-auto">
+      <h2 className="text-xl font-semibold text-center mb-4 ">{title}</h2>
       {tasks.map((task) => (
         <Task
           key={task.todo_id}
@@ -283,42 +283,56 @@ const TaskModal = ({ title, task, setTask, onSave, onClose }) => (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
     <div className="bg-white w-1/3 p-6 rounded-lg shadow-lg">
       <h2 className="text-xl font-bold mb-4">{title}</h2>
+      
+      {/* Project Name Input */}
       <div className="mb-4">
         <label className="block font-medium mb-2">ชื่อโปรเจกต์</label>
         <input
           type="text"
           className="w-full px-4 py-2 border rounded-lg"
-          value={task.project_name}
+          value={task.project_name || ''}
           onChange={(e) => setTask({ ...task, project_name: e.target.value })}
+          placeholder="กรอกชื่อโปรเจกต์"
         />
       </div>
+
+      {/* Task Name Input */}
       <div className="mb-4">
         <label className="block font-medium mb-2">ชื่อ Task</label>
         <input
           type="text"
           className="w-full px-4 py-2 border rounded-lg"
-          value={task.name}
+          value={task.name || ''}
           onChange={(e) => setTask({ ...task, name: e.target.value })}
+          placeholder="กรอกชื่อ Task"
         />
       </div>
+
+      {/* Task Description Input */}
       <div className="mb-4">
         <label className="block font-medium mb-2">รายละเอียด</label>
         <textarea
           className="w-full px-4 py-2 border rounded-lg"
           rows="4"
-          value={task.desc}
+          value={task.desc || ''}
           onChange={(e) => setTask({ ...task, desc: e.target.value })}
+          placeholder="กรอกรายละเอียดของ Task"
         ></textarea>
       </div>
+
+      {/* Employee ID Input */}
       <div className="mb-4">
         <label className="block font-medium mb-2">Employee ID</label>
         <input
           type="number"
           className="w-full px-4 py-2 border rounded-lg"
-          value={task.employee_id}
-          onChange={(e) => setTask({ ...task, desc: e.target.value })}
+          value={task.employee_id || ''}
+          onChange={(e) => setTask({ ...task, employee_id: parseInt(e.target.value) || '' })}
+          placeholder="กรอก Employee ID"
         />
       </div>
+
+      {/* Action Buttons */}
       <div className="flex justify-end space-x-2">
         <button
           className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
@@ -336,5 +350,6 @@ const TaskModal = ({ title, task, setTask, onSave, onClose }) => (
     </div>
   </div>
 );
+
 
 export default Todo;
