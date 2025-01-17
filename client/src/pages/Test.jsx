@@ -14,8 +14,8 @@ const ProjectProgress = () => {
         const response = await axios.get("http://localhost:8080/api/project");
         console.log(response.data); // Debug เพื่อดูโครงสร้างข้อมูล
 
-        // ปรับตามโครงสร้างข้อมูลจริง
-        const data = response.data.map((project) => ({
+        // เข้าถึง listProject ที่เป็นอาเรย์
+        const data = response.data.listProject.map((project) => ({
           id: project.project_id,
           progressCircle: project.progress_circle,
         }));
