@@ -138,10 +138,10 @@ const LeaveSystem = () => {
   
       console.log("Response:", response.data); // Debug: Log the entire API response
   
-      // Check if the response contains the updated leave
-      const updatedLeave = response.data.updatedLeave;
+      // Get the leaveRequest from the response
+      const updatedLeave = response.data.leaveRequest;
   
-      // If updatedLeave is not valid or doesn't contain a leave_id, log an error
+      // Check if the updatedLeave is valid
       if (!updatedLeave || !updatedLeave.leave_id) {
         console.error("Updated leave is invalid. Response data:", response.data);
         alert("Error: Unable to update leave.");
@@ -177,6 +177,7 @@ const LeaveSystem = () => {
   
   
   
+  
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
@@ -195,11 +196,11 @@ const LeaveSystem = () => {
         />
         <select
           name="leaveType"
-          className="border border-gray-300 p-2 rounded w-full md:w-1/5"
+          className="border text-gray-400 border-gray-300 p-2 rounded w-full md:w-1/5"
           value={filters.leaveType}
           onChange={handleFilterChange}
         >
-          <option value="">เลือกประเภทการลา</option>
+          <option value="">Select a Leave Type</option>
           <option value="Sick Leave">Sick Leave</option>
           <option value="Private Leave">Private Leave</option>
           <option value="Annual Leave">Annual Leave</option>
@@ -208,14 +209,14 @@ const LeaveSystem = () => {
           <input
             type="date"
             name="startDate"
-            className="border border-gray-300 p-2 rounded flex-1"
+            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
             value={filters.startDate}
             onChange={handleFilterChange}
           />
           <input
             type="date"
             name="endDate"
-            className="border border-gray-300 p-2 rounded flex-1"
+            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
             value={filters.endDate}
             onChange={handleFilterChange}
           />

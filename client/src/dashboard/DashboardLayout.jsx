@@ -139,7 +139,7 @@ const DashboardLayout = ({
                 }`}
                 onClick={() => handleButtonClick("leave-system")}
               >
-                ระบบการลา
+                รายชื่อการลา
               </button>
               <button
                 className={`p-2 ml-2 rounded-t-lg ${

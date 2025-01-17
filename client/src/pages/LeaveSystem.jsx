@@ -196,11 +196,11 @@ const LeaveSystem = () => {
         />
         <select
           name="leaveType"
-          className="border border-gray-300 p-2 rounded w-full md:w-1/5"
+          className="border text-gray-400 border-gray-300 p-2 rounded w-full md:w-1/5"
           value={filters.leaveType}
           onChange={handleFilterChange}
         >
-          <option value="">เลือกประเภทการลา</option>
+          <option value="">Select a Leave Type</option>
           <option value="Sick Leave">Sick Leave</option>
           <option value="Private Leave">Private Leave</option>
           <option value="Annual Leave">Annual Leave</option>
@@ -209,14 +209,14 @@ const LeaveSystem = () => {
           <input
             type="date"
             name="startDate"
-            className="border border-gray-300 p-2 rounded flex-1"
+            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
             value={filters.startDate}
             onChange={handleFilterChange}
           />
           <input
             type="date"
             name="endDate"
-            className="border border-gray-300 p-2 rounded flex-1"
+            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
             value={filters.endDate}
             onChange={handleFilterChange}
           />
@@ -237,75 +237,26 @@ const LeaveSystem = () => {
             <th className="border border-gray-300 p-2">Leave type</th>
             <th className="border border-gray-300 p-2">Date</th>
             <th className="border border-gray-300 p-2">Status</th>
-            <th className="border border-gray-300 p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredLeaves.map((leave) => (
             <tr key={leave.leave_id}>
-              <td className="border border-gray-300 p-2">
+              <td className="border text-center border-gray-300 p-2">
                 {leave.firstname} {leave.lastname}
               </td>
-              <td className="border border-gray-300 p-2">{leave.leavetype}</td>
+              <td className="border text-center border-gray-300 p-2">{leave.leavetype}</td>
               <td className="border border-gray-300 p-2 text-center">
                 {formatDate(leave.startdate)} - {formatDate(leave.enddate)}
               </td>
               <td className="border border-gray-300 p-2 text-center">
                 {leave.status}
               </td>
-              <td className="border border-gray-300 p-2 text-center">
-                <button
-                  onClick={() => handleEdit(leave)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(leave.leave_id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Edit Modal */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Status</label>
-              <select
-                name="status"
-                value={editData.status}
-                onChange={handleEditChange}
-                className="border border-gray-300 p-2 rounded w-full"
-              >
-                <option value="">Select Status</option>
-                <option value="Allowed">Allowed</option>
-                <option value="Not Allowed">Not Allowed</option>
-              </select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveEdit}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
