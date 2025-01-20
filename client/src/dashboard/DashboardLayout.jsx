@@ -14,6 +14,10 @@ const DashboardLayout = ({
 
   // ตั้งค่า activeButton เริ่มต้นตามเส้นทางปัจจุบัน
   const [activeButton, setActiveButton] = useState("");
+  const [meetings, setMeetings] = useState([]);
+  const [filteredMeetings, setFilteredMeetings] = useState([]);
+  const [carBookings, setCarBookings] = useState([]);
+  const [filteredCarBookings, setFilteredCarBookings] = useState([]);
 
   useEffect(() => {
     // ตรวจสอบ `pathname` แล้วตั้งค่า `activeButton`
@@ -36,6 +40,28 @@ const DashboardLayout = ({
 
     setActiveButton(menuMapping[currentPath] || "");
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (activeMenu === "meeting") {
+      fetch("http://localhost:8080/api/meeting")
+        .then((res) => res.json())
+        .then((data) => {
+          setMeetings(data.listmeetingroom || []);
+          setFilteredMeetings(data.listmeetingroom || []);
+        })
+        .catch((err) => console.error("Error fetching meetings:", err));
+    }
+
+    if (activeMenu === "car-booking") {
+      fetch("http://localhost:8080/api/car-booking")
+        .then((res) => res.json())
+        .then((data) => {
+          setCarBookings(data.listcarbooking || []);
+          setFilteredCarBookings(data.listcarbooking || []);
+        })
+        .catch((err) => console.error("Error fetching car bookings:", err));
+    }
+  }, [activeMenu]);
 
   const handleButtonClick = (button) => {
     setActiveButton(button);
@@ -65,10 +91,12 @@ const DashboardLayout = ({
       .then((res) => res.json())
       .then((newMeeting) => {
         console.log("Meeting added:", newMeeting);
+        setMeetings((prev) => [...prev, newMeeting]);
+        setFilteredMeetings((prev) => [...prev, newMeeting]);
       })
       .catch((err) => console.error("Error:", err));
   };
-  
+
   const handleAddCarBooking = (data) => {
     fetch("http://localhost:8080/api/car-booking", {
       method: "POST",
@@ -78,10 +106,11 @@ const DashboardLayout = ({
       .then((res) => res.json())
       .then((newBooking) => {
         console.log("Car booking added:", newBooking);
+        setCarBookings((prev) => [...prev, newBooking]);
+        setFilteredCarBookings((prev) => [...prev, newBooking]);
       })
       .catch((err) => console.error("Error:", err));
   };
-  
 
   return (
     <div className="grid grid-cols-[300px_1fr] h-screen">
@@ -179,20 +208,28 @@ const DashboardLayout = ({
               </button>
             </div>
           )}
-          {activeMenu === "meeting" && (
+          {/* {activeMenu === "meeting" && (
             <div className="mb-4">
-              <Bubble onAdd={handleAddMeeting} />
+              <Bubble
+                data={meetings}
+                setFilteredData={setFilteredMeetings}
+                onAdd={handleAddMeeting}
+              />
             </div>
-          )}
-          {activeMenu === "car-booking" && (
+          )} */}
+          {/* {activeMenu === "car-booking" && (
             <div className="mb-4">
-              <Bubble onAdd={handleAddCarBooking} />
+              <Bubble
+                data={carBookings}
+                setFilteredData={setFilteredCarBookings}
+                onAdd={handleAddCarBooking}
+              />
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Content Area */}
-        <div className="h-[530px] p-2 bg-white overflow-y-auto">
+        <div className="h-full p-2 bg-white overflow-y-auto">
           <Outlet />
         </div>
       </div>

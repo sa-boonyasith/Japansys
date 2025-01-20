@@ -2,92 +2,92 @@ import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const Bubble = ({ setFilteredData, onAdd }) => {
-  const [meetingDetails, setMeetingDetails] = useState({
+const Bubble = ({ data, setFilteredData, onAdd, placeholder = "Search..." }) => {
+  const [filters, setFilters] = useState({
     name: "",
     startDate: null,
     endDate: null,
   });
 
-  // Handle input change
   const handleInputChange = (e) => {
-    setMeetingDetails({ ...meetingDetails, [e.target.name]: e.target.value });
+    setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  // Handle date picker change
   const handleDateChange = (name, date) => {
-    setMeetingDetails({ ...meetingDetails, [name]: date });
+    setFilters({ ...filters, [name]: date });
   };
 
-  // Automatically filter data when meetingDetails changes
   useEffect(() => {
-    if (setFilteredData) {
-      setFilteredData((prevData) => {
-        return prevData.filter((item) => {
-          const matchesName = meetingDetails.name
-            ? item.name.toLowerCase().includes(meetingDetails.name.toLowerCase())
-            : true;
-          const matchesStartDate = meetingDetails.startDate
-            ? new Date(item.startDate) >= new Date(meetingDetails.startDate)
-            : true;
-          const matchesEndDate = meetingDetails.endDate
-            ? new Date(item.endDate) <= new Date(meetingDetails.endDate)
-            : true;
+    if (data && setFilteredData) {
+      const filtered = data.filter((item) => {
+        const matchesName = filters.name
+          ? Object.values(item)
+              .join(" ")
+              .toLowerCase()
+              .includes(filters.name.toLowerCase())
+          : true;
+        const matchesStartDate = filters.startDate
+          ? new Date(item.startdate) >= new Date(filters.startDate)
+          : true;
+        const matchesEndDate = filters.endDate
+          ? new Date(item.enddate) <= new Date(filters.endDate)
+          : true;
 
-          return matchesName && matchesStartDate && matchesEndDate;
-        });
+        return matchesName && matchesStartDate && matchesEndDate;
       });
-    }
-  }, [meetingDetails, setFilteredData]);
 
-  // Handle add click
+      setFilteredData(filtered);
+    }
+  }, [filters, data, setFilteredData]);
+
   const handleAddClick = () => {
     if (onAdd) {
       const newEntry = {
-        name: meetingDetails.name || "Unnamed",
-        startDate: meetingDetails.startDate
-          ? meetingDetails.startDate.toISOString().split("T")[0]
+        firstname: filters.name || "Unnamed",
+        lastname: "",
+        startdate: filters.startDate
+          ? filters.startDate.toISOString().split("T")[0]
           : "",
-        endDate: meetingDetails.endDate
-          ? meetingDetails.endDate.toISOString().split("T")[0]
+        enddate: filters.endDate
+          ? filters.endDate.toISOString().split("T")[0]
           : "",
       };
-      onAdd(newEntry); // Pass the new entry to the parent
+      onAdd(newEntry);
     }
-    setMeetingDetails({ name: "", startDate: null, endDate: null }); // Reset form
+    setFilters({ name: "", startDate: null, endDate: null });
   };
 
-  // Handle reset click
   const handleResetClick = () => {
-    setMeetingDetails({ name: "", startDate: null, endDate: null });
+    setFilters({ name: "", startDate: null, endDate: null });
+    if (data && setFilteredData) {
+      setFilteredData(data);
+    }
   };
 
   return (
-    <div className="p-4 bg-white shadow-md rounded flex items-center justify-between space-x-4">
-      {/* Search Input */}
-      <div className="flex items-center flex-1">
+    <div className="p-4 bg-white shadow-md rounded flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4">
+      <div className="flex flex-1 w-full md:w-auto">
         <input
           type="text"
           name="name"
-          placeholder="Search for Name or Place"
-          value={meetingDetails.name}
+          placeholder={placeholder}
+          value={filters.name}
           onChange={handleInputChange}
           className="border border-gray-300 p-2 rounded w-full"
         />
       </div>
 
-      {/* Date Range Pickers */}
-      <div className="flex items-center space-x-2">
+      <div className="flex space-x-2 items-center w-full md:w-auto">
         <DatePicker
-          selected={meetingDetails.startDate}
+          selected={filters.startDate}
           onChange={(date) => handleDateChange("startDate", date)}
           dateFormat="yyyy-MM-dd"
           placeholderText="Start Date"
           className="border border-gray-300 p-2 rounded"
         />
-        <span>--</span>
+        <span>to</span>
         <DatePicker
-          selected={meetingDetails.endDate}
+          selected={filters.endDate}
           onChange={(date) => handleDateChange("endDate", date)}
           dateFormat="yyyy-MM-dd"
           placeholderText="End Date"
@@ -95,8 +95,7 @@ const Bubble = ({ setFilteredData, onAdd }) => {
         />
       </div>
 
-      {/* Buttons */}
-      <div className="flex items-center space-x-2">
+      <div className="flex space-x-2">
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded"
           onClick={handleAddClick}
