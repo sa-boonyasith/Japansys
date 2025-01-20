@@ -78,6 +78,8 @@ exports.update = async (req, res) => {
       enddate,
       timestart,
       timeend,
+      place,
+      car,
       status,
     } = req.body;
 
@@ -119,6 +121,8 @@ exports.update = async (req, res) => {
         enddate: formattedEndDate,
         timestart,
         timeend,
+        place,
+        car,
         status,
       },
     });

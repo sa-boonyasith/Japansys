@@ -2,12 +2,14 @@ const prisma = require("../config/prisma");
 
 exports.list = async (req, res) => {
   try {
-    const listmeetingroom = await prisma.leaveRequest.findMany();
+    const listmeetingroom = await prisma.meetingroom.findMany();
     res.json({ listmeetingroom });
   } catch (err) {
-    console.log(err);
+    console.error("Error fetching meeting rooms:", err.message);
+    res.status(500).json({ error: "Failed to fetch meeting rooms" });
   }
 };
+
 exports.create = async (req, res) => {
   try {
     const { employee_id, startdate, enddate, timestart, timeend } = req.body;

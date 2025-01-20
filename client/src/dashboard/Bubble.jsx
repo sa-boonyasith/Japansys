@@ -1,79 +1,65 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const Bubble = ({ setFilteredData }) => {
+const Bubble = ({ setFilteredData, onAdd }) => {
   const [meetingDetails, setMeetingDetails] = useState({
     name: "",
     startDate: null,
     endDate: null,
   });
 
-  const [meetingData, setMeetingData] = useState([
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-18",
-      endDate: "2024-02-18",
-      time: "16:00 - 17:00",
-      place: "Place Name",
-      car: "No.1",
-    },
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-19",
-      endDate: "2024-02-19",
-      time: "16:00 - 17:00",
-      place: "Place Name",
-      car: "No.2",
-    },
-  ]);
-
+  // Handle input change
   const handleInputChange = (e) => {
     setMeetingDetails({ ...meetingDetails, [e.target.name]: e.target.value });
   };
 
+  // Handle date picker change
   const handleDateChange = (name, date) => {
     setMeetingDetails({ ...meetingDetails, [name]: date });
   };
 
-  const handleAddClick = () => {
-    const newMeeting = {
-      name: meetingDetails.name || "Unnamed",
-      startDate: meetingDetails.startDate
-        ? meetingDetails.startDate.toISOString().split("T")[0]
-        : "",
-      endDate: meetingDetails.endDate
-        ? meetingDetails.endDate.toISOString().split("T")[0]
-        : "",
-      time: "16:00 - 17:00",
-      place: "Default Place",
-      car: "No.1",
-    };
+  // Automatically filter data when meetingDetails changes
+  useEffect(() => {
+    if (setFilteredData) {
+      setFilteredData((prevData) => {
+        return prevData.filter((item) => {
+          const matchesName = meetingDetails.name
+            ? item.name.toLowerCase().includes(meetingDetails.name.toLowerCase())
+            : true;
+          const matchesStartDate = meetingDetails.startDate
+            ? new Date(item.startDate) >= new Date(meetingDetails.startDate)
+            : true;
+          const matchesEndDate = meetingDetails.endDate
+            ? new Date(item.endDate) <= new Date(meetingDetails.endDate)
+            : true;
 
-    const updatedData = [...meetingData, newMeeting];
-    setMeetingData(updatedData);
-    setFilteredData(updatedData); // อัปเดตข้อมูลในตารางหลัก
-    setMeetingDetails({ name: "", startDate: null, endDate: null }); // รีเซ็ตฟอร์ม
+          return matchesName && matchesStartDate && matchesEndDate;
+        });
+      });
+    }
+  }, [meetingDetails, setFilteredData]);
+
+  // Handle add click
+  const handleAddClick = () => {
+    if (onAdd) {
+      const newEntry = {
+        name: meetingDetails.name || "Unnamed",
+        startDate: meetingDetails.startDate
+          ? meetingDetails.startDate.toISOString().split("T")[0]
+          : "",
+        endDate: meetingDetails.endDate
+          ? meetingDetails.endDate.toISOString().split("T")[0]
+          : "",
+      };
+      onAdd(newEntry); // Pass the new entry to the parent
+    }
+    setMeetingDetails({ name: "", startDate: null, endDate: null }); // Reset form
   };
 
-  const handleSearchClick = () => {
-    const { name, startDate, endDate } = meetingDetails;
-
-    const filtered = meetingData.filter((item) => {
-      const matchesName = name
-        ? item.name.toLowerCase().includes(name.toLowerCase())
-        : true;
-      const matchesStartDate = startDate
-        ? new Date(item.startDate) >= new Date(startDate)
-        : true;
-      const matchesEndDate = endDate
-        ? new Date(item.endDate) <= new Date(endDate)
-        : true;
-
-      return matchesName && matchesStartDate && matchesEndDate;
-    });
-
-    setFilteredData(filtered); // อัปเดตข้อมูลที่กรองแล้วให้ตาราง
+  // Handle reset click
+  const handleResetClick = () => {
+    setMeetingDetails({ name: "", startDate: null, endDate: null });
   };
 
   return (
@@ -118,10 +104,10 @@ const Bubble = ({ setFilteredData }) => {
           Add
         </button>
         <button
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={handleSearchClick}
+          className="bg-gray-500 text-white px-4 py-2 rounded"
+          onClick={handleResetClick}
         >
-          Search
+          Reset
         </button>
       </div>
     </div>

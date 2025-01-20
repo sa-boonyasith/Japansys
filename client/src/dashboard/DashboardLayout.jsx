@@ -27,6 +27,7 @@ const DashboardLayout = ({
       "/dashboard/leave-system": "leave-system",
       "/dashboard/leave-status": "leave-status",
       "/dashboard/meeting": "meeting",
+      "/dashboard/car-booking": "car-booking",
     };
 
     const currentPath = Object.keys(menuMapping).find((key) =>
@@ -54,6 +55,33 @@ const DashboardLayout = ({
 
     navigate(buttonMapping[button] || "/dashboard");
   };
+
+  const handleAddMeeting = (data) => {
+    fetch("http://localhost:8080/api/meeting", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+      .then((res) => res.json())
+      .then((newMeeting) => {
+        console.log("Meeting added:", newMeeting);
+      })
+      .catch((err) => console.error("Error:", err));
+  };
+  
+  const handleAddCarBooking = (data) => {
+    fetch("http://localhost:8080/api/car-booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+      .then((res) => res.json())
+      .then((newBooking) => {
+        console.log("Car booking added:", newBooking);
+      })
+      .catch((err) => console.error("Error:", err));
+  };
+  
 
   return (
     <div className="grid grid-cols-[300px_1fr] h-screen">
@@ -153,12 +181,12 @@ const DashboardLayout = ({
           )}
           {activeMenu === "meeting" && (
             <div className="mb-4">
-              <Bubble />
+              <Bubble onAdd={handleAddMeeting} />
             </div>
           )}
           {activeMenu === "car-booking" && (
             <div className="mb-4">
-              <Bubble />
+              <Bubble onAdd={handleAddCarBooking} />
             </div>
           )}
         </div>

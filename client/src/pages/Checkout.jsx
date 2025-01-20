@@ -27,33 +27,41 @@ const Checkout = () => {
         alert("Employee ID is required");
         return;
       }
-  
+
       const response = await axios.put("http://localhost:8080/api/attend", {
         employee_id: parseInt(employeeId),
       });
-  
+
       alert(response.data.message || "Checkout successfully");
-  
+
       // อัปเดตข้อมูลในตารางด้วยการเรียก API ใหม่
-      const updatedAttendance = await axios.get("http://localhost:8080/api/attend");
+      const updatedAttendance = await axios.get(
+        "http://localhost:8080/api/attend"
+      );
       setAttend(updatedAttendance.data);
     } catch (err) {
       console.error("Failed to checkout", err);
       alert(err.response?.data?.error || "Failed to checkout");
     }
   };
+  function formatHoursAndMinutes(hours) {
+    const totalMinutes = Math.floor(hours * 60); // แปลงชั่วโมงเป็นนาทีทั้งหมด
+    const h = Math.floor(totalMinutes / 60); // ชั่วโมง
+    const m = totalMinutes % 60; // นาที
+    return `${h}:${m.toString().padStart(2, "0")}`; // รูปแบบ HH:MM
+  }
   
 
   return (
     <div className="p-4">
-        <h1 className="text-xl font-semibold">Attendance Records</h1>
+      <h1 className="text-xl font-semibold">Attendance Records</h1>
       {error && <div className="text-red-500">{error}</div>}
       <button
-          onClick={handlecheckout}
-          className="bg-blue-500 mt-2 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-        >
-          Checkout
-        </button>
+        onClick={handlecheckout}
+        className="bg-blue-500 mt-2 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+      >
+        Checkout
+      </button>
       {!error && attend.length === 0 && <div>Loading...</div>}
       {attend.length > 0 && (
         <table className="table-auto w-full mt-4  border-collapse border border-gray-300">
@@ -63,7 +71,9 @@ const Checkout = () => {
               <th className="border border-gray-300 px-4 py-2">Firstname</th>
               <th className="border border-gray-300 px-4 py-2">Lastname</th>
               <th className="border border-gray-300 px-4 py-2">Check Out</th>
-              <th className="border border-gray-300 px-4 py-2">Working Hours</th>
+              <th className="border border-gray-300 px-4 py-2">
+                Working Hours
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -84,7 +94,9 @@ const Checkout = () => {
                     : "Not Checked Out"}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {att.working_hours || "N/A"}
+                  {att.working_hours
+                    ? formatHoursAndMinutes(att.working_hours)
+                    : "N/A"}
                 </td>
               </tr>
             ))}

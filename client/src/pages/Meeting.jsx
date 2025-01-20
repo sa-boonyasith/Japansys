@@ -1,83 +1,81 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const Meeting = () => {
-  const [meetingData, setMeetingData] = useState([
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-18",
-      endDate: "2024-02-18",
-      time: "16:00 - 17:00",
-    },
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-19",
-      endDate: "2024-02-19",
-      time: "16:00 - 17:00",
-    },
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-20",
-      endDate: "2024-02-20",
-      time: "16:00 - 17:00",
-    },
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-21",
-      endDate: "2024-02-21",
-      time: "16:00 - 17:00",
-    },
-  ]);
+  const [meeting, setMeeting] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleEdit = (index) => {
-    alert(`Edit functionality for row ${index + 1}`);
+  useEffect(() => {
+    const fetchMeeting = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/meeting');
+        setMeeting(response.data.listmeetingroom || []); // กำหนดเป็นอาร์เรย์ในกรณีที่ไม่มีข้อมูล
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch meeting data');
+        console.error(err);
+        setLoading(false);
+      }
+    };
+
+    fetchMeeting();
+  }, []);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0'); // เพิ่ม 0 ข้างหน้า ถ้าวันน้อยกว่า 10
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // เดือนเริ่มจาก 0, ต้องบวก 1
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
-  const handleDelete = (index) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete this meeting?`
-    );
-    if (confirmDelete) {
-      const updatedData = meetingData.filter((_, i) => i !== index);
-      setMeetingData(updatedData);
-    }
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  // ตรวจสอบว่า meeting เป็นอาร์เรย์
+  if (!Array.isArray(meeting)) {
+    return <div>No meeting data available</div>;
+  }
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-semibold mb-4">Meeting Room Schedule</h1>
+      <h1 className="text-xl font-semibold mb-4">Meeting Room Reservations</h1>
       <table className="table-auto w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">Meeting room username</th>
+            <th className="border border-gray-300 px-4 py-2">Meeting Name</th>
             <th className="border border-gray-300 px-4 py-2">Date</th>
             <th className="border border-gray-300 px-4 py-2">Time</th>
-            <th className="border border-gray-300 px-4 py-2">Action</th>
           </tr>
         </thead>
         <tbody>
-          {meetingData.map((meeting, index) => (
-            <tr key={index} className="text-center">
-              <td className="border border-gray-300 px-4 py-2">{meeting.name}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                {meeting.startDate} - {meeting.endDate}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">{meeting.time}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                <button
-                  onClick={() => handleEdit(index)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(index)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
+          {meeting.length > 0 ? (
+            meeting.map((item, index) => (
+              <tr key={index} className="text-center">
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.firstname} {item.lastname}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {formatDate(item.startdate)} - {formatDate(item.enddate)}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.timestart} - {item.timeend}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="3" className="border border-gray-300 px-4 py-2 text-center">
+                No meetings available
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

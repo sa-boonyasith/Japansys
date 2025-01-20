@@ -340,16 +340,19 @@ const AddJob = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium">อาศัย</label>
-            <input
-              type="text"
+            <label className="block text-sm font-medium">อาศัยอยู่กับ</label>
+            <select
               name="liveby"
               value={formData.liveby}
               onChange={handleChange}
-              placeholder="อยู่กับครอบครัว,คอนโด,บ้านเช่า,บ้านตัวเอง"
               required
               className="w-full p-2 border rounded"
-            />
+            >
+              <option value="โสด">อยู่กับครอบครัว</option>
+              <option value="แต่งงาน">บ้านตัวเอง</option>
+              <option value="หย่าร้าง">บ้านเช่า</option>
+              <option value="หม้าย">คอนโด</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium">จังหวัด</label>
@@ -384,7 +387,6 @@ const AddJob = () => {
               required
               className="w-full p-2 border rounded"
             >
-              <option value="">-- เลือกสถานภาพ --</option>
               <option value="โสด">โสด</option>
               <option value="แต่งงาน">แต่งงาน</option>
               <option value="หย่าร้าง">หย่าร้าง</option>
@@ -400,7 +402,6 @@ const AddJob = () => {
               required
               className="w-full p-2 border rounded"
             >
-              <option value="">-- เลือกภาวะทางการทหาร --</option>
               <option value="ได้รับการยกเว้น">ได้รับการยกเว้น</option>
               <option value="ปลดเป็นทหารกองหนุน">ปลดเป็นทหารกองหนุน</option>
               <option value="ยังไม่ได้รับการเกณฑ์">ยังไม่ได้รับการเกณฑ์</option>

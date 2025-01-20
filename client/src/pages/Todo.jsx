@@ -9,7 +9,7 @@ const Todo = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [employeeId, setEmployeeId] = useState(1);
+  const [employeeId, setEmployeeId] = useState();
   const [newTask, setNewTask] = useState({
     project_name: "",
     name: "",

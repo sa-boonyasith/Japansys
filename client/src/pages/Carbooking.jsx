@@ -1,97 +1,61 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const Carbooking = () => {
-  const [meetingData, setMeetingData] = useState([
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-18",
-      endDate: "2024-02-18",
-      time: "16:00 - 17:00",
-      place: "Place Name",
-      car: "No.1",
-    },
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-19",
-      endDate: "2024-02-19",
-      time: "16:00 - 17:00",
-      place: "Place Name",
-      car: "No.2",
-    },
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-20",
-      endDate: "2024-02-20",
-      time: "16:00 - 17:00",
-      place: "Place Name",
-      car: "No.2",
-    },
-    {
-      name: "Firstname Lastname",
-      startDate: "2024-02-21",
-      endDate: "2024-02-21",
-      time: "16:00 - 17:00",
-      place: "Place Name",
-      car: "No.1",
-    },
-  ]);
+  const [carBookings, setCarBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleEdit = (index) => {
-    alert(`Edit functionality for row ${index + 1}`);
-  };
+  useEffect(() => {
+    const fetchCarBookings = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/rentcar'); // URL API
+        setCarBookings(response.data.listrentcar || []); // Set to an empty array if no data
+        setLoading(false); // Stop loading when data is fetched
+      } catch (err) {
+        setError('Failed to fetch car booking records');
+        console.error(err);
+        setLoading(false); // Stop loading even if an error occurs
+      }
+    };
 
-  const handleDelete = (index) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete this meeting?`
-    );
-    if (confirmDelete) {
-      const updatedData = meetingData.filter((_, i) => i !== index);
-      setMeetingData(updatedData);
-    }
-  };
+    fetchCarBookings();
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-semibold mb-4">Reserve Car Schedule</h1>
-      <table className="table-auto w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">Reserve car name</th>
-            <th className="border border-gray-300 px-4 py-2">Date</th>
-            <th className="border border-gray-300 px-4 py-2">Time</th>
-            <th className="border border-gray-300 px-4 py-2">Place</th>
-            <th className="border border-gray-300 px-4 py-2">Car</th>
-            <th className="border border-gray-300 px-4 py-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {meetingData.map((meeting, index) => (
-            <tr key={index} className="text-center">
-              <td className="border border-gray-300 px-4 py-2">{meeting.name}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                {meeting.startDate} - {meeting.endDate}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">{meeting.time}</td>
-              <td className="border border-gray-300 px-4 py-2">{meeting.place}</td>
-              <td className="border border-gray-300 px-4 py-2">{meeting.car}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                <button
-                  onClick={() => handleEdit(index)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(index)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Car Booking Records</h1>
+      {carBookings.length === 0 ? (
+        <p>No car bookings available.</p>
+      ) : (
+        <table className="table-auto w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th className="border border-gray-300 px-4 py-2">Reserve Car Name</th>
+              <th className="border border-gray-300 px-4 py-2">Date</th>
+              <th className="border border-gray-300 px-4 py-2">Time </th>
+              <th className="border border-gray-300 px-4 py-2">Place</th>
+              <th className="border border-gray-300 px-4 py-2">Car</th>
+              <th className="border border-gray-300 px-4 py-2">Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {carBookings.map((booking) => (
+              <tr key={booking.rentcar_id}>
+                <td className="border border-gray-300 text-center px-4 py-2">{booking.firstname} {booking.lastname}</td>
+                <td className="border border-gray-300 text-center px-4 py-2">{new Date(booking.startdate).toLocaleDateString()}-{new Date(booking.enddate).toLocaleDateString()}</td>
+                <td className="border border-gray-300 text-center px-4 py-2">{booking.timestart}-{booking.timeend}</td>
+                <td className="border border-gray-300 text-center px-4 py-2">{booking.place}</td>
+                <td className="border border-gray-300 text-center px-4 py-2">{booking.car}</td>
+                <td className="border border-gray-300 text-center px-4 py-2">{booking.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
