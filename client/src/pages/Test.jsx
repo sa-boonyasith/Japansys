@@ -1,109 +1,148 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const Meeting = () => {
-  const [meetings, setMeetings] = useState([]);
-  const [filteredMeetings, setFilteredMeetings] = useState([]);
+const Carbooking = () => {
+  const [carBooking, setCarBooking] = useState([]);
+  const [filteredCarBookings, setFilteredCarBookings] = useState([]);
   const [filters, setFilters] = useState({
     search: "",
-    status: "",
     startDate: "",
     endDate: "",
     startTime: "",
     endTime: "",
+    status: "",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchMeetings = async () => {
+    const fetchCarBooking = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/meeting");
-        if (Array.isArray(response.data.listmeetingroom)) {
-          setMeetings(response.data.listmeetingroom);
-          setFilteredMeetings(response.data.listmeetingroom);
+        const res = await axios.get("http://localhost:8080/api/rentcar");
+        if (Array.isArray(res.data.listrentcar)) {
+          // จัดเรียงข้อมูลโดยคำนวณความใกล้เคียงกับวันที่ปัจจุบัน
+          const today = new Date();
+          const sortedCarBookings = res.data.listrentcar.sort((a, b) => {
+            const diffA = Math.abs(new Date(a.startdate) - today);
+            const diffB = Math.abs(new Date(b.startdate) - today);
+            return diffA - diffB;
+          });
+          setCarBooking(sortedCarBookings);
+          setFilteredCarBookings(sortedCarBookings);
         } else {
-          setError("Expected an array of meetings, but got something else.");
+          setError(
+            "Expected an array of car bookings, but got something else."
+          );
         }
-        setLoading(false);
       } catch (err) {
         setError("Failed to fetch data.");
+      } finally {
         setLoading(false);
       }
     };
-    fetchMeetings();
+    fetchCarBooking();
   }, []);
+  
+  
 
   const handleFilterChange = (e) => {
-    const newFilters = { ...filters, [e.target.name]: e.target.value };
+    const { name, value } = e.target;
+    const newFilters = { ...filters, [name]: value };
     setFilters(newFilters);
     applyFilters(newFilters);
   };
 
   const applyFilters = (currentFilters) => {
-    const filtered = meetings.filter((meeting) => {
-      const searchFilter = currentFilters.search
-        ? meeting.firstname.toLowerCase().includes(currentFilters.search.toLowerCase()) ||
-          meeting.lastname.toLowerCase().includes(currentFilters.search.toLowerCase())
-        : true;
-      const statusFilter = currentFilters.status ? meeting.status === currentFilters.status : true;
-      const startDateFilter = currentFilters.startDate
-        ? new Date(meeting.startdate) >= new Date(currentFilters.startDate)
-        : true;
-      const endDateFilter = currentFilters.endDate
-        ? new Date(meeting.enddate) <= new Date(currentFilters.endDate)
-        : true;
-      const startTimeFilter = currentFilters.startTime
-        ? meeting.timestart >= currentFilters.startTime
-        : true;
-      const endTimeFilter = currentFilters.endTime
-        ? meeting.timeend <= currentFilters.endTime
-        : true;
-
+    const filtered = carBooking.filter((car) => {
       return (
-        searchFilter &&
-        statusFilter &&
-        startDateFilter &&
-        endDateFilter &&
-        startTimeFilter &&
-        endTimeFilter
+        filterBySearch(car, currentFilters.search) &&
+        filterByDate(car, currentFilters.startDate, currentFilters.endDate) &&
+        filterByTime(car, currentFilters.startTime, currentFilters.endTime) &&
+        filterByExact(car, "status", currentFilters.status)
       );
     });
-    setFilteredMeetings(filtered);
+  
+    // Sort by the date closest to today
+    const sorted = filtered.sort((a, b) => {
+      const today = new Date();
+      const diffA = Math.abs(new Date(a.startdate) - today);
+      const diffB = Math.abs(new Date(b.startdate) - today);
+      return diffA - diffB;
+    });
+  
+    setFilteredCarBookings(sorted);
+  };
+  
+  
+  
+
+  const filterBySearch = (car, search) => {
+    if (!search) return true;
+    const searchText = search.toLowerCase();
+    return (
+      car.firstname.toLowerCase().includes(searchText) ||
+      car.lastname.toLowerCase().includes(searchText) ||
+      car.place.toLowerCase().includes(searchText)
+    );
+  };
+
+  const filterByDate = (car, startDate, endDate) => {
+    const carStartDate = new Date(car.startdate);
+    const carEndDate = new Date(car.enddate);
+    const filterStartDate = startDate ? new Date(startDate) : null;
+    const filterEndDate = endDate ? new Date(endDate) : null;
+
+    return (
+      (!filterStartDate || carStartDate >= filterStartDate) &&
+      (!filterEndDate || carEndDate <= filterEndDate)
+    );
+  };
+
+  const filterByTime = (car, startTime, endTime) => {
+    return (
+      (!startTime || car.timestart >= startTime) &&
+      (!endTime || car.timeend <= endTime)
+    );
+  };
+
+  const filterByExact = (car, field, value) => {
+    return !value || car[field] === value;
   };
 
   const resetFilters = () => {
     const initialFilters = {
       search: "",
-      status: "",
       startDate: "",
       endDate: "",
       startTime: "",
       endTime: "",
+      status: "",
     };
     setFilters(initialFilters);
-    setFilteredMeetings(meetings);
+    setFilteredCarBookings(carBooking);
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).replace(/\//g, "-");
+    return new Date(dateString)
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
   };
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="p-6 bg-gray-200">
+    <div className="p-6">
       <div className="bg-white shadow-md p-4 rounded-lg mb-6">
         <div className="flex flex-wrap gap-4">
           <input
             type="text"
             name="search"
-            placeholder="Search for Name"
+            placeholder="Search for Name or Place"
             className="border border-gray-300 p-2 rounded w-full md:w-1/5"
             value={filters.search}
             onChange={handleFilterChange}
@@ -151,7 +190,10 @@ const Meeting = () => {
             <option value="allowed">Allowed</option>
             <option value="rejected">Rejected</option>
           </select>
-          <button onClick={resetFilters} className="bg-gray-500 text-white px-4 py-2 rounded">
+          <button
+            onClick={resetFilters}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
             Reset
           </button>
         </div>
@@ -160,31 +202,47 @@ const Meeting = () => {
       <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
         <thead className="bg-blue-600 text-white">
           <tr>
-            <th className="border border-gray-300 p-2">Meeting room username</th>
+            <th className="border border-gray-300 p-2">Name</th>
             <th className="border border-gray-300 p-2">Date</th>
             <th className="border border-gray-300 p-2">Time</th>
-            <th className="border border-gray-300 p-2">Status</th>
+            <th className="border border-gray-300 p-2">Place</th>
+            <th className="border border-gray-300 p-2">Car</th>
           </tr>
         </thead>
         <tbody>
-          {filteredMeetings.map((meeting) => (
-            <tr key={meeting.meeting_id}>
+          {filteredCarBookings.map((carbooking) => (
+            <tr key={carbooking.rentcar_id}>
               <td className="border text-center border-gray-300 p-2">
-                {meeting.firstname} {meeting.lastname}
+                {carbooking.firstname} {carbooking.lastname}
               </td>
               <td className="border text-center border-gray-300 p-2">
-                {formatDate(meeting.startdate)} - {formatDate(meeting.enddate)}
+                {formatDate(carbooking.startdate)} -{" "}
+                {formatDate(carbooking.enddate)}
+              </td>
+              <td
+                className="border text-center border-gray-300 p-2"
+              >
+                {carbooking.timestart} - {carbooking.timeend}
               </td>
               <td className="border text-center border-gray-300 p-2">
-                {meeting.timestart} - {meeting.timeend}
+                {carbooking.place}
               </td>
-              <td className="border text-center border-gray-300 p-2">{meeting.status}</td>
+              <td className="border text-center border-gray-300 p-2">
+                {carbooking.car}
+              </td>
             </tr>
           ))}
+          {filteredCarBookings.length === 0 && (
+            <tr>
+              <td colSpan="5" className="text-center text-gray-500 p-4">
+                No bookings found matching the filters.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
   );
 };
 
-export default Meeting;
+export default Carbooking;
