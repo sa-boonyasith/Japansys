@@ -179,24 +179,34 @@ const DashboardLayout = ({
               </button>
             </div>
           )}
-          {/* {activeMenu === "meeting" && (
-            <div className="mb-4">
-              <Bubble
-                data={meetings}
-                setFilteredData={setFilteredMeetings}
-                onAdd={handleAddMeeting}
-              />
+          {activeMenu === "meeting" && (
+            <div className="">
+               <button
+                className={`p-2 rounded-t-lg ${
+                  activeButton === "meeting" ? "bg-white" : "bg-gray-300"
+                }`}
+                onClick={() => handleButtonClick("meeting")}
+              >
+                รายชื่อการนัดประชุม
+              </button>
+              <button
+                className={`p-2 ml-2 rounded-t-lg ${
+                  activeButton === "leave-status" ? "bg-white" : "bg-gray-300"
+                }`}
+                onClick={() => handleButtonClick("leave-status")}
+              >
+                จัดการประชุม
+              </button>
             </div>
-          )} */}
-          {/* {activeMenu === "car-booking" && (
+          )}
+          {activeMenu === "car-booking" && (
             <div className="mb-4">
               <Bubble
                 data={carBookings}
                 setFilteredData={setFilteredCarBookings}
-                onAdd={handleAddCarBooking}
               />
             </div>
-          )} */}
+          )}
         </div>
 
         {/* Content Area */}

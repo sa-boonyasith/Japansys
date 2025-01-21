@@ -12,6 +12,16 @@ const Carbooking = () => {
     endTime: "",
     status: "",
   });
+    const [newRentcar, setnewRentcar] = useState({
+      employee_id: "",
+      startdate: "",
+      enddate: "",
+      timestart: "",
+      timeend: "",
+      place: "",
+      car :"",
+    });
+    const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -132,6 +142,54 @@ const Carbooking = () => {
       .replace(/\//g, "-");
   };
 
+  const handleModalChange = (e)=>{
+    setnewRentcar({...newRentcar,[e.target.name]:e.target.value})
+  }
+
+  const handleAddRentcar = async () => {
+    if (
+      !newRentcar.employee_id ||
+      !newRentcar.startdate ||
+      !newRentcar.enddate ||
+      !newRentcar.timestart ||
+      !newRentcar.timeend ||
+      !newRentcar.place || 
+      !newRentcar.car 
+    ) {
+      alert("Please fill out all required fields.");
+      return;
+    }
+
+    try {
+      const payload = {
+        ...newRentcar,
+        employee_id: parseInt(newRentcar.employee_id, 10),
+      };
+
+      const response = await axios.post("http://localhost:8080/api/rentcar", payload);
+      if (response.data && response.data.newrentcar) {
+        setCarBooking([...carBooking, response.data.newrentcar]);
+        setFilteredCarBookings([...filteredCarBookings, response.data.newrentcar]);
+        setShowAddModal(false);
+        setnewRentcar({
+          employee_id: "",
+          startdate: "",
+          enddate: "",
+          timestart: "",
+          timeend: "",
+          place:"",
+          car:"",
+        });
+      } else {
+        alert("Unexpected response from the server.");
+        console.log(error)
+      }
+    } catch (error) {
+      console.error("Failed to add meeting:", error);
+      alert("Error adding meeting. Please try again.");
+    }
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -196,6 +254,12 @@ const Carbooking = () => {
           >
             Reset
           </button>
+          <button
+          onClick={()=> setShowAddModal(true)}
+          className="bg-green-500 text-white px-4 py-2 rounded"
+          >
+            Add Meeting
+          </button>
         </div>
       </div>
 
@@ -245,6 +309,79 @@ const Carbooking = () => {
           )}
         </tbody>
       </table>
+      {showAddModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h2 className="text-lg font-bold mb-4">Add Rentcar</h2>
+            <input
+              type="text"
+              name="employee_id"
+              placeholder="Employee ID"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newRentcar.employee_id}
+              onChange={handleModalChange}
+            />
+            <input
+              type="date"
+              name="startdate"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newRentcar.startdate}
+              onChange={handleModalChange}
+            />
+            <input
+              type="date"
+              name="enddate"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newRentcar.enddate}
+              onChange={handleModalChange}
+            />
+            <input
+              type="time"
+              name="timestart"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newRentcar.timestart}
+              onChange={handleModalChange}
+            />
+            <input
+              type="time"
+              name="timeend"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newRentcar.timeend}
+              onChange={handleModalChange}
+            />
+            <input
+              type="text"
+              name="place"
+              placeholder="Place"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newRentcar.place}
+              onChange={handleModalChange}
+            />
+            <input
+              type="text"
+              name="car"
+              placeholder="Car"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newRentcar.car}
+              onChange={handleModalChange}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddRentcar}
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

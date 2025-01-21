@@ -12,6 +12,14 @@ const Meeting = () => {
     startTime: "",
     endTime: "",
   });
+  const [newMeeting, setNewMeeting] = useState({
+    employee_id: "",
+    startdate: "",
+    enddate: "",
+    timestart: "",
+    timeend: "",
+  });
+  const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -107,12 +115,56 @@ const Meeting = () => {
     }).replace(/\//g, "-");
   };
 
+  const handleModalChange = (e) => {
+    setNewMeeting({ ...newMeeting, [e.target.name]: e.target.value });
+  };
+
+  const handleAddMeeting = async () => {
+    if (
+      !newMeeting.employee_id ||
+      !newMeeting.startdate ||
+      !newMeeting.enddate ||
+      !newMeeting.timestart ||
+      !newMeeting.timeend
+    ) {
+      alert("Please fill out all required fields.");
+      return;
+    }
+
+    try {
+      const payload = {
+        ...newMeeting,
+        employee_id: parseInt(newMeeting.employee_id, 10),
+      };
+
+      const response = await axios.post("http://localhost:8080/api/meeting", payload);
+      if (response.data && response.data.newmeetingroom) {
+        setMeetings([...meetings, response.data.newmeetingroom]);
+        setFilteredMeetings([...filteredMeetings, response.data.newmeetingroom]);
+        setShowAddModal(false);
+        setNewMeeting({
+          employee_id: "",
+          startdate: "",
+          enddate: "",
+          timestart: "",
+          timeend: "",
+        });
+      } else {
+        alert("Unexpected response from the server.");
+      }
+    } catch (error) {
+      console.error("Failed to add meeting:", error);
+      alert("Error adding meeting. Please try again.");
+    }
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="p-6 ">
-      <div className=" shadow-lg p-4 rounded-lg mb-6">
+    <div className="p-6">
+      {/* Filters */}
+      <div className="shadow-lg p-4 rounded-lg mb-6">
         <div className="flex flex-wrap gap-4">
           <input
             type="text"
@@ -168,9 +220,16 @@ const Meeting = () => {
           <button onClick={resetFilters} className="bg-gray-500 text-white px-4 py-2 rounded">
             Reset
           </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-green-500 text-white  px-4 py-2 rounded"
+          >
+            Add Meeting
+          </button>
         </div>
       </div>
 
+      {/* Table */}
       <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
         <thead className="bg-blue-600 text-white">
           <tr>
@@ -197,6 +256,65 @@ const Meeting = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Add Meeting Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h2 className="text-lg font-bold mb-4">Add Meeting</h2>
+            <input
+              type="text"
+              name="employee_id"
+              placeholder="Employee ID"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newMeeting.employee_id}
+              onChange={handleModalChange}
+            />
+            <input
+              type="date"
+              name="startdate"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newMeeting.startdate}
+              onChange={handleModalChange}
+            />
+            <input
+              type="date"
+              name="enddate"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newMeeting.enddate}
+              onChange={handleModalChange}
+            />
+            <input
+              type="time"
+              name="timestart"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newMeeting.timestart}
+              onChange={handleModalChange}
+            />
+            <input
+              type="time"
+              name="timeend"
+              className="border border-gray-300 p-2 rounded w-full mb-2"
+              value={newMeeting.timeend}
+              onChange={handleModalChange}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddMeeting}
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
