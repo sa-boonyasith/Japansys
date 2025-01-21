@@ -38,7 +38,7 @@ exports.listproject = async(req,res)=>{
 exports.create = async (req, res) => {
   try {
     // รับค่าจาก body
-    const { project_name, employee_id, todo } = req.body;
+    const { project_name, employee_id, todo  } = req.body;
 
     // ตรวจสอบว่ามี employee_id และ task ย่อยหรือไม่
     if (!employee_id || !Array.isArray(todo) || todo.length === 0) {

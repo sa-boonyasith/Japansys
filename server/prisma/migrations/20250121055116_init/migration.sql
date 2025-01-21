@@ -96,7 +96,7 @@ CREATE TABLE `LeaveRequest` (
     `startdate` DATE NOT NULL,
     `enddate` DATE NOT NULL,
     `action` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
-    `status` ENUM('pending', 'allowed', 'rejected') NOT NULL DEFAULT 'pending',
+    `status` VARCHAR(191) NOT NULL DEFAULT 'Pending',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 

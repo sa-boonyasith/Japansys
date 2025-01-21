@@ -22,6 +22,8 @@ import Progress from "./pages/Progress";
 import Status from "./pages/Status";
 import Test from "./pages/Test"
 import Test2 from "./pages/Test2"
+import EditCarbooking from "./pages/EditCarbooking";
+import EditMeeting from "./pages/EditMeeting";
 
 
 const App = () => {
@@ -97,6 +99,8 @@ const App = () => {
             <Route path="expense-system" element={<ExpenseSystem />} />
             <Route path="salary" element={<Salary />} />
             <Route path="trial" element={<Trial />} />
+            <Route path="editcar" element={<EditCarbooking />} />
+            <Route path="editmeeting" element={<EditMeeting />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="progress" element={<Progress />} />
             <Route path="leave-status" element={<Status />} />

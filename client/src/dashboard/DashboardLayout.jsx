@@ -32,6 +32,8 @@ const DashboardLayout = ({
       "/dashboard/leave-status": "leave-status",
       "/dashboard/meeting": "meeting",
       "/dashboard/car-booking": "car-booking",
+      "/dashboard/editcar":"editcar",
+      "/dashboard/editmeeting":"editmeeting"
     };
 
     const currentPath = Object.keys(menuMapping).find((key) =>
@@ -77,6 +79,8 @@ const DashboardLayout = ({
       "leave-status": "/dashboard/leave-status",
       meeting: "/dashboard/meeting",
       carbooking: "/dashboard/car-booking",
+      editcar :"/dashboard/editcar",
+      editmeeting:"/dashboard/editmeeting"
     };
 
     navigate(buttonMapping[button] || "/dashboard");
@@ -191,9 +195,9 @@ const DashboardLayout = ({
               </button>
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
-                  activeButton === "leave-status" ? "bg-white" : "bg-gray-300"
+                  activeButton === "editmeeting" ? "bg-white" : "bg-gray-300"
                 }`}
-                onClick={() => handleButtonClick("leave-status")}
+                onClick={() => handleButtonClick("editmeeting")}
               >
                 จัดการประชุม
               </button>

@@ -148,7 +148,7 @@ const LeaveSystem = () => {
   return (
     <div className="p-6 ">
       {/* Search and Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex flex-wrap shadow-md p-2 rounded-md gap-4 mb-6">
         <input
           type="text"
           name="search"
