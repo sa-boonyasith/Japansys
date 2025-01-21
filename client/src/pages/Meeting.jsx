@@ -20,8 +20,14 @@ const Meeting = () => {
       try {
         const response = await axios.get("http://localhost:8080/api/meeting");
         if (Array.isArray(response.data.listmeetingroom)) {
-          setMeetings(response.data.listmeetingroom);
-          setFilteredMeetings(response.data.listmeetingroom);
+          const today = new Date();
+          const sortedMeetings = response.data.listmeetingroom.sort((a, b) => {
+            const diffA = Math.abs(new Date(a.startdate) - today);
+            const diffB = Math.abs(new Date(b.startdate) - today);
+            return diffA - diffB;
+          });
+          setMeetings(sortedMeetings);
+          setFilteredMeetings(sortedMeetings);
         } else {
           setError("Expected an array of meetings, but got something else.");
         }
@@ -69,7 +75,15 @@ const Meeting = () => {
         endTimeFilter
       );
     });
-    setFilteredMeetings(filtered);
+
+    const sorted = filtered.sort((a, b) => {
+      const today = new Date();
+      const diffA = Math.abs(new Date(a.startdate) - today);
+      const diffB = Math.abs(new Date(b.startdate) - today);
+      return diffA - diffB;
+    });
+
+    setFilteredMeetings(sorted);
   };
 
   const resetFilters = () => {
@@ -97,8 +111,8 @@ const Meeting = () => {
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="p-6 bg-gray-200">
-      <div className="bg-white shadow-md p-4 rounded-lg mb-6">
+    <div className="p-6 ">
+      <div className=" shadow-lg p-4 rounded-lg mb-6">
         <div className="flex flex-wrap gap-4">
           <input
             type="text"

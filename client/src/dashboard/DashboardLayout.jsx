@@ -82,35 +82,6 @@ const DashboardLayout = ({
     navigate(buttonMapping[button] || "/dashboard");
   };
 
-  const handleAddMeeting = (data) => {
-    fetch("http://localhost:8080/api/meeting", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-      .then((res) => res.json())
-      .then((newMeeting) => {
-        console.log("Meeting added:", newMeeting);
-        setMeetings((prev) => [...prev, newMeeting]);
-        setFilteredMeetings((prev) => [...prev, newMeeting]);
-      })
-      .catch((err) => console.error("Error:", err));
-  };
-
-  const handleAddCarBooking = (data) => {
-    fetch("http://localhost:8080/api/car-booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-      .then((res) => res.json())
-      .then((newBooking) => {
-        console.log("Car booking added:", newBooking);
-        setCarBookings((prev) => [...prev, newBooking]);
-        setFilteredCarBookings((prev) => [...prev, newBooking]);
-      })
-      .catch((err) => console.error("Error:", err));
-  };
 
   return (
     <div className="grid grid-cols-[300px_1fr] h-screen">
