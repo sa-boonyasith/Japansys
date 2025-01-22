@@ -1,39 +1,33 @@
 const prisma = require("../config/prisma");
 const cron = require("node-cron");
 
-
 cron.schedule("0 0 * * *", async () => {
-  const currentTime = new Date(); 
-
-  // Check if it's midnight in local time
-  if (currentTime.getHours() === 0 && currentTime.getMinutes() === 0) {
-    try {
-    
-      await prisma.attend.updateMany({
-        where: {
-          check_in_time: {
-            not: null,
-          },
+  try {
+    // Reset fields for attendance records that are not null
+    await prisma.attend.updateMany({
+      where: {
+        check_in_time: {
+          not: null,
         },
-        data: {
-          check_in_time: null,
-          check_out_time: null,
-          working_hours: null,
-          status: "not_checked_in",
-        },
-      });
+      },
+      data: {
+        check_in_time: null,
+        check_out_time: null,
+        working_hours: null,
+        status: "not_checked_in",
+      },
+    });
 
-      console.log("Working hours reset successfully at midnight");
-    } catch (error) {
-      console.error("Error resetting working hours:", error);
-    }
+    console.log("Attendance records reset successfully at midnight");
+  } catch (error) {
+    console.error("Error resetting attendance records:", error);
   }
 });
 
 exports.list = async (req, res) => {
   try {
     const listAttend = await prisma.attend.findMany();
-    res.json( listAttend );
+    res.json(listAttend);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Failed to retrieve attendance records" });
@@ -173,13 +167,11 @@ exports.remove = async (req, res) => {
     ]);
 
     // Respond with success
-    res.json({ message: "Attendance records moved to history and deleted successfully" });
+    res.json({
+      message: "Attendance records moved to history and deleted successfully",
+    });
   } catch (err) {
-    console.error(err);  // More detailed error logging
+    console.error(err); // More detailed error logging
     res.status(500).json({ error: "Failed to remove attendance record" });
   }
 };
-
-  
-  
-  

@@ -34,6 +34,7 @@ const DashboardLayout = ({
       "/dashboard/car-booking": "car-booking",
       "/dashboard/editcar":"editcar",
       "/dashboard/editmeeting":"editmeeting"
+      
     };
 
     const currentPath = Object.keys(menuMapping).find((key) =>
@@ -199,16 +200,28 @@ const DashboardLayout = ({
                 }`}
                 onClick={() => handleButtonClick("editmeeting")}
               >
-                จัดการประชุม
+                สถานะการยืนยันคำขอ
               </button>
             </div>
           )}
           {activeMenu === "car-booking" && (
-            <div className="mb-4">
-              <Bubble
-                data={carBookings}
-                setFilteredData={setFilteredCarBookings}
-              />
+            <div className="">
+              <button
+                className={`p-2 rounded-t-lg ${
+                  activeButton === "car-booking" ? "bg-white" : "bg-gray-300"
+                }`}
+                onClick={() => handleButtonClick("carbooking")}
+              >
+                รายชื่อการยืมรถ
+              </button>
+              <button
+                className={`p-2 ml-2 rounded-t-lg ${
+                  activeButton === "editcar" ? "bg-white" : "bg-gray-300"
+                }`}
+                onClick={() => handleButtonClick("editcar")}
+              >
+                สถานะการยืนยันคำขอ
+              </button>
             </div>
           )}
         </div>

@@ -83,16 +83,22 @@ exports.update = async (req, res) => {
       status,
     } = req.body;
 
-    const employee = await prisma.employee.findUnique({
-        where: { id: employee_id },
-        select: { firstname: true, lastname: true },
-      });
-  
-      if (!employee) {
-        return res.status(404).json({ error: "Employee not found" });
-      }
-    
+    // ตรวจสอบว่า id เป็นตัวเลข
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ error: "Invalid ID" });
+    }
 
+    // ค้นหาข้อมูลพนักงาน
+    const employee = await prisma.employee.findUnique({
+      where: { id: employee_id },
+      select: { firstname: true, lastname: true },
+    });
+
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    // ตรวจสอบ startdate และ enddate
     const validStartDate =
       startdate && !isNaN(new Date(startdate).getTime())
         ? new Date(startdate)
@@ -104,19 +110,19 @@ exports.update = async (req, res) => {
       return res.status(400).json({ error: "Invalid startdate or enddate" });
     }
 
-    const formattedStartDate =
-      validStartDate.toISOString().split("T")[0] + "T00:00:00.000Z";
-    const formattedEndDate =
-      validEndDate.toISOString().split("T")[0] + "T23:59:59.000Z";
+    // แปลงวันที่เป็น ISO-8601
+    const formattedStartDate = validStartDate.toISOString();
+    const formattedEndDate = validEndDate.toISOString();
 
+    // อัปเดตข้อมูล
     const update = await prisma.rentcar.update({
       where: {
         rentcar_id: Number(id),
       },
       data: {
         employee_id,
-        firstname:employee.firstname,
-        lastname:employee.lastname,
+        firstname: employee.firstname,
+        lastname: employee.lastname,
         startdate: formattedStartDate,
         enddate: formattedEndDate,
         timestart,
@@ -127,15 +133,17 @@ exports.update = async (req, res) => {
       },
     });
 
+    // ส่ง Response
     res.status(201).json({
-      message: "Rentcar created successfully",
+      message: "Rentcar updated successfully",
       update,
     });
   } catch (err) {
-    console.log("Error updateing Rentcar:", err);
+    console.error("Error updating Rentcar:", err.message, err.stack);
     res.status(500).json({ error: "Failed to update Rentcar" });
   }
 };
+
 exports.remove = async (req, res) => {
   try {
     const { id } = req.params;

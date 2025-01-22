@@ -478,6 +478,7 @@ const Editmeeting = () => {
             value={editMeeting.status}
             onChange={handleEditModalChange}
           >
+            <option value="pending">Pending</option>
             <option value="allowed">Allowed</option>
             <option value="rejected">Rejected</option>
           </select>

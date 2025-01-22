@@ -1,505 +1,168 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React from 'react';
+import { Search, Download, Mail, CreditCard } from 'lucide-react';
 
-const Editmeeting = () => {
-  const [meetings, setMeetings] = useState([]);
-  const [filteredMeetings, setFilteredMeetings] = useState([]);
-  const [filters, setFilters] = useState({
-    search: "",
-    status: "",
-    startDate: "",
-    endDate: "",
-    startTime: "",
-    endTime: "",
-  });
-  const [newMeeting, setNewMeeting] = useState({
-    employee_id: "",
-    startdate: "",
-    enddate: "",
-    timestart: "",
-    timeend: "",
-  });
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editMeeting, setEditMeeting] = useState(null); 
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const response = await axios.get("http://localhost:8080/api/meeting");
-        if (Array.isArray(response.data.listmeetingroom)) {
-          const today = new Date();
-          const sortedMeetings = response.data.listmeetingroom.sort((a, b) => {
-            const diffA = Math.abs(new Date(a.startdate) - today);
-            const diffB = Math.abs(new Date(b.startdate) - today);
-            return diffA - diffB;
-          });
-          setMeetings(sortedMeetings);
-          setFilteredMeetings(sortedMeetings);
-        } else {
-          setError("Expected an array of meetings, but got something else.");
-        }
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch data.");
-        setLoading(false);
-      }
-    };
-    fetchMeetings();
-  }, []);
-
-  const handleFilterChange = (e) => {
-    const newFilters = { ...filters, [e.target.name]: e.target.value };
-    setFilters(newFilters);
-    applyFilters(newFilters);
-  };
-
-  const applyFilters = (currentFilters) => {
-    const filtered = meetings.filter((meeting) => {
-      const searchFilter = currentFilters.search
-        ? meeting.firstname
-            .toLowerCase()
-            .includes(currentFilters.search.toLowerCase()) ||
-          meeting.lastname
-            .toLowerCase()
-            .includes(currentFilters.search.toLowerCase())
-        : true;
-      const statusFilter = currentFilters.status
-        ? meeting.status === currentFilters.status
-        : true;
-      const startDateFilter = currentFilters.startDate
-        ? new Date(meeting.startdate) >= new Date(currentFilters.startDate)
-        : true;
-      const endDateFilter = currentFilters.endDate
-        ? new Date(meeting.enddate) <= new Date(currentFilters.endDate)
-        : true;
-      const startTimeFilter = currentFilters.startTime
-        ? meeting.timestart >= currentFilters.startTime
-        : true;
-      const endTimeFilter = currentFilters.endTime
-        ? meeting.timeend <= currentFilters.endTime
-        : true;
-
-      return (
-        searchFilter &&
-        statusFilter &&
-        startDateFilter &&
-        endDateFilter &&
-        startTimeFilter &&
-        endTimeFilter
-      );
-    });
-
-    const sorted = filtered.sort((a, b) => {
-      const today = new Date();
-      const diffA = Math.abs(new Date(a.startdate) - today);
-      const diffB = Math.abs(new Date(b.startdate) - today);
-      return diffA - diffB;
-    });
-
-    setFilteredMeetings(sorted);
-  };
-
-  const resetFilters = () => {
-    const initialFilters = {
-      search: "",
-      status: "",
-      startDate: "",
-      endDate: "",
-      startTime: "",
-      endTime: "",
-    };
-    setFilters(initialFilters);
-    setFilteredMeetings(meetings);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString)
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "-");
-  };
-
-  const formatInputDate = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-  
-
-  const handleModalChange = (e) => {
-    setNewMeeting({ ...newMeeting, [e.target.name]: e.target.value });
-  };
-
-  const handleEditModalChange = (e) => {  // For edit modal
-    setEditMeeting({ ...editMeeting, [e.target.name]: e.target.value });
-  };
-
-  const handleAddMeeting = async () => {
-    if (
-      !newMeeting.employee_id ||
-      !newMeeting.startdate ||
-      !newMeeting.enddate ||
-      !newMeeting.timestart ||
-      !newMeeting.timeend
-    ) {
-      alert("Please fill out all required fields.");
-      return;
-    }
-
-    try {
-      const payload = {
-        ...newMeeting,
-        employee_id: parseInt(newMeeting.employee_id, 10),
-      };
-
-      const response = await axios.post(
-        "http://localhost:8080/api/meeting",
-        payload
-      );
-      if (response.data && response.data.newmeetingroom) {
-        setMeetings([...meetings, response.data.newmeetingroom]);
-        setFilteredMeetings([
-          ...filteredMeetings,
-          response.data.newmeetingroom,
-        ]);
-        setShowAddModal(false);
-        setNewMeeting({
-          employee_id: "",
-          startdate: "",
-          enddate: "",
-          timestart: "",
-          timeend: "",
-        });
-      } else {
-        const serverMessage =
-        response.data && response.data.message
-          ? response.data.message
-          : "Unexpected response from the server.";
-      alert(serverMessage); // แสดงข้อความจาก response หากมี
-        
-      }
-    } catch (error) {
-      console.error("Failed to add meeting:", error);
-      alert("Error adding meeting. Please try again.");
-    }
-  };
-  const handleEditMeeting = async () => {
-    if (!editMeeting) {
-      alert("Please select a meeting to edit.");
-      return;
-    }
-  
-    try {
-      const response = await axios.put(
-        `http://localhost:8080/api/meeting/${editMeeting.meeting_id}`,
-        editMeeting
-      );
-  
-      if (response.status === 201 && response.data?.update) {
-        const updatedMeetings = meetings.map((meeting) =>
-          meeting.meeting_id === editMeeting.meeting_id
-            ? { ...meeting, ...response.data.update }
-            : meeting
-        );
-  
-        // Update state with new meeting data
-        setMeetings(updatedMeetings);
-        setFilteredMeetings(updatedMeetings);
-  
-        // Reset UI states after successful edit
-        setShowEditModal(false);
-        setEditMeeting(null);
-      } else {
-        alert("Unexpected response from the server. Please check your data.");
-      }
-    } catch (error) {
-      console.error("Failed to edit meeting:", error);
-  
-      // Show appropriate error feedback
-      const errorMessage =
-        error.response?.data?.error || "An error occurred while editing the meeting. Please try again.";
-      alert(errorMessage);
-    }
-  };
-  
-  const handleDeleteMeeting = async (meetingId) => {
-    if (window.confirm("Are you sure you want to delete this meeting?")) {
-      try {
-        const response = await axios.delete(
-          `http://localhost:8080/api/meeting/${meetingId}`
-        );
-        if (response.data && response.data.deleted) {
-          const updatedMeetings = meetings.filter(
-            (meeting) => meeting.meeting_id !== meetingId
-          );
-          setMeetings(updatedMeetings);
-          setFilteredMeetings(updatedMeetings);
-        } else {
-          alert("Unexpected response from the server.");
-        }
-      } catch (error) {
-        console.error("Failed to delete meeting:", error);
-        alert("Error deleting meeting. Please try again.");
-      }
-    }
-  };
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+const ExpenseSystem = () => {
+  const employeeData = [
+    { id: 'PR-000000036', status: 'จ่ายแล้ว', period: 'ประจำเดือน 12/62', payDate: '03/12/63', name: 'อี้ปโป้ ร้อยตพ', position: 'แม่บ้าน', salary: 8000.00, deduction: 0.00, tax: 400.00, netPay: 7600.00 },
+    { id: 'PR-000000035', status: 'จ่ายแล้ว', period: 'ประจำเดือน 12/62', payDate: '03/12/63', name: 'ดวงดารดา เบญญ', position: 'ลูกน้อง', salary: 15000.00, deduction: 0.00, tax: 750.00, netPay: 14250.00 },
+    { id: 'PR-000000034', status: 'จ่ายแล้ว', period: 'ประจำเดือน 12/62', payDate: '03/12/63', name: 'หัวหน้า ขยก', position: 'CEO', salary: 50000.00, deduction: 0.00, tax: 750.00, netPay: 49250.00 },
+    { id: 'PR-000000033', status: 'รออนุมัติ', period: 'ประจำเดือน 11/62', payDate: '-', name: 'อี้ปโป้ ร้อยตพ', position: 'แม่บ้าน', salary: 8000.00, deduction: 0.00, tax: 400.00, netPay: 7600.00 },
+    { id: 'PR-000000032', status: 'รออนุมัติ', period: 'ประจำเดือน 11/62', payDate: '-', name: 'ดวงดารดา เบญญ', position: 'ลูกน้อง', salary: 15000.00, deduction: 0.00, tax: 750.00, netPay: 14250.00 }
+  ];
 
   return (
-    <div className="p-6">
-      {/* Filters */}
-      <div className="shadow-lg p-4 rounded-lg mb-6">
-        <div className="flex flex-wrap gap-4">
-          <input
-            type="text"
-            name="search"
-            placeholder="Search for Name"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-            value={filters.search}
-            onChange={handleFilterChange}
-          />
-          <div className="flex gap-2 w-full md:w-2/5">
-            <input
-              type="date"
-              name="startDate"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.startDate}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="date"
-              name="endDate"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.endDate}
-              onChange={handleFilterChange}
-            />
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow mb-6">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-lg font-medium">ข้อมูลเงินเดือนและเบิกจ่าย | ประจำเดือน ธ.ค. 63</h1>
+            <div className="flex gap-4">
+              <button className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                เงินได้สุทธิ -<br/>
+                ประจำเดือน ธ.ค. 63
+              </button>
+              <button className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                เงินได้สุทธิ -<br/>
+                ประจำปี 63
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2 w-full md:w-2/5">
-            <input
-              type="time"
-              name="startTime"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.startTime}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="time"
-              name="endTime"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.endTime}
-              onChange={handleFilterChange}
-            />
+
+          {/* Summary */}
+          <div className="grid grid-cols-5 gap-4 mb-6">
+            <div>
+              <div className="text-gray-600 text-sm">พนักงาน</div>
+              <div className="font-medium">3 คน</div>
+            </div>
+            <div>
+              <div className="text-gray-600 text-sm">เงินเดือน</div>
+              <div className="font-medium">-</div>
+            </div>
+            <div>
+              <div className="text-gray-600 text-sm">ประกันสังคม</div>
+              <div className="font-medium">-</div>
+            </div>
+            <div>
+              <div className="text-gray-600 text-sm">ภาษี</div>
+              <div className="font-medium">-</div>
+            </div>
+            <div>
+              <div className="text-gray-600 text-sm">ยอดเบิกจ่าย</div>
+              <div className="font-medium">-</div>
+            </div>
           </div>
-          <select
-            name="status"
-            className="border text-gray-400 border-gray-300 p-2 rounded w-full md:w-1/5"
-            value={filters.status}
-            onChange={handleFilterChange}
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="allowed">Allowed</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <button
-            onClick={resetFilters}
-            className="bg-gray-500 text-white px-4 py-2 rounded"
-          >
-            Reset
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-green-500 text-white  px-4 py-2 rounded"
-          >
-            Add Meeting
-          </button>
+
+          {/* Actions */}
+          <div className="flex gap-2 mb-6">
+            <button className="px-4 py-2 text-gray-600 border rounded-lg hover:bg-gray-50">
+              ตัวกรอง
+            </button>
+            <button className="px-4 py-2 text-gray-600 border rounded-lg hover:bg-gray-50">
+              คอลัมน์...ดำเนินก
+            </button>
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="ค้นหา..."
+                className="pl-10 w-full px-4 py-2 border rounded-lg"
+              />
+            </div>
+            <div className="flex gap-2">
+              <select className="px-4 py-2 border rounded-lg">
+                <option>No. ▼</option>
+              </select>
+              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                จ่ายเงินเดือน
+              </button>
+              <select className="px-4 py-2 border rounded-lg">
+                <option>ตลอดเวลา ▼</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mb-6 bg-gray-100 p-2 rounded-lg">
+            <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              พิมพ์เอกสาร
+            </button>
+            <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              ส่ง Email
+            </button>
+            <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+              ธนาคาร
+            </button>
+            <button className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              K Cash Connect
+            </button>
+            <button className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
+              SCB Anywhere
+            </button>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-y">
+                <tr>
+                  <th className="px-4 py-2"><input type="checkbox" /></th>
+                  <th className="px-4 py-2 text-left">No.</th>
+                  <th className="px-4 py-2 text-left">สถานะ</th>
+                  <th className="px-4 py-2 text-left">รอบจ่าย</th>
+                  <th className="px-4 py-2 text-left">วันที่จ่าย</th>
+                  <th className="px-4 py-2 text-left">ชื่อพนักงาน</th>
+                  <th className="px-4 py-2 text-left">ตำแหน่ง</th>
+                  <th className="px-4 py-2 text-right">เงินเดือน</th>
+                  <th className="px-4 py-2 text-right">ยอดเบิกจ่าย</th>
+                  <th className="px-4 py-2 text-right">ยอดรวมหัก</th>
+                  <th className="px-4 py-2 text-right">เงินได้สุทธิ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employeeData.map((employee) => (
+                  <tr key={employee.id} className="border-b hover:bg-blue-50">
+                    <td className="px-4 py-2"><input type="checkbox" /></td>
+                    <td className="px-4 py-2 text-blue-600">{employee.id}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${employee.status === 'จ่ายแล้ว' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                        {employee.status}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">{employee.period}</td>
+                    <td className="px-4 py-2">{employee.payDate}</td>
+                    <td className="px-4 py-2">{employee.name}</td>
+                    <td className="px-4 py-2">{employee.position}</td>
+                    <td className="px-4 py-2 text-right">{employee.salary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-2 text-right">{employee.deduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-2 text-right">{employee.tax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-2 text-right">{employee.netPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center mt-4">
+            <div className="text-sm text-gray-600">1-20 of 36</div>
+            <div className="flex gap-2 items-center">
+              <button className="px-2 py-1 border rounded">◀</button>
+              <button className="px-2 py-1 border rounded">▶</button>
+              <div className="text-gray-600">แสดง</div>
+              <button className="px-2 py-1 text-blue-600">20</button>
+              <button className="px-2 py-1">50</button>
+              <button className="px-2 py-1">100</button>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Table */}
-      <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="border border-gray-300 p-2">
-              Meeting room username
-            </th>
-            <th className="border border-gray-300 p-2">Date</th>
-            <th className="border border-gray-300 p-2">Time</th>
-            <th className="border border-gray-300 p-2">Status</th>
-            <th className="border border-gray-300 p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredMeetings.map((meeting) => (
-            <tr key={meeting.meeting_id}>
-              <td className="border text-center border-gray-300 p-2">
-                {meeting.firstname} {meeting.lastname}
-              </td>
-              <td className="border text-center border-gray-300 p-2">
-                {formatDate(meeting.startdate)} - {formatDate(meeting.enddate)}
-              </td>
-              <td className="border text-center border-gray-300 p-2">
-                {meeting.timestart} - {meeting.timeend}
-              </td>
-              <td className="border text-center border-gray-300 p-2">
-                {meeting.status}
-              </td>
-              <td className="border border-gray-300 p-2 text-center">
-              <button
-                  onClick={() => { setEditMeeting(meeting); setShowEditModal(true); }}
-                  className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteMeeting(meeting.meeting_id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Add Meeting Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-            <h2 className="text-lg font-bold mb-4">Add Meeting</h2>
-            <input
-              type="text"
-              name="employee_id"
-              placeholder="Employee ID"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.employee_id}
-              onChange={handleModalChange}
-            />
-            <input
-              type="date"
-              name="startdate"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.startdate}
-              onChange={handleModalChange}
-            />
-            <input
-              type="date"
-              name="enddate"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.enddate}
-              onChange={handleModalChange}
-            />
-            <input
-              type="time"
-              name="timestart"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.timestart}
-              onChange={handleModalChange}
-            />
-            <input
-              type="time"
-              name="timeend"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.timeend}
-              onChange={handleModalChange}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddMeeting}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-       {/* Edit Meeting Modal */}
-       {showEditModal && editMeeting && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-            <h2 className="text-lg font-bold mb-4">Edit Meeting</h2>
-            <input
-              type="text"
-              name="employee_id"
-              placeholder="Employee ID"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={editMeeting.employee_id}
-              onChange={handleEditModalChange}
-            />
-            <input
-              type="date"
-              name="startdate"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={formatInputDate(editMeeting.startdate)}
-              onChange={handleEditModalChange}
-            />
-            <input
-              type="date"
-              name="enddate"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={formatInputDate(editMeeting.enddate)}
-              onChange={handleEditModalChange}
-            />
-            <input
-              type="time"
-              name="timestart"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={editMeeting.timestart}
-              onChange={handleEditModalChange}
-            />
-            <input
-              type="time"
-              name="timeend"
-              className="border border-gray-300 p-2 rounded w-full mb-4"
-              value={editMeeting.timeend}
-              onChange={handleEditModalChange}
-            />
-            <select
-            name="status"
-            className="border  border-gray-300 p-2 rounded w-full mb-4"
-            value={editMeeting.status}
-            onChange={handleEditModalChange}
-          >
-            <option value="allowed">Allowed</option>
-            <option value="rejected">Rejected</option>
-          </select>
-            <div className="flex justify-end">
-              <button
-                onClick={handleEditMeeting}
-                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default Editmeeting;
+export default ExpenseSystem;
