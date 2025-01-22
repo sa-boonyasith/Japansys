@@ -57,7 +57,7 @@ exports.create = async (req, res) => {
   exports.update = async (req, res) => {
     try {
       const { id } = req.params; // รับ ID ของรายการที่ต้องการอัพเดทจาก URL parameters
-      const { employee_id, date, type_expense, money, desc } = req.body;
+      const { employee_id, date, type_expense, money, desc, status } = req.body;
   
       // ตรวจสอบว่ามี ID หรือไม่
       if (!id) {
@@ -95,10 +95,12 @@ exports.create = async (req, res) => {
           employee_id: Number(employee_id),
           firstname: employee.firstname,
           lastname: employee.lastname,
-          date: date ? new Date(date) : existingExpense.date, // ใช้วันที่ใหม่หากส่งมา มิฉะนั้นใช้ค่าที่มีอยู่เดิม
-          type_expense: type_expense || existingExpense.type_expense, // ใช้ค่าที่ส่งมา หรือใช้ค่าที่มีอยู่เดิม
-          money: money !== undefined ? money : existingExpense.money, // ใช้ค่าที่ส่งมา หรือใช้ค่าที่มีอยู่เดิม
-          desc: desc || existingExpense.desc, // ใช้ค่าที่ส่งมา หรือใช้ค่าที่มีอยู่เดิม
+          date: date ? new Date(date) : existingExpense.date,
+          type_expense: type_expense || existingExpense.type_expense,
+          money: money !== undefined ? money : existingExpense.money,
+          desc: desc || existingExpense.desc, 
+          status: status || existingExpense.status,
+          
         },
       });
   

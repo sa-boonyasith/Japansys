@@ -1,228 +1,228 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const ExpenseSystem = () => {
   const [expenses, setExpenses] = useState([]);
-  const [filteredExpenses, setFilteredExpenses] = useState([]);
+  const [filterExpense, setFilterExpense] = useState([]);
   const [filters, setFilters] = useState({
     search: "",
-    startDate: "",
-    endDate: "",
-    category: "",
+    type: "",
+    date: "",
+    money: "",
+    desc: "",
   });
   const [newExpense, setNewExpense] = useState({
-    employeeId: "",
+    employee_id: "",
     date: "",
-    category: "",
-    amount: "",
-    description: "",
+    type_expense: "",
+    money: "",
+    desc: "",
   });
+  const [editing, setEditing] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const expenseCategories = [
-    "ค่าเดินทาง",
-    "ค่าที่พัก",
-    "ค่าอาหาร",
-    "ค่าอุปกรณ์สำนักงาน",
-    "อื่นๆ",
-  ];
+  // ดึงข้อมูลจาก API เมื่อโหลดหน้า
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/expense');
+        setExpenses(response.data.listExpense);
+        setFilterExpense(response.data.listExpense);
+      } catch (error) {
+        console.error('Error fetching expenses:', error);
+        setError('Failed to fetch expenses.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpenses();
+  }, []);
+
+  // ฟังก์ชันสำหรับกรองข้อมูล
+  useEffect(() => {
+    let filtered = expenses.filter((expense) =>
+      (expense.firstname.toLowerCase().includes(filters.search.toLowerCase()) ||
+        expense.lastname.toLowerCase().includes(filters.search.toLowerCase()) ||
+        expense.type_expense.toLowerCase().includes(filters.search.toLowerCase()) ||
+        expense.money.toString().includes(filters.search) ||
+        expense.desc.toLowerCase().includes(filters.search.toLowerCase())) &&
+      (filters.type ? expense.type_expense.toLowerCase().includes(filters.type.toLowerCase()) : true) &&
+      (filters.date ? new Date(expense.date).toLocaleDateString().includes(filters.date) : true) &&
+      (filters.money ? expense.money.toString().includes(filters.money) : true) &&
+      (filters.desc ? expense.desc.toLowerCase().includes(filters.desc.toLowerCase()) : true)
+    );
+    setFilterExpense(filtered);
+  }, [filters, expenses]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     const newFilters = { ...filters, [name]: value };
     setFilters(newFilters);
-    applyFilters(newFilters);
-  };
-
-  const applyFilters = (currentFilters) => {
-    const filtered = expenses.filter((expense) => {
-      return (
-        (!currentFilters.search ||
-          expense.description.toLowerCase().includes(currentFilters.search.toLowerCase())) &&
-        (!currentFilters.startDate || new Date(expense.date) >= new Date(currentFilters.startDate)) &&
-        (!currentFilters.endDate || new Date(expense.date) <= new Date(currentFilters.endDate)) &&
-        (!currentFilters.category || expense.category === currentFilters.category)
-      );
-    });
-    setFilteredExpenses(filtered);
-  };
-
-  const resetFilters = () => {
-    setFilters({
-      search: "",
-      startDate: "",
-      endDate: "",
-      category: "",
-    });
-    setFilteredExpenses(expenses);
-  };
-
-  const handleModalChange = (e) => {
-    setNewExpense({ ...newExpense, [e.target.name]: e.target.value });
   };
 
   const handleAddExpense = () => {
-    if (!newExpense.employeeId || !newExpense.date || !newExpense.category || !newExpense.amount) {
-      alert("Please fill out all required fields.");
-      return;
-    }
-
-    const newRecord = { ...newExpense, id: expenses.length + 1 };
-    setExpenses([...expenses, newRecord]);
-    setFilteredExpenses([...filteredExpenses, newRecord]);
-    setShowAddModal(false);
-    setNewExpense({
-      employeeId: "",
-      date: "",
-      category: "",
-      amount: "",
-      description: "",
-    });
+    // ฟังก์ชันสำหรับเพิ่มค่าใช้จ่ายใหม่
+    axios.post('http://localhost:8080/api/expense', newExpense)
+      .then((response) => {
+        setExpenses([...expenses, response.data]);
+        setShowAddModal(false);
+      })
+      .catch((error) => {
+        console.error('Error adding expense:', error);
+      });
   };
 
   return (
     <div className="p-6">
-      <div className="shadow-md p-4 rounded-lg mb-6">
-        <div className="flex flex-wrap gap-4">
+      {/* Search and Filter */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          className="border p-2 rounded w-full mb-2"
+        />
+        <div className="flex space-x-4 mb-4">
           <input
             type="text"
-            name="search"
-            placeholder="Search by description"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-            value={filters.search}
+            placeholder="Type"
+            value={filters.type}
             onChange={handleFilterChange}
+            name="type"
+            className="border p-2 rounded w-full"
           />
-          <div className="flex gap-2 w-full md:w-2/5">
-            <input
-              type="date"
-              name="startDate"
-              className="border border-gray-300 p-2 rounded flex-1"
-              value={filters.startDate}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="date"
-              name="endDate"
-              className="border border-gray-300 p-2 rounded flex-1"
-              value={filters.endDate}
-              onChange={handleFilterChange}
-            />
-          </div>
-          <select
-            name="category"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-            value={filters.category}
+          <input
+            type="date"
+            value={filters.date}
             onChange={handleFilterChange}
-          >
-            <option value="">All Categories</option>
-            {expenseCategories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-          <button
-            onClick={resetFilters}
-            className="bg-gray-500 text-white px-4 py-2 rounded"
-          >
-            Reset
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-green-500 text-white px-4 py-2 rounded"
-          >
-            Add Expense
-          </button>
+            name="date"
+            className="border p-2 rounded w-full"
+          />
+          <input
+            type="number"
+            placeholder="Money"
+            value={filters.money}
+            onChange={handleFilterChange}
+            name="money"
+            className="border p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={filters.desc}
+            onChange={handleFilterChange}
+            name="desc"
+            className="border p-2 rounded w-full"
+          />
         </div>
       </div>
 
-      <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="border border-gray-300 p-2">Employee ID</th>
-            <th className="border border-gray-300 p-2">Date</th>
-            <th className="border border-gray-300 p-2">Category</th>
-            <th className="border border-gray-300 p-2">Amount</th>
-            <th className="border border-gray-300 p-2">Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredExpenses.map((expense) => (
-            <tr key={expense.id}>
-              <td className="border text-center border-gray-300 p-2">{expense.employeeId}</td>
-              <td className="border text-center border-gray-300 p-2">{expense.date}</td>
-              <td className="border text-center border-gray-300 p-2">{expense.category}</td>
-              <td className="border text-center border-gray-300 p-2">{expense.amount}</td>
-              <td className="border text-center border-gray-300 p-2">{expense.description}</td>
-            </tr>
-          ))}
-          {filteredExpenses.length === 0 && (
-            <tr>
-              <td colSpan="5" className="text-center text-gray-500 p-4">
-                No expenses found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      {/* Add Button */}
+      <div className="mb-4">
+        <button
+          className="bg-blue-500 text-white p-2 rounded"
+          onClick={() => setShowAddModal(true)}
+        >
+          Add Expense
+        </button>
+      </div>
 
+      {loading ? (
+        <p className="text-gray-500">Loading...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+        <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th className="border border-gray-300 p-2">Employee Name</th>
+              <th className="border border-gray-300 p-2">Date</th>
+              <th className="border border-gray-300 p-2">Type</th>
+              <th className="border border-gray-300 p-2">Money</th>
+              <th className="border border-gray-300 p-2">Description</th>
+              <th className="border border-gray-300 p-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filterExpense.length > 0 ? (
+              filterExpense.map((expense) => (
+                <tr key={expense.id}>
+                  <td className="border text-center border-gray-300 p-2">{expense.firstname} {expense.lastname}</td>
+                  <td className="border text-center border-gray-300 p-2">
+                    {new Date(expense.date).toLocaleDateString()}
+                  </td>
+                  <td className="border text-center border-gray-300 p-2">{expense.type_expense}</td>
+                  <td className="border text-center border-gray-300 p-2">{expense.money}</td>
+                  <td className="border text-center border-gray-300 p-2">{expense.desc}</td>
+                  <td className='border text-center border-gray-300 p-2'>{expense.status}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="text-center text-gray-500 p-4">
+                  No expenses found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
+
+      {/* Add Expense Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-            <h2 className="text-lg font-bold mb-4">Add Expense</h2>
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-md">
+            <h2 className="text-xl mb-4">Add New Expense</h2>
             <input
               type="text"
-              name="employeeId"
               placeholder="Employee ID"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newExpense.employeeId}
-              onChange={handleModalChange}
+              value={newExpense.employee_id}
+              onChange={(e) => setNewExpense({ ...newExpense, employee_id: e.target.value })}
+              className="border p-2 rounded mb-2 w-full"
             />
             <input
               type="date"
-              name="date"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
               value={newExpense.date}
-              onChange={handleModalChange}
-            />
-            <select
-              name="category"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newExpense.category}
-              onChange={handleModalChange}
-            >
-              <option value="">Select Category</option>
-              {expenseCategories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-            <input
-              type="number"
-              name="amount"
-              placeholder="Amount"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newExpense.amount}
-              onChange={handleModalChange}
+              onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+              className="border p-2 rounded mb-2 w-full"
             />
             <input
               type="text"
-              name="description"
-              placeholder="Description"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newExpense.description}
-              onChange={handleModalChange}
+              placeholder="Type"
+              value={newExpense.type_expense}
+              onChange={(e) => setNewExpense({ ...newExpense, type_expense: e.target.value })}
+              className="border p-2 rounded mb-2 w-full"
             />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddExpense}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Add
-              </button>
-            </div>
+            <input
+              type="number"
+              placeholder="Amount"
+              value={newExpense.money}
+              onChange={(e) => setNewExpense({ ...newExpense, money: e.target.value })}
+              className="border p-2 rounded mb-2 w-full"
+            />
+            <textarea
+              placeholder="Description"
+              value={newExpense.desc}
+              onChange={(e) => setNewExpense({ ...newExpense, desc: e.target.value })}
+              className="border p-2 rounded mb-2 w-full"
+            />
+            <button
+              className="bg-blue-500 text-white p-2 rounded mr-2"
+              onClick={handleAddExpense}
+            >
+              Add Expense
+            </button>
+            <button
+              className="bg-gray-500 text-white p-2 rounded"
+              onClick={() => setShowAddModal(false)}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

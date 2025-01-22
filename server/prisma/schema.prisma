@@ -201,8 +201,8 @@ model Expense {
   type_expense String
   money        Int
   desc         String
+  status       String   @default("Pending")
 }
-
 
 model attendhistory {
   id             Int      @id @default(autoincrement())
