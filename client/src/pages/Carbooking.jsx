@@ -201,7 +201,7 @@ const Carbooking = () => {
             type="text"
             name="search"
             placeholder="Search for Name or Place"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/5"
+            className="border  border-gray-300 p-2 rounded w-full md:w-1/5"
             value={filters.search}
             onChange={handleFilterChange}
           />
@@ -258,7 +258,7 @@ const Carbooking = () => {
           onClick={()=> setShowAddModal(true)}
           className="bg-green-500 text-white px-4 py-2 rounded"
           >
-            Add Meeting
+            Add Booking
           </button>
         </div>
       </div>

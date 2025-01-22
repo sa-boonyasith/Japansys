@@ -199,6 +199,7 @@ model Expense {
   Date         DateTime @db.Date
   Type_Expense String
   Money        Int
+  desc         String
 }
 
 model attendhistory {

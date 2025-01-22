@@ -5,7 +5,7 @@ const ExpenseSystem = () => {
   const [files, setFiles] = useState([]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-8">
+    <div className=" p-4">
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8">
@@ -97,41 +97,6 @@ const ExpenseSystem = () => {
               </div>
             </div>
 
-            {/* File Upload */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">แนบเอกสาร</h2>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
-                <Upload className="w-8 h-8 text-blue-500 mx-auto mb-4" />
-                <input
-                  type="file"
-                  className="hidden"
-                  id="fileUpload"
-                  multiple
-                  onChange={(e) => setFiles(Array.from(e.target.files))}
-                />
-                <label
-                  htmlFor="fileUpload"
-                  className="cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  คลิกเพื่ออัพโหลดไฟล์
-                </label>
-                <p className="text-sm text-gray-500 mt-2">
-                  รองรับไฟล์ PDF, JPEG, PNG (ไม่เกิน 5MB)
-                </p>
-                {files.length > 0 && (
-                  <div className="mt-4 text-left">
-                    <p className="text-sm font-medium">ไฟล์ที่แนบ:</p>
-                    <ul className="list-disc list-inside">
-                      {files.map((file, index) => (
-                        <li key={index} className="text-sm text-gray-600">
-                          {file.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Submit Buttons */}
             <div className="flex justify-end space-x-4 pt-4">
