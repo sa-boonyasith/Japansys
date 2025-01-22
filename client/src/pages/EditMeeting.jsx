@@ -203,7 +203,7 @@ const Editmeeting = () => {
         editMeeting
       );
   
-      if (response.status === 201 && response.data?.update) {
+      if (response.status === 200 && response.data?.update) {
         const updatedMeetings = meetings.map((meeting) =>
           meeting.meeting_id === editMeeting.meeting_id
             ? { ...meeting, ...response.data.update }

@@ -62,7 +62,7 @@ exports.create = async (req, res) => {
 };
 exports.update = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // Extract ID from params
     const { employee_id, startdate, enddate, timestart, timeend, status } =
       req.body;
 
@@ -76,8 +76,9 @@ exports.update = async (req, res) => {
         .json({ message: "Employee ID is required for updating" });
     }
 
+    // Check if the employee exists
     const employee = await prisma.employee.findUnique({
-      where: { id: employee_id },
+      where: { id: Number(employee_id) }, // Ensure employee_id is a number
       select: { firstname: true, lastname: true },
     });
 
@@ -85,6 +86,7 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: "Employee not found" });
     }
 
+    // Validate and format dates
     const validStartDate =
       startdate && !isNaN(new Date(startdate).getTime())
         ? new Date(startdate)
@@ -96,17 +98,20 @@ exports.update = async (req, res) => {
       return res.status(400).json({ error: "Invalid startdate or enddate" });
     }
 
+    // Format start and end dates
     const formattedStartDate =
       validStartDate.toISOString().split("T")[0] + "T00:00:00.000Z";
     const formattedEndDate =
       validEndDate.toISOString().split("T")[0] + "T23:59:59.000Z";
 
+    // Perform the update
     const update = await prisma.meetingroom.update({
       where: {
-        meeting_id: Number(id),
+        meeting_id: Number(id), // Ensure ID is a number
       },
       data: {
-        firstname: employee.firstname,
+        employee_id: Number(employee_id), // Ensure employee_id is updated
+        firstname: employee.firstname, // Use updated employee name
         lastname: employee.lastname,
         startdate: formattedStartDate,
         enddate: formattedEndDate,
@@ -116,8 +121,8 @@ exports.update = async (req, res) => {
       },
     });
 
-    res.status(201).json({
-      message: "Meetingroom created successfully",
+    res.status(200).json({
+      message: "Meeting room updated successfully",
       update,
     });
   } catch (err) {
@@ -125,6 +130,7 @@ exports.update = async (req, res) => {
     res.status(500).json({ error: "Failed to update Meeting room" });
   }
 };
+
 exports.remove = async (req, res) => {
   try {
     const { id } = req.params;
