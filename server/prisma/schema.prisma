@@ -57,9 +57,9 @@ model Employee {
   attends       attend[]
   attendhistory attendhistory[]
   projects      Project[]
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  Expense       Expense[]
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
 }
 
 model JobApplication {
@@ -189,6 +189,16 @@ model Salary {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model Expense {
+  expen_id     Int      @id @default(autoincrement())
+  employee     Employee @relation(fields: [employee_id], references: [id])
+  employee_id  Int      @unique
+  department   String
+  Date         DateTime @db.Date
+  Type_Expense String
+  Money        Int
 }
 
 model attendhistory {

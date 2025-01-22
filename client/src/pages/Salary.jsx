@@ -95,11 +95,11 @@ const Salary = () => {
             <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
               ธนาคาร
             </button>
-            <button className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-2">
+            <button className="px-4 py-2 bg-gray-200 text-white rounded hover:bg-gray-300 flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
               K Cash Connect
             </button>
-            <button className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
+            <button className="px-4 py-2 bg-gray-200 text-white rounded hover:bg-gray-300">
               SCB Anywhere
             </button>
           </div>
