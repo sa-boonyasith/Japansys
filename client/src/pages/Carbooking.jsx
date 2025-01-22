@@ -195,7 +195,7 @@ const Carbooking = () => {
 
   return (
     <div className="p-6">
-      <div className="bg-white shadow-md p-4 rounded-lg mb-6">
+      <div className=" shadow-md p-4 rounded-lg mb-6">
         <div className="flex flex-wrap gap-4">
           <input
             type="text"

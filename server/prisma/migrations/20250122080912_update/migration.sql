@@ -182,6 +182,20 @@ CREATE TABLE `Salary` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Expense` (
+    `expen_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `employee_id` INTEGER NOT NULL,
+    `firstname` VARCHAR(191) NOT NULL,
+    `lastname` VARCHAR(191) NOT NULL,
+    `date` DATE NOT NULL,
+    `type_expense` VARCHAR(191) NOT NULL,
+    `money` INTEGER NOT NULL,
+    `desc` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`expen_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `attendhistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `attend_id` INTEGER NOT NULL,
@@ -219,6 +233,9 @@ ALTER TABLE `Todo` ADD CONSTRAINT `Todo_employee_id_fkey` FOREIGN KEY (`employee
 
 -- AddForeignKey
 ALTER TABLE `Salary` ADD CONSTRAINT `Salary_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Expense` ADD CONSTRAINT `Expense_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `attendhistory` ADD CONSTRAINT `attendhistory_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
