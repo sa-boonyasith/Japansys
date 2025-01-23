@@ -184,6 +184,7 @@ const LeaveSystem = () => {
             onChange={handleFilterChange}
           />
         </div>
+        <div className="flex gap-2 w-full ">
         <button
           onClick={resetFilters}
           className="bg-gray-500 text-white px-4 py-2 rounded"
@@ -192,10 +193,11 @@ const LeaveSystem = () => {
         </button>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-green-500 text-white px-4 py-2 rounded"
         >
-          เพิ่มรายชื่อการลา
+          Add Leave Request
         </button>
+        </div>
       </div>
 
       {/* Add New Leave Modal */}

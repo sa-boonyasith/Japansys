@@ -16,8 +16,8 @@ datasource db {
 model user {
   user_id   Int    @id @default(autoincrement())
   username  String @unique
-  firstname String
-  lastname  String
+  firstname String 
+  lastname  String 
   email     String @unique
   password  String
   role      Role   @default(recruit)
@@ -41,6 +41,7 @@ model Employee {
   birth_date      DateTime @db.Date
   age             Int
   ethnicity       String   @db.VarChar(50)
+
   nationality     String   @db.VarChar(50)
   religion        String   @db.VarChar(50)
   marital_status  String   @db.VarChar(50)

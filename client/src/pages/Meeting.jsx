@@ -165,7 +165,8 @@ const Meeting = () => {
     <div className="p-6">
       {/* Filters */}
       <div className="shadow-lg p-4 rounded-lg mb-6">
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2 w-full">
           <input
             type="text"
             name="search"
@@ -174,8 +175,7 @@ const Meeting = () => {
             value={filters.search}
             onChange={handleFilterChange}
           />
-          <div className="flex gap-2 w-full md:w-2/5">
-            <input
+           <input
               type="date"
               name="startDate"
               className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
@@ -189,8 +189,6 @@ const Meeting = () => {
               value={filters.endDate}
               onChange={handleFilterChange}
             />
-          </div>
-          <div className="flex gap-2 w-full md:w-2/5">
             <input
               type="time"
               name="startTime"
@@ -205,10 +203,10 @@ const Meeting = () => {
               value={filters.endTime}
               onChange={handleFilterChange}
             />
-          </div>
-          <select
+            <div className="w-[200px]">
+            <select
             name="status"
-            className="border text-gray-400 border-gray-300 p-2 rounded w-full md:w-1/5"
+            className="border text-gray-400 border-gray-300 p-2 rounded w-full"
             value={filters.status}
             onChange={handleFilterChange}
           >
@@ -217,6 +215,9 @@ const Meeting = () => {
             <option value="allowed">Allowed</option>
             <option value="rejected">Rejected</option>
           </select>
+            </div>
+          </div>
+          <div className="flex justify-start gap-2">
           <button onClick={resetFilters} className="bg-gray-500 text-white px-4 py-2 rounded">
             Reset
           </button>
@@ -226,6 +227,7 @@ const Meeting = () => {
           >
             Add Meeting
           </button>
+          </div>
         </div>
       </div>
 

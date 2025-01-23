@@ -205,8 +205,7 @@ const Carbooking = () => {
             value={filters.search}
             onChange={handleFilterChange}
           />
-          <div className="flex gap-2 w-full md:w-2/5">
-            <input
+          <input
               type="date"
               name="startDate"
               className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
@@ -220,7 +219,6 @@ const Carbooking = () => {
               value={filters.endDate}
               onChange={handleFilterChange}
             />
-          </div>
           <div className="flex gap-2 w-full md:w-2/5">
             <input
               type="time"
@@ -365,7 +363,7 @@ const Carbooking = () => {
               value={newRentcar.car}
               onChange={handleModalChange}
             />
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-start gap-2">
               <button
                 onClick={() => setShowAddModal(false)}
                 className="bg-gray-500 text-white px-4 py-2 rounded"

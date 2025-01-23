@@ -33,14 +33,12 @@ const ExpenseSystem = () => {
     fetchExpenses();
   }, []);
 
-
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     const newFilters = { ...filters, [name]: value.trim() };
     setFilters(newFilters);
     applyFilters(newFilters);
   };
-  
 
   const applyFilters = (filters) => {
     const filtered = expenses.filter((expense) => {
@@ -57,32 +55,34 @@ const ExpenseSystem = () => {
             .toLowerCase()
             .includes(searchTerm)
         : true;
-  
+
       const matchesStatus = filters.status
         ? expense.status.toLowerCase() === filters.status.toLowerCase()
         : true;
-  
+
       const matchesDate = filters.date
         ? new Date(expense.date).toISOString().split("T")[0] === filters.date
         : true;
-  
+
       const matchesType = filters.type
         ? expense.type_expense.toLowerCase() === filters.type.toLowerCase()
         : true;
-  
+
       const matchesMoney = filters.money
         ? parseFloat(expense.money) === parseFloat(filters.money)
         : true;
-  
+
       return (
-        matchesSearch && matchesStatus && matchesDate && matchesType && matchesMoney
+        matchesSearch &&
+        matchesStatus &&
+        matchesDate &&
+        matchesType &&
+        matchesMoney
       );
     });
-  
+
     setFilterExpenses(filtered);
   };
-  
-  
 
   const handleAddExpense = async () => {
     try {
@@ -127,59 +127,61 @@ const ExpenseSystem = () => {
 
   return (
     <div className="p-6">
-      <div className="flex space-x-4 mb-4">
-        {/* Search Bar */}
-        <input
-          type="text"
-          name="search"
-          value={filters.search}
-          onChange={handleFilterChange}
-          placeholder="Search..."
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="date"
-          name="date"
-          value={filters.date}
-          onChange={handleFilterChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="text"
-          placeholder="Type"
-          name="type"
-          value={filters.type}
-          onChange={handleFilterChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="text"
-          placeholder="money"
-          name="money"
-          value={filters.money}
-          onChange={handleFilterChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <select
-          name="status"
-          className="border border-gray-300 p-2 rounded w-full md:w1/5 mb-4 "
-          value={filters.status}
-          onChange={handleFilterChange}
-        >
-          <option value="">All Status</option>
-          <option value="Pending">Pending</option>
-          <option value="Allowed">Allowed</option>
-          <option value="Rejected">Rejected</option>
-        </select>
+      <div className="flex flex-col space-x-4 mb-4  shadow-lg p-2 bg-white rounded">
+        <div className="flex flex-row gap-4">
+          {/* Search Bar */}
+          <input
+            type="text"
+            name="search"
+            value={filters.search}
+            onChange={handleFilterChange}
+            placeholder="Search..."
+            className="border p-2 rounded w-full h-10 "
+          />
+          <input
+            type="date"
+            name="date"
+            value={filters.date}
+            onChange={handleFilterChange}
+            className="border p-2 rounded w-full h-10 "
+          />
+          <input
+            type="text"
+            placeholder="Type"
+            name="type"
+            value={filters.type}
+            onChange={handleFilterChange}
+            className="border p-2 rounded w-full mb-4 h-10"
+          />
+          <input
+            type="text"
+            placeholder="money"
+            name="money"
+            value={filters.money}
+            onChange={handleFilterChange}
+            className="border p-2 rounded w-full mb-4 h-10"
+          />
+          <select
+            name="status"
+            className="border border-gray-300 p-2 rounded w-full md:w1/5 h-10  mb-4 "
+            value={filters.status}
+            onChange={handleFilterChange}
+          >
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Allowed">Allowed</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="flex flex-row gap-4">
+          <button
+            className="bg-blue-500 text-white p-2 rounded mb-4"
+            onClick={() => setShowAddModal(true)}
+          >
+            Add Expense
+          </button>
+        </div>
       </div>
-
-      {/* Add Expense Button */}
-      <button
-        className="bg-blue-500 text-white p-2 rounded mb-4"
-        onClick={() => setShowAddModal(true)}
-      >
-        Add Expense
-      </button>
 
       {/* Expenses Table */}
       {loading ? (

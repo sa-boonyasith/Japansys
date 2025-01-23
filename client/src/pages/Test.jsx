@@ -33,14 +33,12 @@ const ExpenseSystem = () => {
     fetchExpenses();
   }, []);
 
-
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     const newFilters = { ...filters, [name]: value.trim() };
     setFilters(newFilters);
     applyFilters(newFilters);
   };
-  
 
   const applyFilters = (filters) => {
     const filtered = expenses.filter((expense) => {
@@ -57,32 +55,34 @@ const ExpenseSystem = () => {
             .toLowerCase()
             .includes(searchTerm)
         : true;
-  
+
       const matchesStatus = filters.status
         ? expense.status.toLowerCase() === filters.status.toLowerCase()
         : true;
-  
+
       const matchesDate = filters.date
         ? new Date(expense.date).toISOString().split("T")[0] === filters.date
         : true;
-  
+
       const matchesType = filters.type
         ? expense.type_expense.toLowerCase() === filters.type.toLowerCase()
         : true;
-  
+
       const matchesMoney = filters.money
         ? parseFloat(expense.money) === parseFloat(filters.money)
         : true;
-  
+
       return (
-        matchesSearch && matchesStatus && matchesDate && matchesType && matchesMoney
+        matchesSearch &&
+        matchesStatus &&
+        matchesDate &&
+        matchesType &&
+        matchesMoney
       );
     });
-  
+
     setFilterExpenses(filtered);
   };
-  
-  
 
   const handleAddExpense = async () => {
     try {
