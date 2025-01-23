@@ -127,8 +127,8 @@ const ExpenseSystem = () => {
 
   return (
     <div className="p-6">
-      <div className="flex flex-col space-x-4 mb-4  shadow-lg p-2 bg-white rounded">
-        <div className="flex flex-row gap-4">
+      <div className="flex flex-col mb-4  shadow-lg p-2 bg-white rounded">
+        <div className="flex flex-row gap-2">
           {/* Search Bar */}
           <input
             type="text"
@@ -173,7 +173,7 @@ const ExpenseSystem = () => {
             <option value="Rejected">Rejected</option>
           </select>
         </div>
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row gap-4 ">
           <button
             className="bg-blue-500 text-white p-2 rounded mb-4"
             onClick={() => setShowAddModal(true)}
