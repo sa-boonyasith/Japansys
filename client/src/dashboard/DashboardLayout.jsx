@@ -33,7 +33,9 @@ const DashboardLayout = ({
       "/dashboard/meeting": "meeting",
       "/dashboard/car-booking": "car-booking",
       "/dashboard/editcar":"editcar",
-      "/dashboard/editmeeting":"editmeeting"
+      "/dashboard/editmeeting":"editmeeting",
+      "/dashboard/expense-system": "expense-system",
+      "/dashboard/editexpense": "editexpense",
       
     };
 
@@ -81,7 +83,9 @@ const DashboardLayout = ({
       meeting: "/dashboard/meeting",
       carbooking: "/dashboard/car-booking",
       editcar :"/dashboard/editcar",
-      editmeeting:"/dashboard/editmeeting"
+      editmeeting:"/dashboard/editmeeting",
+      editexpense:"/dashboard/editexpense",
+      "expense-system": "/dashboard/expense-system",
     };
 
     navigate(buttonMapping[button] || "/dashboard");
@@ -224,6 +228,27 @@ const DashboardLayout = ({
               </button>
             </div>
           )}
+           {activeMenu === "expense-system" && (
+            <div className="">
+              <button
+                className={`p-2 rounded-t-lg ${
+                  activeButton === "expense-system" ? "bg-white" : "bg-gray-300"
+                }`}
+                onClick={() => handleButtonClick("expense-system")}
+              >
+                การขอเบิกเงิน
+              </button>
+              <button
+                className={`p-2 ml-2 rounded-t-lg ${
+                  activeButton === "editexpense" ? "bg-white" : "bg-gray-300"
+                }`}
+                onClick={() => handleButtonClick("editexpense")}
+              >
+                สถานะการขอเบิกเงิน
+              </button>
+            </div>
+          )}
+        
         </div>
 
         {/* Content Area */}
