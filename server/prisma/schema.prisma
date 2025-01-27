@@ -48,6 +48,8 @@ model Employee {
   military_status String @db.VarChar(100)
   role            Role   @default(employee)
   photo           String
+  banking         String
+  banking_id      Int
 
   // Relationships
   LeaveRequests LeaveRequest[]
@@ -178,24 +180,27 @@ model Todo {
 model Salary {
   salary_id   Int      @id @default(autoincrement())
   employee    Employee @relation(fields: [employee_id], references: [id])
-  employee_id Int      @unique
+  employee_id Int
   firstname   String
   lastname    String
+  position    String
 
-  Date DateTime @db.Date
-
-  salary            Float
-  banking           Float
+  payroll_startdate DateTime @db.Date
+  payroll_enddate   DateTime @db.Date
+  payment_date      DateTime @db.Date
+  banking           String
   banking_id        Int
-  overtime          Float @default(0)
-  bonus             Float @default(0)
-  income_tax        Float @default(0)
-  tax               Float @default(0)
-  providentfund     Float @default(0)
-  socialsecurity    Float @default(0)
-  tax_total         Float @default(0)
-  salary_total      Float @default(0)
-  Total_working_day Int   @default(0)
+  salary            Float    @default(0)
+  absent_late       Float    @default(0)
+  overtime          Float    @default(0)
+  bonus             Float    @default(0)
+  tax               Float    @default(0) //ภาษี
+  providentfund     Float    @default(0) //กองทุนสำรองชีพ
+  socialsecurity    Float    @default(0) //ประกันสังคม
+  expense           Float    @default(0) //ค่าเบิกเงิน
+  tax_total         Float    @default(0) //ภาษีทั้งหมด
+  salary_total      Float    @default(0) //เงินเดือนทั้งหมด
+  status            String   @default("Pending")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

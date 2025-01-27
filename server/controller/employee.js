@@ -27,6 +27,8 @@ exports.create = async (req, res) => {
       religion,
       marital_status,
       military_status,
+      banking,
+      banking_id,
       photo,
     } = req.body;
 
@@ -61,6 +63,8 @@ exports.create = async (req, res) => {
         religion,
         marital_status,
         military_status,
+        banking,
+        banking_id,
         photo,
       },
     });
@@ -95,6 +99,8 @@ exports.update = async (req, res) => {
         religion,
         marital_status,
         military_status,
+        banking,
+        banking_id,
         photo,
         role,
       } = req.body;
@@ -122,6 +128,8 @@ exports.update = async (req, res) => {
         religion,
         marital_status,
         military_status,
+        banking,
+        banking_id,
         photo,
         role,
         }

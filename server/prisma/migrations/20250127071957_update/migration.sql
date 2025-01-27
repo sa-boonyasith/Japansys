@@ -36,6 +36,8 @@ CREATE TABLE `Employee` (
     `military_status` VARCHAR(100) NOT NULL,
     `role` ENUM('employee', 'manager', 'admin', 'recruit') NOT NULL DEFAULT 'employee',
     `photo` VARCHAR(191) NOT NULL,
+    `banking` VARCHAR(191) NOT NULL,
+    `banking_id` INTEGER NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
@@ -169,15 +171,26 @@ CREATE TABLE `Salary` (
     `employee_id` INTEGER NOT NULL,
     `firstname` VARCHAR(191) NOT NULL,
     `lastname` VARCHAR(191) NOT NULL,
-    `salary` DOUBLE NOT NULL,
+    `position` VARCHAR(191) NOT NULL,
+    `payroll_startdate` DATE NOT NULL,
+    `payroll_enddate` DATE NOT NULL,
+    `payment_date` DATE NOT NULL,
+    `banking` VARCHAR(191) NOT NULL,
+    `banking_id` INTEGER NOT NULL,
+    `salary` DOUBLE NOT NULL DEFAULT 0,
+    `absent_late` DOUBLE NOT NULL DEFAULT 0,
     `overtime` DOUBLE NOT NULL DEFAULT 0,
     `bonus` DOUBLE NOT NULL DEFAULT 0,
+    `tax` DOUBLE NOT NULL DEFAULT 0,
+    `providentfund` DOUBLE NOT NULL DEFAULT 0,
+    `socialsecurity` DOUBLE NOT NULL DEFAULT 0,
+    `expense` DOUBLE NOT NULL DEFAULT 0,
+    `tax_total` DOUBLE NOT NULL DEFAULT 0,
     `salary_total` DOUBLE NOT NULL DEFAULT 0,
-    `Total_working_day` INTEGER NOT NULL DEFAULT 0,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'Pending',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `Salary_employee_id_key`(`employee_id`),
     PRIMARY KEY (`salary_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -191,6 +204,7 @@ CREATE TABLE `Expense` (
     `type_expense` VARCHAR(191) NOT NULL,
     `money` INTEGER NOT NULL,
     `desc` VARCHAR(191) NOT NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'Pending',
 
     PRIMARY KEY (`expen_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

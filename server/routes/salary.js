@@ -4,7 +4,7 @@ const {create,list,update,remove} = require('../controller/salary')
 
 router.get('/salary',list)
 router.post('/salary',create)
-router.put('/salary',update)
+router.put('/salary/:id',update)
 router.delete('/salary/:id',remove)
 
 
