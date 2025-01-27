@@ -15,7 +15,9 @@ exports.create = async (req, res) => {
     const { employee_id, date, type_expense, money, desc } = req.body;
 
     if (!employee_id) {
-      return res.status(400).json({ message: "Employee ID is required for creating expense" });
+      return res
+        .status(400)
+        .json({ message: "Employee ID is required for creating expense" });
     }
 
     const employee = await prisma.employee.findUnique({
@@ -55,7 +57,6 @@ exports.create = async (req, res) => {
       message: "Expense created successfully",
       data: newExpense,
     });
-
   } catch (err) {
     console.error("Error during Expense creation:", err);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -67,12 +68,15 @@ exports.update = async (req, res) => {
     const { id } = req.params;
     const { employee_id, date, type_expense, money, desc, status } = req.body;
 
-    if (!id) {
-      return res.status(400).json({ message: "Expense ID is required for updating" });
+    const expenseId = Number(id);
+    if (isNaN(expenseId)) {
+      return res
+        .status(400)
+        .json({ message: "Expense ID must be a valid number" });
     }
 
     const existingExpense = await prisma.expense.findUnique({
-      where: { expen_id: Number(id) },
+      where: { expen_id: expenseId },
     });
 
     if (!existingExpense) {
@@ -80,7 +84,9 @@ exports.update = async (req, res) => {
     }
 
     if (!employee_id) {
-      return res.status(400).json({ message: "Employee ID is required for updating expense" });
+      return res
+        .status(400)
+        .json({ message: "Employee ID is required for updating expense" });
     }
 
     const employee = await prisma.employee.findUnique({
@@ -92,20 +98,19 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: "Employee not found" });
     }
 
-    // ตรวจสอบค่า money
-    const expenseMoney = money !== undefined ? parseInt(money) : existingExpense.money;
+    const expenseMoney =
+      money !== undefined ? parseInt(money) : existingExpense.money;
     if (money !== undefined && isNaN(expenseMoney)) {
       return res.status(400).json({ message: "Money must be a valid number" });
     }
 
-    // ตรวจสอบค่าวันที่
     const expenseDate = date ? new Date(date) : existingExpense.date;
     if (date && isNaN(expenseDate.getTime())) {
       return res.status(400).json({ message: "Invalid date format" });
     }
 
     const updatedExpense = await prisma.expense.update({
-      where: { expen_id: Number(id) },
+      where: { expen_id: expenseId },
       data: {
         employee_id: Number(employee_id),
         firstname: employee.firstname,
@@ -122,10 +127,11 @@ exports.update = async (req, res) => {
       message: "Expense updated successfully",
       data: updatedExpense,
     });
-
   } catch (err) {
     console.error("Error updating Expense:", err);
-    res.status(500).json({ error: "Failed to update Expense", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to update Expense", details: err.message });
   }
 };
 
@@ -134,7 +140,9 @@ exports.remove = async (req, res) => {
     const { id } = req.params;
 
     if (!id) {
-      return res.status(400).json({ message: "Expense ID is required for deletion" });
+      return res
+        .status(400)
+        .json({ message: "Expense ID is required for deletion" });
     }
 
     const existingExpense = await prisma.expense.findUnique({
@@ -149,10 +157,13 @@ exports.remove = async (req, res) => {
       where: { expen_id: Number(id) },
     });
 
-    res.json({ message: "Expense deleted successfully", data: deleted });
-
+    res.json(
+      { message: "Expense deleted successfully", data: deleted }.status(200)
+    );
   } catch (err) {
     console.error("Error deleting Expense:", err);
-    res.status(500).json({ error: "Failed to delete Expense", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to delete Expense", details: err.message });
   }
 };

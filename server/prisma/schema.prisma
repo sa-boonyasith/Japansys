@@ -16,8 +16,8 @@ datasource db {
 model user {
   user_id   Int    @id @default(autoincrement())
   username  String @unique
-  firstname String 
-  lastname  String 
+  firstname String
+  lastname  String
   email     String @unique
   password  String
   role      Role   @default(recruit)
@@ -35,18 +35,18 @@ model Employee {
   documents     Json
   personal_info Json
 
-  phone_number    String   @db.VarChar(20)
-  email           String   @unique @db.VarChar(150)
-  liveby          String
-  birth_date      DateTime @db.Date
-  age             Int
-  ethnicity       String   @db.VarChar(50)
+  phone_number String   @db.VarChar(20)
+  email        String   @unique @db.VarChar(150)
+  liveby       String
+  birth_date   DateTime @db.Date
+  age          Int
+  ethnicity    String   @db.VarChar(50)
 
-  nationality     String   @db.VarChar(50)
-  religion        String   @db.VarChar(50)
-  marital_status  String   @db.VarChar(50)
-  military_status String   @db.VarChar(100)
-  role            Role     @default(employee)
+  nationality     String @db.VarChar(50)
+  religion        String @db.VarChar(50)
+  marital_status  String @db.VarChar(50)
+  military_status String @db.VarChar(100)
+  role            Role   @default(employee)
   photo           String
 
   // Relationships
@@ -182,9 +182,18 @@ model Salary {
   firstname   String
   lastname    String
 
+  Date DateTime @db.Date
+
   salary            Float
+  banking           Float
+  banking_id        Int
   overtime          Float @default(0)
   bonus             Float @default(0)
+  income_tax        Float @default(0)
+  tax               Float @default(0)
+  providentfund     Float @default(0)
+  socialsecurity    Float @default(0)
+  tax_total         Float @default(0)
   salary_total      Float @default(0)
   Total_working_day Int   @default(0)
 

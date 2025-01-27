@@ -4,7 +4,13 @@ import axios from "axios";
 const ExpenseSystem = () => {
   const [expenses, setExpenses] = useState([]);
   const [filterExpenses, setFilterExpenses] = useState([]);
-  const [filters, setFilters] = useState({ search: "" });
+  const [filters, setFilters] = useState({
+    search: "",
+    date: "",
+    type: "",
+    money: "",
+    status: "",
+  });
   const [newExpense, setNewExpense] = useState({
     employee_id: "",
     date: new Date().toISOString().substring(0, 10),
@@ -12,6 +18,8 @@ const ExpenseSystem = () => {
     money: "",
     desc: "",
   });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editExpense, setEditExpense] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addError, setAddError] = useState("");
@@ -84,6 +92,74 @@ const ExpenseSystem = () => {
     setFilterExpenses(filtered);
   };
 
+  const handleEditExpense = async () => {
+    if (!editExpense) {
+      alert("Please select expense to edit");
+      return;
+    }
+    try {
+      const payload ={
+        ...editExpense ,
+        employee_id : parseInt(editExpense.employee_id),
+      }
+
+
+      console.log("Sending data to server:", editExpense);
+      const res = await axios.put(
+        `http://localhost:8080/api/expense/${editExpense.expen_id}`,
+        payload
+      );
+      console.log("Response from server:", res.data);
+      if (res.status === 200 && res.data?.update) {
+        const updatedExpenses = expenses.map((expense) =>
+          expense.expen_id === editExpense.expen_id
+            ? { ...expense, ...res.data.update }
+            : expense
+        );
+  
+        setExpenses(updatedExpenses);
+        setFilterExpenses(updatedExpenses);
+        setShowEditModal(false);
+        setEditExpense(null);
+      } else {
+        alert("Unexpected response from the server");
+      }
+    } catch (err) {
+      console.error("Error updating expense:", err);
+      alert("Failed to update expense. Please try again.");
+    }
+  };
+  
+
+  const handleDeleteExpense = async (expenseId) => {
+    if (window.confirm("Are you sure you want to delete this expense?")) {
+      try {
+        const res = await axios.delete(
+          `http://localhost:8080/api/expense/${expenseId}`
+        );
+        if (res.status === 200 && res.data?.delete) {
+          const updatedExpenses = expenses.filter(
+            (expense) => expense.expen_id !== expenseId
+          );
+          setExpenses(updatedExpenses);
+          setFilterExpenses(updatedExpenses);
+        } else {
+          alert("Unexpected response from the server");
+        }
+      } catch (err) {
+        console.error("Error deleting expense:", err);
+        alert("Failed to delete expense. Please try again.");
+      }
+    }
+  };
+  const formatInputDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const handleAddExpense = async () => {
     try {
       // Validate fields
@@ -127,59 +203,61 @@ const ExpenseSystem = () => {
 
   return (
     <div className="p-6">
-      <div className="flex space-x-4 mb-4">
-        {/* Search Bar */}
-        <input
-          type="text"
-          name="search"
-          value={filters.search}
-          onChange={handleFilterChange}
-          placeholder="Search..."
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="date"
-          name="date"
-          value={filters.date}
-          onChange={handleFilterChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="text"
-          placeholder="Type"
-          name="type"
-          value={filters.type}
-          onChange={handleFilterChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="text"
-          placeholder="money"
-          name="money"
-          value={filters.money}
-          onChange={handleFilterChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <select
-          name="status"
-          className="border border-gray-300 p-2 rounded w-full md:w1/5 mb-4 "
-          value={filters.status}
-          onChange={handleFilterChange}
-        >
-          <option value="">All Status</option>
-          <option value="Pending">Pending</option>
-          <option value="Allowed">Allowed</option>
-          <option value="Rejected">Rejected</option>
-        </select>
+      <div className="flex flex-col mb-4  shadow-lg p-2 bg-white rounded">
+        <div className="flex flex-row gap-2">
+          {/* Search Bar */}
+          <input
+            type="text"
+            name="search"
+            value={filters.search}
+            onChange={handleFilterChange}
+            placeholder="Search..."
+            className="border p-2 rounded w-full h-10 "
+          />
+          <input
+            type="date"
+            name="date"
+            value={filters.date}
+            onChange={handleFilterChange}
+            className="border p-2 rounded w-full h-10 "
+          />
+          <input
+            type="text"
+            placeholder="Type"
+            name="type"
+            value={filters.type}
+            onChange={handleFilterChange}
+            className="border p-2 rounded w-full mb-4 h-10"
+          />
+          <input
+            type="text"
+            placeholder="money"
+            name="money"
+            value={filters.money}
+            onChange={handleFilterChange}
+            className="border p-2 rounded w-full mb-4 h-10"
+          />
+          <select
+            name="status"
+            className="border border-gray-300 p-2 rounded w-full md:w1/5 h-10  mb-4 "
+            value={filters.status}
+            onChange={handleFilterChange}
+          >
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Allowed">Allowed</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="flex flex-row gap-4 ">
+          <button
+            className="bg-green-500 text-white p-2 rounded mb-4"
+            onClick={() => setShowAddModal(true)}
+          >
+            Add Expense
+          </button>
+        </div>
       </div>
-
-      {/* Add Expense Button */}
-      <button
-        className="bg-blue-500 text-white p-2 rounded mb-4"
-        onClick={() => setShowAddModal(true)}
-      >
-        Add Expense
-      </button>
 
       {/* Expenses Table */}
       {loading ? (
@@ -197,6 +275,7 @@ const ExpenseSystem = () => {
                 "Money",
                 "Description",
                 "Status",
+                "Action",
               ].map((header) => (
                 <th key={header} className="border border-gray-300 p-2">
                   {header}
@@ -225,6 +304,23 @@ const ExpenseSystem = () => {
                   </td>
                   <td className="border text-center border-gray-300 p-2">
                     {expense.status}
+                  </td>
+                  <td className="border text-center border-gray-300 p-2">
+                    <button
+                      onClick={() => {
+                        setEditExpense(expense);
+                        setShowEditModal(true);
+                      }}
+                      className="bg-blue-500 text-white p-2 rounded"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteExpense(expense.expen_id)}
+                      className="bg-red-500 text-white p-2 rounded ml-2"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
@@ -278,6 +374,96 @@ const ExpenseSystem = () => {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+      {showEditModal && editExpense && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg w-4/5 md:w-1/3">
+            <h2 className="text-xl mb-4">Edit Expense</h2>
+            <div className="flex flex-col gap-4">
+              <input
+                type="text"
+                name="employee_id"
+                placeholder="Employee ID"
+                className="border border-gray-300 p-2 rounded"
+                value={editExpense.employee_id}
+                onChange={(e) =>
+                  setEditExpense({
+                    ...editExpense,
+                    employee_id: e.target.value,
+                  })
+                }
+              />
+              <input
+                type="date"
+                name="date"
+                className="border border-gray-300 p-2 rounded"
+                value={formatInputDate(editExpense.date)}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, date: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                name="type_expense"
+                placeholder="Type of Expense"
+                className="border border-gray-300 p-2 rounded"
+                value={editExpense.type_expense}
+                onChange={(e) =>
+                  setEditExpense({
+                    ...editExpense,
+                    type_expense: e.target.value,
+                  })
+                }
+              />
+              <input
+                type="number"
+                name="money"
+                placeholder="Amount"
+                className="border border-gray-300 p-2 rounded"
+                value={editExpense.money}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, money: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                name="desc"
+                placeholder="Description"
+                className="border border-gray-300 p-2 rounded"
+                value={editExpense.desc}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, desc: e.target.value })
+                }
+              />
+              <select
+                name="status"
+                className="border border-gray-300 p-2 rounded"
+                value={editExpense.status}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, status: e.target.value })
+                }
+              >
+                <option value="Pending">Pending</option>
+                <option value="Allowed">Allowed</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <div className="flex justify-end gap-4">
+                <button
+                  className="bg-gray-500 text-white px-4 py-2 rounded"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={handleEditExpense}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -175,7 +175,7 @@ const ExpenseSystem = () => {
         </div>
         <div className="flex flex-row gap-4 ">
           <button
-            className="bg-blue-500 text-white p-2 rounded mb-4"
+            className="bg-green-500 text-white p-2 rounded mb-4"
             onClick={() => setShowAddModal(true)}
           >
             Add Expense
