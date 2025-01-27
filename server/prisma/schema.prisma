@@ -200,6 +200,7 @@ model Salary {
   expense           Float    @default(0) //ค่าเบิกเงิน
   tax_total         Float    @default(0) //ภาษีทั้งหมด
   salary_total      Float    @default(0) //เงินเดือนทั้งหมด
+  salaryX12         Float    @default(0) //เงินเดือนรวมทั้งปี
   status            String   @default("Pending")
 
   created_at DateTime @default(now())

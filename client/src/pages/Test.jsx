@@ -29,6 +29,25 @@ const Test = () => {
     }).format(amount);
   };
 
+  const getStatusDisplay = (status) => {
+    if (status === 'paid') {
+      return (
+        <div className="flex items-center">
+          <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+          <span className="text-green-700">จ่ายแล้ว</span>
+        </div>
+      );
+    } else if (status === 'Pending') {
+      return (
+        <div className="flex items-center">
+          <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+          <span className="text-yellow-700">รออนุมัติ</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="p-8 max-w-[95%] mx-auto">
       <div className="bg-white rounded-lg shadow-lg">
@@ -56,6 +75,7 @@ const Test = () => {
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
                     <th className="p-4 text-left font-medium text-gray-500">Employee Info</th>
+                    <th className="p-4 text-left font-medium text-gray-500">สถานะ</th>
                     <th className="p-4 text-left font-medium text-gray-500">Position</th>
                     <th className="p-4 text-left font-medium text-gray-500">Payment Period</th>
                     <th className="p-4 text-left font-medium text-gray-500">Banking Details</th>
@@ -72,6 +92,7 @@ const Test = () => {
                         <div className="font-medium">{`${item.firstname} ${item.lastname}`}</div>
                         <div className="text-sm text-gray-500">ID: {item.employee_id}</div>
                       </td>
+                      <td className="p-4">{getStatusDisplay(item.status)}</td>
                       <td className="p-4">{item.position}</td>
                       <td className="p-4">
                         <div className="text-sm">
