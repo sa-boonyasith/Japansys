@@ -269,8 +269,12 @@ const Task = ({ task, onEdit, onDelete }) => {
           แก้ไข
         </button>
         <button
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-          onClick={onDelete}
+           className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+           onClick={() => {
+             if (window.confirm("คุณต้องการลบข้อมูลนี้ใช่หรือไม่?")) {
+               onDelete(); // Call the delete function if confirmed
+             }
+           }}
         >
           ลบ
         </button>
