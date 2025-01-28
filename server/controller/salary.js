@@ -129,7 +129,7 @@ exports.create = async (req, res) => {
 
     // Calculate annual income and deductions
     const annualIncome = salary * 12 + bonus_total;
-    const salary50 = Math.min((salary / 2) * 12, 100000);
+    const salary50 = Math.min((annualIncome / 2) * 12, 100000);
     const allowances = 0;
     const netIncome = annualIncome - salary50 - allowances;
 
@@ -203,6 +203,7 @@ exports.create = async (req, res) => {
       },
     });
 
+
     res.status(201).json(newSalary);
   } catch (err) {
     console.error("Error creating salary record:", err);
@@ -273,6 +274,38 @@ exports.update = async (req, res) => {
     const { job_position, salary, firstname, lastname, banking, banking_id } =
       employee;
 
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    const endOfYear = new Date(new Date().getFullYear(), 11, 31);
+
+    const bonuses = await prisma.salary.findMany({
+      where: {
+        employee_id: Number(employee_id),
+        payment_date: {
+          gte: startOfYear,
+          lte: endOfYear,
+        },
+      },
+      select: { bonus: true },
+    });
+
+    const bonus_total = bonuses.reduce((total, record) => total + record.bonus, 0);
+
+    if (new Date(payroll_enddate) <= new Date(payroll_startdate)) {
+      return res
+        .status(400)
+        .json({ error: "Payroll end date must be after start date" });
+    }
+
+
+    if (new Date(payment_date) < new Date(payroll_enddate)) {
+      return res
+        .status(400)
+        .json({ error: "Payment date must be after payroll end date" });
+    }
+
+  
+
+   
     // ดึงข้อมูล Attendance
     const attendanceRecords = await prisma.attend.findMany({
       where: {
@@ -321,23 +354,53 @@ exports.update = async (req, res) => {
     });
 
     const totalExpenses = expenses.reduce((total, exp) => total + exp.money, 0);
+    const annualIncome = salary * 12 + bonus_total;
+    const salary50 = Math.min((annualIncome / 2) * 12, 100000);
+    const allowances = 0;
+    const netIncome = annualIncome - salary50 - allowances;
+
+    const calculateTax = (income) => {
+      let tax = 0;
+      if (income > 5000000) {
+        tax += (income - 5000000) * 0.35;
+        income = 5000000;
+      }
+      if (income > 2000000) {
+        tax += (income - 2000000) * 0.3;
+        income = 2000000;
+      }
+      if (income > 1000000) {
+        tax += (income - 1000000) * 0.25;
+        income = 1000000;
+      }
+      if (income > 750000) {
+        tax += (income - 750000) * 0.2;
+        income = 750000;
+      }
+      if (income > 500000) {
+        tax += (income - 500000) * 0.15;
+        income = 500000;
+      }
+      if (income > 300000) {
+        tax += (income - 300000) * 0.1;
+        income = 300000;
+      }
+      if (income > 150000) {
+        tax += (income - 150000) * 0.05;
+      }
+      return tax;
+    }
+
+    const taxyear = calculateTax(netIncome);
+    const tax = taxyear / 12;
 
     // คำนวณตัวเลข
     const providentfund = salary * 0.03;
     const socialsecurity = Math.min(salary, 15000) * 0.05;
 
-    const tax_total =
-      parseFloat((providentfund + socialsecurity).toFixed(2));
-    const salary_total = parseFloat(
-      (
-        salary -
-        tax_total +
-        overtime +
-        bonus -
-        absent_late -
-        totalExpenses
-      ).toFixed(2)
-    );
+    const tax_total = tax + providentfund + socialsecurity;
+    const salary_total =
+      salary - tax_total + overtime + bonus - absent_late - totalExpenses;
 
     // อัปเดตข้อมูล
     const updatedSalary = await prisma.salary.update({
@@ -356,15 +419,21 @@ exports.update = async (req, res) => {
         absent_late,
         overtime,
         bonus,
-        tax: tax_total,
+        bonus_total: bonus_total,
+        tax: parseFloat(tax.toFixed(2)),
         providentfund,
         socialsecurity,
         expense: totalExpenses,
-        tax_total,
-        salary_total,
+        tax_total: parseFloat(tax_total.toFixed(2)),
+        salary_total: parseFloat(salary_total.toFixed(2)),
         status,
       },
     });
+
+    console.log("รายได้รวม : ",annualIncome)
+    console.log("ค่าใช้จ่าย : ",salary50)
+    console.log("รายได้สุทธิ : ",netIncome)
+    console.log("ภาษี : ",taxyear)
 
     res.status(200).json({
       message: "Salary updated successfully",
