@@ -20,17 +20,46 @@ exports.create = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!employee_id || !payroll_startdate || !payroll_enddate || !payment_date) {
+    if (
+      !employee_id ||
+      !payroll_startdate ||
+      !payroll_enddate ||
+      !payment_date
+    ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Calculate total bonus for the year
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    const endOfYear = new Date(new Date().getFullYear(), 11, 31);
+
+    const bonuses = await prisma.salary.findMany({
+      where: {
+        employee_id,
+        payment_date: {
+          gte: startOfYear,
+          lte: endOfYear,
+        },
+      },
+      select: {
+        bonus: true,
+      },
+    });
+
+    const bonus_total =
+      bonuses.reduce((total, record) => total + record.bonus, 0) + bonus;
+
     // Validate date logic
     if (new Date(payroll_enddate) <= new Date(payroll_startdate)) {
-      return res.status(400).json({ error: "Payroll end date must be after start date" });
+      return res
+        .status(400)
+        .json({ error: "Payroll end date must be after start date" });
     }
 
     if (new Date(payment_date) < new Date(payroll_enddate)) {
-      return res.status(400).json({ error: "Payment date must be after payroll end date" });
+      return res
+        .status(400)
+        .json({ error: "Payment date must be after payroll end date" });
     }
 
     // Fetch employee details
@@ -42,7 +71,8 @@ exports.create = async (req, res) => {
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    const { job_position, salary, firstname, lastname, banking, banking_id } = employee;
+    const { job_position, salary, firstname, lastname, banking, banking_id } =
+      employee;
 
     // Fetch attendance records
     const attendanceRecords = await prisma.attend.findMany({
@@ -66,13 +96,16 @@ exports.create = async (req, res) => {
         const workHours = record.working_hours || 0;
 
         // Count late arrivals (after 9:00 AM)
-        if (checkInTime.getHours() > 9 || (checkInTime.getHours() === 9 && checkInTime.getMinutes() > 0)) {
+        if (
+          checkInTime.getHours() > 9 ||
+          (checkInTime.getHours() === 9 && checkInTime.getMinutes() > 0)
+        ) {
           absent_late += 1;
         }
 
         // Calculate overtime
         if (workHours > 8.5) {
-          overtime += Math.floor(workHours - 8.5) * 1000; // Add 1000 per overtime hour
+          overtime += Math.floor(workHours - 8.5) * 1000;
         }
       }
     });
@@ -85,7 +118,7 @@ exports.create = async (req, res) => {
           gte: new Date(payroll_startdate),
           lte: new Date(payroll_enddate),
         },
-        status: "Allowed", // Include only "allowed" expenses
+        status: "Allowed",
       },
       select: {
         money: true,
@@ -94,9 +127,13 @@ exports.create = async (req, res) => {
 
     const totalExpenses = expenses.reduce((total, exp) => total + exp.money, 0);
 
-    
+    // Calculate annual income and deductions
+    const annualIncome = salary * 12 + bonus_total;
+    const salary50 = Math.min((salary / 2) * 12, 100000);
+    const allowances = 0;
+    const netIncome = annualIncome - salary50 - allowances;
 
-    // Calculate tax based on salary ranges
+    // Calculate tax based on net income
     const calculateTax = (income) => {
       let tax = 0;
       if (income > 5000000) {
@@ -104,7 +141,7 @@ exports.create = async (req, res) => {
         income = 5000000;
       }
       if (income > 2000000) {
-        tax += (income - 2000000) * 0.30;
+        tax += (income - 2000000) * 0.3;
         income = 2000000;
       }
       if (income > 1000000) {
@@ -112,7 +149,7 @@ exports.create = async (req, res) => {
         income = 1000000;
       }
       if (income > 750000) {
-        tax += (income - 750000) * 0.20;
+        tax += (income - 750000) * 0.2;
         income = 750000;
       }
       if (income > 500000) {
@@ -120,7 +157,7 @@ exports.create = async (req, res) => {
         income = 500000;
       }
       if (income > 300000) {
-        tax += (income - 300000) * 0.10;
+        tax += (income - 300000) * 0.1;
         income = 300000;
       }
       if (income > 150000) {
@@ -129,13 +166,16 @@ exports.create = async (req, res) => {
       return tax;
     };
 
-    const tax = calculateTax(salary);
-    const providentfund = salary * 0.03; // Example: 3% provident fund
-    const socialsecurity = Math.min(salary, 15000) * 0.05; // Example: 5% social security (max salary capped at 15,000)
+    const taxyear = calculateTax(netIncome);
+    const tax = taxyear / 12; // Monthly tax
+
+    const providentfund = salary * 0.03;
+    const socialsecurity = Math.min(salary, 15000) * 0.05;
 
     // Calculate tax_total and salary_total
     const tax_total = tax + providentfund + socialsecurity;
-    const salary_total = salary - tax_total + overtime + bonus - absent_late - totalExpenses;
+    const salary_total =
+      salary - tax_total + overtime + bonus - absent_late - totalExpenses;
 
     // Create salary record
     const newSalary = await prisma.salary.create({
@@ -153,53 +193,66 @@ exports.create = async (req, res) => {
         absent_late,
         overtime,
         bonus,
-        tax,
+        bonus_total: bonus_total,
+        tax: parseFloat(tax.toFixed(2)),
         providentfund,
         socialsecurity,
         expense: totalExpenses,
-        tax_total,
-        salary_total,
+        tax_total: parseFloat(tax_total.toFixed(2)),
+        salary_total: parseFloat(salary_total.toFixed(2)),
       },
     });
 
     res.status(201).json(newSalary);
   } catch (err) {
     console.error("Error creating salary record:", err);
-    res.status(500).json({ error: "Failed to create salary record", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to create salary record", details: err.message });
   }
 };
 
 exports.update = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    // รับข้อมูลจาก body
     const {
       employee_id,
       payroll_startdate,
       payroll_enddate,
       payment_date,
       bonus = 0,
-      tax = 0,
-      providentfund = 0,
-      socialsecurity = 0,
       status,
     } = req.body;
 
-    const { id } = req.params;
-
-    // Validate required fields
-    if (!id || isNaN(id) || !employee_id || !payroll_startdate || !payroll_enddate || !payment_date) {
-      return res.status(400).json({ error: "Missing or invalid required fields" });
+    // ตรวจสอบ ID และวันที่
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "Invalid or missing salary ID" });
     }
 
-    // Validate date logic
+    if (
+      !employee_id ||
+      !payroll_startdate ||
+      !payroll_enddate ||
+      !payment_date
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
     if (new Date(payroll_enddate) <= new Date(payroll_startdate)) {
-      return res.status(400).json({ error: "Payroll end date must be after start date" });
+      return res
+        .status(400)
+        .json({ error: "Payroll end date must be after start date" });
     }
 
     if (new Date(payment_date) < new Date(payroll_enddate)) {
-      return res.status(400).json({ error: "Payment date must be after payroll end date" });
+      return res
+        .status(400)
+        .json({ error: "Payment date must be after payroll end date" });
     }
 
-    // Check if salary record exists
+    // ตรวจสอบว่า record นี้มีอยู่จริงหรือไม่
     const existingSalary = await prisma.salary.findUnique({
       where: { salary_id: Number(id) },
     });
@@ -208,7 +261,7 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: "Salary record not found" });
     }
 
-    // Fetch employee details
+    // ดึงข้อมูลพนักงาน
     const employee = await prisma.employee.findUnique({
       where: { id: Number(employee_id) },
     });
@@ -217,9 +270,10 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    const { job_position, salary, firstname, lastname, banking, banking_id } = employee;
+    const { job_position, salary, firstname, lastname, banking, banking_id } =
+      employee;
 
-    // Fetch attendance records
+    // ดึงข้อมูล Attendance
     const attendanceRecords = await prisma.attend.findMany({
       where: {
         employee_id: Number(employee_id),
@@ -235,24 +289,25 @@ exports.update = async (req, res) => {
 
     attendanceRecords.forEach((record) => {
       if (!record.check_in_time) {
-        absent_late += 1; // Missing check-in counts as absent
+        absent_late += 1;
       } else {
         const checkInTime = new Date(record.check_in_time);
         const workHours = record.working_hours || 0;
 
-        // Count late arrivals (after 9:00 AM)
-        if (checkInTime.getHours() > 9 || (checkInTime.getHours() === 9 && checkInTime.getMinutes() > 0)) {
+        if (
+          checkInTime.getHours() > 9 ||
+          (checkInTime.getHours() === 9 && checkInTime.getMinutes() > 0)
+        ) {
           absent_late += 1;
         }
 
-        // Calculate overtime
         if (workHours > 8.5) {
-          overtime += Math.floor(workHours - 8.5) * 1000; // Add 1000 per overtime hour
+          overtime += Math.floor(workHours - 8.5) * 1000;
         }
       }
     });
 
-    // Fetch expense records
+    // ดึงข้อมูล Expenses
     const expenses = await prisma.expense.findMany({
       where: {
         employee_id: Number(employee_id),
@@ -260,20 +315,31 @@ exports.update = async (req, res) => {
           gte: new Date(payroll_startdate),
           lte: new Date(payroll_enddate),
         },
-        status: "Allowed", // Include only "allowed" expenses
+        status: "Allowed",
       },
-      select: {
-        money: true,
-      },
+      select: { money: true },
     });
 
     const totalExpenses = expenses.reduce((total, exp) => total + exp.money, 0);
 
-    // Calculate tax_total and salary_total
-    const tax_total = tax + providentfund + socialsecurity;
-    const salary_total = salary - tax_total + overtime + bonus - absent_late - totalExpenses;
+    // คำนวณตัวเลข
+    const providentfund = salary * 0.03;
+    const socialsecurity = Math.min(salary, 15000) * 0.05;
 
-    // Update the existing salary record
+    const tax_total =
+      parseFloat((providentfund + socialsecurity).toFixed(2));
+    const salary_total = parseFloat(
+      (
+        salary -
+        tax_total +
+        overtime +
+        bonus -
+        absent_late -
+        totalExpenses
+      ).toFixed(2)
+    );
+
+    // อัปเดตข้อมูล
     const updatedSalary = await prisma.salary.update({
       where: { salary_id: Number(id) },
       data: {
@@ -290,7 +356,7 @@ exports.update = async (req, res) => {
         absent_late,
         overtime,
         bonus,
-        tax,
+        tax: tax_total,
         providentfund,
         socialsecurity,
         expense: totalExpenses,
@@ -300,17 +366,17 @@ exports.update = async (req, res) => {
       },
     });
 
-    res.status(200).json({ message: "Salary updated successfully", updatedSalary });
+    res.status(200).json({
+      message: "Salary updated successfully",
+      updatedSalary,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update salary record", details: err.message });
+    console.error("Error updating salary record:", err);
+    res
+      .status(500)
+      .json({ error: "Failed to update salary record", details: err.message });
   }
 };
-
-
-
-
-
 
 
 exports.remove = async (req, res) => {

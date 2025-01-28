@@ -194,13 +194,13 @@ model Salary {
   absent_late       Float    @default(0)
   overtime          Float    @default(0)
   bonus             Float    @default(0)
+  bonus_total       Float    @default(0)
   tax               Float    @default(0) //ภาษี
   providentfund     Float    @default(0) //กองทุนสำรองชีพ
   socialsecurity    Float    @default(0) //ประกันสังคม
   expense           Float    @default(0) //ค่าเบิกเงิน
   tax_total         Float    @default(0) //ภาษีทั้งหมด
   salary_total      Float    @default(0) //เงินเดือนทั้งหมด
-  salaryX12         Float    @default(0) //เงินเดือนรวมทั้งปี
   status            String   @default("Pending")
 
   created_at DateTime @default(now())

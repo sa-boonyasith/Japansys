@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 const Test = () => {
   const [salaryData, setSalaryData] = useState([]);
   const [error, setError] = useState(null);
+  const [employeeId, setEmployeeId] = useState('');
+  const [filteredItems, setFilteredItems] = useState([]);
 
   useEffect(() => {
     const fetchSalaryData = async () => {
@@ -22,6 +24,17 @@ const Test = () => {
     fetchSalaryData();
   }, []);
 
+  useEffect(() => {
+    if (employeeId) {
+      const filtered = salaryData.filter(item => 
+        item.employee_id.toString().includes(employeeId.trim())
+      );
+      setFilteredItems(filtered);
+    } else {
+      setFilteredItems(salaryData);
+    }
+  }, [employeeId, salaryData]);
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
@@ -30,7 +43,7 @@ const Test = () => {
   };
 
   const getStatusDisplay = (status) => {
-    if (status === 'paid') {
+    if (status === 'Paid') {
       return (
         <div className="flex items-center">
           <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
@@ -52,7 +65,26 @@ const Test = () => {
     <div className="p-8 max-w-[95%] mx-auto">
       <div className="bg-white rounded-lg shadow-lg">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold">Salary Data</h2>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 className="text-2xl font-bold">Salary Data</h2>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="ใส่รหัสพนักงาน..."
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+              {employeeId && (
+                <button
+                  onClick={() => setEmployeeId('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
         </div>
         <div className="p-6">
           {error && (
@@ -86,53 +118,61 @@ const Test = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {salaryData.map((item, index) => (
-                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-4">
-                        <div className="font-medium">{`${item.firstname} ${item.lastname}`}</div>
-                        <div className="text-sm text-gray-500">ID: {item.employee_id}</div>
-                      </td>
-                      <td className="p-4">{getStatusDisplay(item.status)}</td>
-                      <td className="p-4">{item.position}</td>
-                      <td className="p-4">
-                        <div className="text-sm">
-                          <div>Start: {new Date(item.payroll_startdate).toLocaleDateString('th-TH')}</div>
-                          <div>End: {new Date(item.payroll_enddate).toLocaleDateString('th-TH')}</div>
-                          <div className="text-gray-500">Pay date: {new Date(item.payment_date).toLocaleDateString('th-TH')}</div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm">
-                          <div>{item.banking}</div>
-                          <div className="text-gray-500">{item.banking_id}</div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="font-medium">{formatCurrency(item.salary)}</div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm">
-                          <div className="text-red-500">ขาด/สาย: -{formatCurrency(item.absent_late)}</div>
-                          <div className="text-green-500">ค่าล่วงเวลา: +{formatCurrency(item.overtime)}</div>
-                          <div className="text-green-500">โบนัส: +{formatCurrency(item.bonus)}</div>
-                          <div>ค่าเบิกเงิน: {formatCurrency(item.expense)}</div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm">
-                          <div>ภาษี: {formatCurrency(item.tax)}</div>
-                          <div>กองทุน: {formatCurrency(item.providentfund)}</div>
-                          <div>ประกันสังคม: {formatCurrency(item.socialsecurity)}</div>
-                          <div className="font-medium">Total: {formatCurrency(item.tax_total)}</div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-lg font-bold">
-                          {formatCurrency(item.salary_total)}
-                        </div>
+                  {filteredItems.length > 0 ? (
+                    filteredItems.map((item, index) => (
+                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="p-4">
+                          <div className="font-medium">{`${item.firstname} ${item.lastname}`}</div>
+                          <div className="text-sm text-gray-500">ID: {item.employee_id}</div>
+                        </td>
+                        <td className="p-4">{getStatusDisplay(item.status)}</td>
+                        <td className="p-4">{item.position}</td>
+                        <td className="p-4">
+                          <div className="text-sm">
+                            <div>Start: {new Date(item.payroll_startdate).toLocaleDateString('th-TH')}</div>
+                            <div>End: {new Date(item.payroll_enddate).toLocaleDateString('th-TH')}</div>
+                            <div className="text-gray-500">Pay date: {new Date(item.payment_date).toLocaleDateString('th-TH')}</div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm">
+                            <div>{item.banking}</div>
+                            <div className="text-gray-500">{item.banking_id}</div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="font-medium">{formatCurrency(item.salary)}</div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm">
+                            <div className="text-red-500">ขาด/สาย: -{formatCurrency(item.absent_late)}</div>
+                            <div className="text-green-500">ค่าล่วงเวลา: +{formatCurrency(item.overtime)}</div>
+                            <div className="text-green-500">โบนัส: +{formatCurrency(item.bonus)}</div>
+                            <div>ค่าเบิกเงิน: {formatCurrency(item.expense)}</div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm">
+                            <div>ภาษี: {formatCurrency(item.tax)}</div>
+                            <div>กองทุน: {formatCurrency(item.providentfund)}</div>
+                            <div>ประกันสังคม: {formatCurrency(item.socialsecurity)}</div>
+                            <div className="font-medium">Total: {formatCurrency(item.tax_total)}</div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-lg font-bold">
+                            {formatCurrency(item.salary_total)}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="9" className="text-center py-8 text-gray-500">
+                        ไม่พบข้อมูลรหัสพนักงานที่ค้นหา
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
