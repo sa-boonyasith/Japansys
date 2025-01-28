@@ -35,19 +35,20 @@ exports.create = async (req, res) => {
 
     const bonuses = await prisma.salary.findMany({
       where: {
-        employee_id,
+        employee_id: Number(employee_id),
         payment_date: {
           gte: startOfYear,
           lte: endOfYear,
         },
       },
-      select: {
-        bonus: true,
-      },
+      select: { bonus: true },
     });
 
+    // ถ้าไม่มีโบนัสในปีนี้ จะกำหนดให้ bonus_total เป็น 0
     const bonus_total =
-      bonuses.reduce((total, record) => total + record.bonus, 0) + bonus;
+      bonuses.length > 0
+        ? bonuses.reduce((total, record) => total + record.bonus, 0)
+        : 0;
 
     // Validate date logic
     if (new Date(payroll_enddate) <= new Date(payroll_startdate)) {
@@ -110,21 +111,20 @@ exports.create = async (req, res) => {
       }
     });
 
-    // Fetch expense records
+    // ดึงข้อมูล Expenses เฉพาะช่วง payroll period
     const expenses = await prisma.expense.findMany({
       where: {
-        employee_id,
+        employee_id: Number(employee_id),
         date: {
-          gte: new Date(payroll_startdate),
-          lte: new Date(payroll_enddate),
+          gte: new Date(payroll_startdate), // เริ่มต้นจาก payroll_startdate
+          lte: new Date(payroll_enddate), // สิ้นสุดที่ payroll_enddate
         },
-        status: "Allowed",
+        status: "Allowed", // เฉพาะสถานะ Allowed เท่านั้น
       },
-      select: {
-        money: true,
-      },
+      select: { money: true },
     });
 
+    // รวมค่าใช้จ่ายในช่วงที่กำหนด
     const totalExpenses = expenses.reduce((total, exp) => total + exp.money, 0);
 
     // Calculate annual income and deductions
@@ -203,7 +203,6 @@ exports.create = async (req, res) => {
       },
     });
 
-
     res.status(201).json(newSalary);
   } catch (err) {
     console.error("Error creating salary record:", err);
@@ -276,7 +275,6 @@ exports.update = async (req, res) => {
 
     const startOfYear = new Date(new Date().getFullYear(), 0, 1);
     const endOfYear = new Date(new Date().getFullYear(), 11, 31);
-
     const bonuses = await prisma.salary.findMany({
       where: {
         employee_id: Number(employee_id),
@@ -288,7 +286,11 @@ exports.update = async (req, res) => {
       select: { bonus: true },
     });
 
-    const bonus_total = bonuses.reduce((total, record) => total + record.bonus, 0);
+    // ถ้าไม่มีโบนัสในปีนี้ จะกำหนดให้ bonus_total เป็น 0
+    const bonus_total =
+      bonuses.length > 0
+        ? bonuses.reduce((total, record) => total + record.bonus, 0)
+        : 0;
 
     if (new Date(payroll_enddate) <= new Date(payroll_startdate)) {
       return res
@@ -296,16 +298,12 @@ exports.update = async (req, res) => {
         .json({ error: "Payroll end date must be after start date" });
     }
 
-
     if (new Date(payment_date) < new Date(payroll_enddate)) {
       return res
         .status(400)
         .json({ error: "Payment date must be after payroll end date" });
     }
 
-  
-
-   
     // ดึงข้อมูล Attendance
     const attendanceRecords = await prisma.attend.findMany({
       where: {
@@ -340,20 +338,21 @@ exports.update = async (req, res) => {
       }
     });
 
-    // ดึงข้อมูล Expenses
+    // ดึงข้อมูล Expenses เฉพาะช่วง payroll period
     const expenses = await prisma.expense.findMany({
       where: {
         employee_id: Number(employee_id),
         date: {
-          gte: new Date(payroll_startdate),
-          lte: new Date(payroll_enddate),
+          gte: new Date(payroll_startdate), // เริ่มต้นจาก payroll_startdate
+          lte: new Date(payroll_enddate), // สิ้นสุดที่ payroll_enddate
         },
-        status: "Allowed",
+        status: "Allowed", // เฉพาะสถานะ Allowed เท่านั้น
       },
       select: { money: true },
     });
 
     const totalExpenses = expenses.reduce((total, exp) => total + exp.money, 0);
+    console.log("ค่าใช้จ่าย : ", totalExpenses);
     const annualIncome = salary * 12 + bonus_total;
     const salary50 = Math.min((annualIncome / 2) * 12, 100000);
     const allowances = 0;
@@ -389,7 +388,7 @@ exports.update = async (req, res) => {
         tax += (income - 150000) * 0.05;
       }
       return tax;
-    }
+    };
 
     const taxyear = calculateTax(netIncome);
     const tax = taxyear / 12;
@@ -430,10 +429,10 @@ exports.update = async (req, res) => {
       },
     });
 
-    console.log("รายได้รวม : ",annualIncome)
-    console.log("ค่าใช้จ่าย : ",salary50)
-    console.log("รายได้สุทธิ : ",netIncome)
-    console.log("ภาษี : ",taxyear)
+    console.log("รายได้รวม : ", annualIncome);
+    console.log("ค่าใช้จ่าย : ", salary50);
+    console.log("รายได้สุทธิ : ", netIncome);
+    console.log("ภาษี : ", taxyear);
 
     res.status(200).json({
       message: "Salary updated successfully",
@@ -446,7 +445,6 @@ exports.update = async (req, res) => {
       .json({ error: "Failed to update salary record", details: err.message });
   }
 };
-
 
 exports.remove = async (req, res) => {
   try {
