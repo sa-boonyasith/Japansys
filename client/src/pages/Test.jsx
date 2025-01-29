@@ -158,167 +158,151 @@ const Test = () => {
   };
 
   return (
-    <div className=" max-w-full  ">
-      <div className="bg-white rounded-lg shadow-lg">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-2xl font-bold">Salary Data</h2>
-            <div className="flex flex-col md:flex-row gap-4">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              >
-                <option value="">เลือกเดือน</option>
-                {months.map((month) => (
-                  <option key={month.value} value={month.value}>
-                    {month.label}
-                  </option>
-                ))}
-              </select>
+    <div className="w-full">
+    <div className="bg-white rounded-lg shadow-lg">
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold">Salary Data</h2>
+          <div className="flex flex-col md:flex-row gap-4">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="">เลือกเดือน</option>
+              {months.map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
 
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year + 543}
-                  </option>
-                ))}
-              </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year + 543}
+                </option>
+              ))}
+            </select>
 
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="ใส่รหัสพนักงาน..."
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                />
-                {employeeId && (
-                  <button
-                    onClick={() => setEmployeeId('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="ใส่รหัสพนักงาน..."
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+              {employeeId && (
+                <button
+                  onClick={() => setEmployeeId('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Rest of the component remains the same */}
-        <div className="p-6">
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-              <p className="text-red-700">{error}</p>
-            </div>
-          )}
-          
-          {salaryData.length === 0 ? (
-            <div className="flex items-center justify-center p-8">
-              <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span className="ml-2 text-gray-500">Loading data...</span>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
+      <div className="p-6">
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+        
+        {salaryData.length === 0 ? (
+          <div className="flex items-center justify-center p-8">
+            <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="ml-2 text-gray-500">Loading data...</span>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <div className="min-w-max">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b border-gray-200  bg-gray-50">
-                      <th className="p-2 text-center font-medium text-gray-500">ข้อมูลพนักงาน</th>
-                      <th className="p-4 text-center font-medium text-gray-500">สถานะ</th>
-                      <th className="p-4 text-center font-medium text-gray-500">ตำแหน่ง</th>
-                      <th className="p-4 text-center font-medium text-gray-500">วันที่จ่าย</th>
-                      <th className="p-4 text-center font-medium text-gray-500">ข้อมูลธนาคาร</th>
-                      <th className="p-4 text-center font-medium text-gray-500">เงินเดือน</th>
-                      <th className="p-4 text-center font-medium text-gray-500">ค่าล่วงเวลา</th>
-                      <th className="p-4 text-center font-medium text-gray-500">โบนัส</th>
-                      <th className="p-4 text-center font-medium text-gray-500">ขาด/สาย</th>
-                      <th className="p-4 text-center font-medium text-gray-500">ค่าเบิกเงิน</th>
-                      <th className="p-4 text-center font-medium text-gray-500">ภาษี</th>
-                      <th className="p-4 text-center font-medium text-gray-500">กองทุน</th>
-                      <th className="p-4 text-center font-medium text-gray-500">ประกันสังคม</th>
-                      <th className="p-4 text-center font-medium text-gray-500">รายได้สุทธิ</th>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="p-2 text-left font-medium text-gray-500 sticky left-0 bg-gray-50">ข้อมูลพนักงาน</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">สถานะ</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">ตำแหน่ง</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">วันที่จ่าย</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">ข้อมูลธนาคาร</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">เงินเดือน</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">ค่าล่วงเวลา</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">โบนัส</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">ขาด/สาย</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">ค่าเบิกเงิน</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">ภาษี</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">กองทุน</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">ประกันสังคม</th>
+                      <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">รายได้สุทธิ</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
                     {currentItems.length > 0 ? (
                       currentItems.map((item, index) => (
-                        <tr key={index} className="border-b text-center border-gray-100 hover:bg-gray-50">
-                          <td className="p-4">
+                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="p-4 sticky left-0 bg-white">
                             <div className="font-medium">{`${item.firstname} ${item.lastname}`}</div>
                             <div className="text-sm text-gray-500">ID: {item.employee_id}</div>
                           </td>
-                          <td className="p-4">{getStatusDisplay(item.status)}</td>
-                          <td className="p-4">{item.position}</td>
-                          <td className="p-4">
-                            <div className="text-sm">
+                          <td className="p-4 text-center">{getStatusDisplay(item.status)}</td>
+                          <td className="p-4 text-center whitespace-nowrap">{item.position}</td>
+                          <td className="p-4 text-center">
+                            <div className="text-sm whitespace-nowrap">
                               <div>Start: {new Date(item.payroll_startdate).toLocaleDateString('th-TH')}</div>
                               <div>End: {new Date(item.payroll_enddate).toLocaleDateString('th-TH')}</div>
-                              <div className="text-gray-500">Pay date: {new Date(item.payment_date).toLocaleDateString('th-TH')}</div>
+                              <div className="text-gray-500">Pay: {new Date(item.payment_date).toLocaleDateString('th-TH')}</div>
                             </div>
                           </td>
-                          <td className="p-4">
-                            <div className="text-sm">
+                          <td className="p-4 text-center">
+                            <div className="text-sm whitespace-nowrap">
                               <div>{item.banking}</div>
                               <div className="text-gray-500">{item.banking_id}</div>
                             </div>
                           </td>
-                          <td className="p-4">
-                            <div className="font-medium text-green-500"> + {formatCurrency(item.salary)}</div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-green-500">+{formatCurrency(item.salary)}</div>
                           </td>
-                          <td className="p-4">
-                            <div className="text-sm font-medium">
-                              <div className="font-medium text-green-500"> + {formatCurrency(item.overtime)}</div>
-                            </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-green-500">+{formatCurrency(item.overtime)}</div>
                           </td>
-                          <td>
-                          <div className='text-sm font-medium'>
-                            <div className='font-medium text-green-500'> + {formatCurrency(item.bonus)}</div>
-                          </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-green-500">+{formatCurrency(item.bonus)}</div>
                           </td>
-                          <td>
-                          <div className='text-sm font-medium'>
-                            <div className='font-medium text-red-500'> - {formatCurrency(item.absent_late)}</div>
-                          </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-red-500">-{formatCurrency(item.absent_late)}</div>
                           </td>
-                          <td>
-                          <div className='text-sm font-medium'>
-                            <div className='font-medium text-red-500'> - {formatCurrency(item.expense)}</div>
-                          </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-red-500">-{formatCurrency(item.expense)}</div>
                           </td>
-                          <td className="p-2">
-                            <div className="text-sm font-medium">
-                              <div className='text-red-500'> - {formatCurrency(item.tax)}</div>
-                            </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-red-500">-{formatCurrency(item.tax)}</div>
                           </td>
-                          <td className="p-2">
-                            <div className="text-sm font-medium">
-                              <div className='text-red-500'> - {formatCurrency(item.providentfund)}</div>
-                            </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-red-500">-{formatCurrency(item.providentfund)}</div>
                           </td>
-                          <td className="p-2">
-                            <div className="text-sm font-medium">
-                              <div className='text-red-500'> - {formatCurrency(item.socialsecurity)}</div>
-                            </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="font-medium text-red-500">-{formatCurrency(item.socialsecurity)}</div>
                           </td>
-                          <td className="p-2">
-                            <div className="text-lg font-bold text-green-500">
-                              {formatCurrency(item.salary_total)}
-                            </div>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <div className="text-lg font-bold text-green-500">{formatCurrency(item.salary_total)}</div>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="9" className="text-center py-8 text-gray-500">
+                        <td colSpan="14" className="text-center py-8 text-gray-500">
                           ไม่พบข้อมูลรหัสพนักงานที่ค้นหา
                         </td>
                       </tr>
@@ -326,13 +310,14 @@ const Test = () => {
                   </tbody>
                 </table>
               </div>
-              <Pagination />
-            </>
-          )}
-        </div>
+            </div>
+            <Pagination />
+          </>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Test;
