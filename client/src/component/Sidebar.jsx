@@ -165,10 +165,22 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
             {activeSection === "customerService" && (
               <ul className="text-center text-sm text-white">
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/service-requests">Service Requests</Link>
+                  <Link to="/dashboard/service-requests">เพิ่มข้อมูลลูกค้า</Link>
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/register/feedback">Feedback</Link>
+                  <Link to="/register/feedback">Quotation/ใบเสนอราคา</Link>
+                </li>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/feedback">Invoice/ใบแจ้งหนี้</Link>
+                </li>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/feedback">Receipt/ใบเสร็จรับเงิน</Link>
+                </li>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/feedback">นัดประชุมกับลูกค้า</Link>
+                </li>
+                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
+                  <Link to="/register/feedback">ร่างเอกสารสัญญารักษาความลับ</Link>
                 </li>
               </ul>
             )}

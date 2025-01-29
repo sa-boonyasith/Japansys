@@ -1,324 +1,476 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import AddJob from "./AddJob";
+import { Plus, Trash2, PencilIcon, Camera } from "lucide-react";
 
-const Meeting = () => {
-  const [meetings, setMeetings] = useState([]);
-  const [filteredMeetings, setFilteredMeetings] = useState([]);
-  const [filters, setFilters] = useState({
-    search: "",
-    status: "",
-    startDate: "",
-    endDate: "",
-    startTime: "",
-    endTime: "",
-  });
-  const [newMeeting, setNewMeeting] = useState({
-    employee_id: "",
-    startdate: "",
-    enddate: "",
-    timestart: "",
-    timeend: "",
-  });
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const Job = () => {
+  const [applications, setApplications] = useState([]);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedApplication, setEditedApplication] = useState(null);
 
   useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const response = await axios.get("http://localhost:8080/api/meeting");
-        if (Array.isArray(response.data.listmeetingroom)) {
-          const today = new Date();
-          const sortedMeetings = response.data.listmeetingroom.sort((a, b) => {
-            const diffA = Math.abs(new Date(a.startdate) - today);
-            const diffB = Math.abs(new Date(b.startdate) - today);
-            return diffA - diffB;
-          });
-          setMeetings(sortedMeetings);
-          setFilteredMeetings(sortedMeetings);
-        } else {
-          setError("Expected an array of meetings, but got something else.");
-        }
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch data.");
-        setLoading(false);
-      }
-    };
-    fetchMeetings();
+    fetchApplications();
   }, []);
 
-  const handleFilterChange = (e) => {
-    const newFilters = { ...filters, [e.target.name]: e.target.value };
-    setFilters(newFilters);
-    applyFilters(newFilters);
+  const fetchApplications = () => {
+    axios
+      .get("http://localhost:8080/api/jobaplication")
+      .then((response) => {
+        setApplications(response.data.listjobaplication);
+      })
+      .catch((error) => {
+        console.error("Error fetching applications:", error);
+      });
   };
 
-  const applyFilters = (currentFilters) => {
-    const filtered = meetings.filter((meeting) => {
-      const searchFilter = currentFilters.search
-        ? meeting.firstname.toLowerCase().includes(currentFilters.search.toLowerCase()) ||
-          meeting.lastname.toLowerCase().includes(currentFilters.search.toLowerCase())
-        : true;
-      const statusFilter = currentFilters.status ? meeting.status === currentFilters.status : true;
-      const startDateFilter = currentFilters.startDate
-        ? new Date(meeting.startdate) >= new Date(currentFilters.startDate)
-        : true;
-      const endDateFilter = currentFilters.endDate
-        ? new Date(meeting.enddate) <= new Date(currentFilters.endDate)
-        : true;
-      const startTimeFilter = currentFilters.startTime
-        ? meeting.timestart >= currentFilters.startTime
-        : true;
-      const endTimeFilter = currentFilters.endTime
-        ? meeting.timeend <= currentFilters.endTime
-        : true;
-
-      return (
-        searchFilter &&
-        statusFilter &&
-        startDateFilter &&
-        endDateFilter &&
-        startTimeFilter &&
-        endTimeFilter
-      );
+  const handleEdit = (application) => {
+    setEditedApplication({
+      ...application,
+      expected_salary: application.expected_salary?.toString() || "",
+      age: application.age?.toString() || "",
     });
-
-    const sorted = filtered.sort((a, b) => {
-      const today = new Date();
-      const diffA = Math.abs(new Date(a.startdate) - today);
-      const diffB = Math.abs(new Date(b.startdate) - today);
-      return diffA - diffB;
-    });
-
-    setFilteredMeetings(sorted);
+    setEditMode(true);
   };
 
-  const resetFilters = () => {
-    const initialFilters = {
-      search: "",
-      status: "",
-      startDate: "",
-      endDate: "",
-      startTime: "",
-      endTime: "",
-    };
-    setFilters(initialFilters);
-    setFilteredMeetings(meetings);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedApplication((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).replace(/\//g, "-");
+  const handleEditStatus = (id, newStatus) => {
+    axios
+      .put(`http://localhost:8080/api/jobaplication/${id}`, {
+        status: newStatus,
+      })
+      .then(() => {
+        fetchApplications();
+      })
+      .catch((error) => {
+        console.error("Error updating status:", error);
+        alert("เกิดข้อผิดพลาด กรุณาลองอีกครั้ง");
+      });
   };
 
-  const handleModalChange = (e) => {
-    setNewMeeting({ ...newMeeting, [e.target.name]: e.target.value });
-  };
-
-  const handleAddMeeting = async () => {
-    if (
-      !newMeeting.employee_id ||
-      !newMeeting.startdate ||
-      !newMeeting.enddate ||
-      !newMeeting.timestart ||
-      !newMeeting.timeend
-    ) {
-      alert("Please fill out all required fields.");
-      return;
+  const handleDelete = (id) => {
+    if (window.confirm("คุณต้องการลบข้อมูลผู้สมัครนี้ใช่หรือไม่?")) {
+      axios
+        .delete(`http://localhost:8080/api/jobaplication/${id}`)
+        .then(() => {
+          setApplications((prev) => prev.filter((app) => app.job_id !== id));
+          setIsModalOpen(false);
+        })
+        .catch((error) => {
+          console.error("Error deleting application:", error);
+        });
     }
+  };
+
+  const handleImageChange = async (event, applicationId) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("photo", file);
 
     try {
-      const payload = {
-        ...newMeeting,
-        employee_id: parseInt(newMeeting.employee_id, 10),
-      };
-
-      const response = await axios.post("http://localhost:8080/api/meeting", payload);
-      if (response.data && response.data.newmeetingroom) {
-        setMeetings([...meetings, response.data.newmeetingroom]);
-        setFilteredMeetings([...filteredMeetings, response.data.newmeetingroom]);
-        setShowAddModal(false);
-        setNewMeeting({
-          employee_id: "",
-          startdate: "",
-          enddate: "",
-          timestart: "",
-          timeend: "",
-        });
-      } else {
-        alert("Unexpected response from the server.");
-      }
+      await axios.put(
+        `http://localhost:8080/api/jobaplication/${applicationId}/photo`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      fetchApplications();
     } catch (error) {
-      console.error("Failed to add meeting:", error);
-      alert("Error adding meeting. Please try again.");
+      console.error("Error updating photo:", error);
+      alert("เกิดข้อผิดพลาด ในการอัพโหลดรูปภาพ");
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  const handleUpdateApplication = async () => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/api/jobaplication/${editedApplication.job_id}`,
+        editedApplication
+      );
+
+      if (response.status === 200) {
+        fetchApplications();
+        setEditMode(false);
+        setIsModalOpen(false);
+        alert("อัพเดทข้อมูลสำเร็จ");
+      }
+    } catch (error) {
+      console.error("Error updating application:", error);
+      alert("เกิดข้อผิดพลาด ในการอัพเดทข้อมูล");
+    }
+  };
+
+  const filterByStatus = (status) =>
+    applications.filter((app) => app.status === status);
+
+  const handleViewDetails = (app) => {
+    setSelectedApplication(app);
+    setEditedApplication(app);
+    setIsModalOpen(true);
+    setEditMode(false);
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      new: "bg-blue-500 hover:bg-blue-600",
+      wait: "bg-yellow-500 hover:bg-yellow-600",
+      pass: "bg-green-500 hover:bg-green-600",
+    };
+    return colors[status] || "bg-gray-500 hover:bg-gray-600";
+  };
+
+  const getStatusBadge = (status) => {
+    const styles = {
+      new: "bg-blue-100 text-blue-800 border-blue-200",
+      wait: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      pass: "bg-green-100 text-green-800 border-green-200",
+    };
+    return styles[status] || "bg-gray-100 text-gray-800 border-gray-200";
+  };
 
   return (
-    <div className="p-6">
-      {/* Filters */}
-      <div className="shadow-lg p-4 rounded-lg mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-2 w-full">
-          <input
-            type="text"
-            name="search"
-            placeholder="Search for Name"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-            value={filters.search}
-            onChange={handleFilterChange}
-          />
-           <input
-              type="date"
-              name="startDate"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.startDate}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="date"
-              name="endDate"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.endDate}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="time"
-              name="startTime"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.startTime}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="time"
-              name="endTime"
-              className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-              value={filters.endTime}
-              onChange={handleFilterChange}
-            />
-            <div className="w-[200px]">
-            <select
-            name="status"
-            className="border text-gray-400 border-gray-300 p-2 rounded w-full"
-            value={filters.status}
-            onChange={handleFilterChange}
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="allowed">Allowed</option>
-            <option value="rejected">Rejected</option>
-          </select>
-            </div>
-          </div>
-          <div className="flex justify-start gap-2">
-          <button onClick={resetFilters} className="bg-gray-500 text-white px-4 py-2 rounded">
-            Reset
-          </button>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">ระบบจัดการผู้สมัครงาน</h1>
           <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-green-500 text-white  px-4 py-2 rounded"
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
           >
-            Add Meeting
+            <Plus size={20} />
+            <span>เพิ่มผู้สมัคร</span>
           </button>
-          </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="border border-gray-300 p-2">Meeting room username</th>
-            <th className="border border-gray-300 p-2">Date</th>
-            <th className="border border-gray-300 p-2">Time</th>
-            <th className="border border-gray-300 p-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredMeetings.map((meeting) => (
-            <tr key={meeting.meeting_id}>
-              <td className="border text-center border-gray-300 p-2">
-                {meeting.firstname} {meeting.lastname}
-              </td>
-              <td className="border text-center border-gray-300 p-2">
-                {formatDate(meeting.startdate)} - {formatDate(meeting.enddate)}
-              </td>
-              <td className="border text-center border-gray-300 p-2">
-                {meeting.timestart} - {meeting.timeend}
-              </td>
-              <td className="border text-center border-gray-300 p-2">{meeting.status}</td>
-            </tr>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {["new", "wait", "pass"].map((status) => (
+            <div key={status} className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className={`p-4 ${getStatusColor(status)} rounded-t-xl`}>
+                <h2 className="text-xl font-semibold text-white">
+                  {status === "new" && "ผู้สมัครใหม่"}
+                  {status === "wait" && "รอสัมภาษณ์"}
+                  {status === "pass" && "ผ่านสัมภาษณ์"}
+                  <span className="ml-2 text-sm font-normal text-white opacity-80">
+                    ({filterByStatus(status).length})
+                  </span>
+                </h2>
+              </div>
+              <div className="p-4">
+                <ul className="space-y-3">
+                  {filterByStatus(status).map((app) => (
+                    <li
+                      key={app.job_id}
+                      className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={`http://localhost:8080${app.photo}`}
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <p
+                              className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+                              onClick={() => handleViewDetails(app)}
+                            >
+                              {app.firstname} {app.lastname}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              ตำแหน่ง: {app.job_position}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={app.status}
+                            onChange={(e) => handleEditStatus(app.job_id, e.target.value)}
+                            className={`text-sm rounded-lg border px-3 py-1.5 ${getStatusBadge(app.status)}`}
+                          >
+                            <option value="new">ใหม่</option>
+                            <option value="wait">รอสัมภาษณ์</option>
+                            <option value="pass">ผ่านสัมภาษณ์</option>
+                          </select>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                  {filterByStatus(status).length === 0 && (
+                    <li className="text-center py-8">
+                      <p className="text-gray-500">ไม่มีข้อมูล</p>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
 
-      {/* Add Meeting Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-            <h2 className="text-lg font-bold mb-4">Add Meeting</h2>
-            <input
-              type="text"
-              name="employee_id"
-              placeholder="Employee ID"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.employee_id}
-              onChange={handleModalChange}
-            />
-            <input
-              type="date"
-              name="startdate"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.startdate}
-              onChange={handleModalChange}
-            />
-            <input
-              type="date"
-              name="enddate"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.enddate}
-              onChange={handleModalChange}
-            />
-            <input
-              type="time"
-              name="timestart"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.timestart}
-              onChange={handleModalChange}
-            />
-            <input
-              type="time"
-              name="timeend"
-              className="border border-gray-300 p-2 rounded w-full mb-2"
-              value={newMeeting.timeend}
-              onChange={handleModalChange}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddMeeting}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Add
-              </button>
+        {isModalOpen && selectedApplication && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl w-[800px] max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {editMode ? "แก้ไขข้อมูลผู้สมัคร" : "รายละเอียดผู้สมัคร"}
+                  </h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditMode(!editMode)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <PencilIcon size={20} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setEditMode(false);
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-start gap-6 mb-6">
+                  <div className="relative group">
+                    <img
+                      src={`http://localhost:8080${selectedApplication.photo}`}
+                      alt="Profile"
+                      className="w-32 h-32 rounded-lg object-cover border border-gray-200"
+                    />
+                    {editMode && (
+                      <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 rounded-lg cursor-pointer transition">
+                        <Camera className="text-white" size={24} />
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(e, selectedApplication.job_id)}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    {editMode ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                ชื่อ
+                              </label>
+                              <input
+                                type="text"
+                                name="firstname"
+                                value={editedApplication.firstname || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                นามสกุล
+                              </label>
+                              <input
+                                type="text"
+                                name="lastname"
+                                value={editedApplication.lastname || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                อีเมล
+                              </label>
+                              <input
+                                type="email"
+                                name="email"
+                                value={editedApplication.email || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                เบอร์โทร
+                              </label>
+                              <input
+                                type="text"
+                                name="phone_number"
+                                value={editedApplication.phone_number || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                วันเกิด
+                              </label>
+                              <input
+                                type="text"
+                                name="birth_date"
+                                value={editedApplication.birth_date || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                ตำแหน่ง
+                              </label>
+                              <input
+                                type="text"
+                                name="job_position"
+                                value={editedApplication.job_position || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                เงินเดือนที่คาดหวัง
+                              </label>
+                              <input
+                                type="number"
+                                name="expected_salary"
+                                value={editedApplication.expected_salary || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                อายุ
+                              </label>
+                              <input
+                                type="number"
+                                name="age"
+                                value={editedApplication.age || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                สถานะ
+                              </label>
+                              <select
+                                name="status"
+                                value={editedApplication.status || "new"}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              >
+                                <option value="new">ใหม่</option>
+                                <option value="wait">รอสัมภาษณ์</option>
+                                <option value="pass">ผ่านสัมภาษณ์</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                เชื้อชาติ
+                              </label>
+                              <input
+                                type="text"
+                                name="ethnicity"
+                                value={editedApplication.ethnicity || ""}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            ที่อยู่
+                          </label>
+                          <textarea
+                            name="liveby"
+                            value={editedApplication.liveby || ""}
+                            onChange={handleInputChange}
+                            className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          ></textarea>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-medium text-gray-700">
+                          อีเมล: {selectedApplication.email}
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          เบอร์โทร: {selectedApplication.phone_number}
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          ตำแหน่ง: {selectedApplication.job_position}
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          เงินเดือนที่คาดหวัง: {selectedApplication.expected_salary} บาท
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          อายุ: {selectedApplication.age} ปี
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          สถานะ: {selectedApplication.status}
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          ที่อยู่: {selectedApplication.liveby}
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          วันเกิด: {selectedApplication.birth_date}
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          เชื้อชาติ: {selectedApplication.ethnicity}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {editMode && (
+                <div className="p-6 border-t border-gray-200 flex justify-end">
+                  <button
+                    onClick={handleUpdateApplication}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    บันทึก
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {addModalOpen && (
+          <AddJob
+            isOpen={addModalOpen}
+            onClose={() => setAddModalOpen(false)}
+            onAdd={fetchApplications}
+          />
+        )}
+      </div>
     </div>
   );
 };
 
-export default Meeting;
+export default Job;

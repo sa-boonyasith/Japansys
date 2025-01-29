@@ -194,7 +194,7 @@ const AddJob = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  เงินเดือนที่คาดหวัง
+                  เงินเดือนที่คาดหวัง 
                 </label>
                 <input
                   type="text" // เปลี่ยนจาก type="number" เป็น type="text"
