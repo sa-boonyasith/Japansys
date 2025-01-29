@@ -67,12 +67,16 @@ exports.create = async (req, res) => {
       military_status,
     } = req.body;
 
-    // แปลง JSON string ให้เป็น object
-    const documents = req.body.documents ? JSON.parse(req.body.documents) : null;
+    // แปลง JSON string ให้เป็น object (ถ้ามี)
     const personal_info = req.body.personal_info ? JSON.parse(req.body.personal_info) : null;
 
     // ดึงข้อมูลไฟล์ที่อัปโหลด
-    const photo = req.file ? `/uploads/${req.file.filename}` : null;
+    const photo = req.files?.photo ? `/uploads/${req.files.photo[0].filename}` : null;
+
+    // ดึงเอกสารทั้งหมดที่อัปโหลด
+    const documents = req.files?.documents
+      ? req.files.documents.map((file) => `/uploads/${file.filename}`)
+      : [];
 
     // ตรวจสอบว่า email ซ้ำหรือไม่
     const checkemail = await prisma.jobApplication.findUnique({
@@ -80,7 +84,7 @@ exports.create = async (req, res) => {
     });
 
     if (checkemail) {
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: "Email already exists" });
     }
 
     // สร้างข้อมูลใหม่
@@ -107,14 +111,15 @@ exports.create = async (req, res) => {
     });
 
     res.status(201).json({
-      message: 'Job application created successfully',
+      message: "Job application created successfully",
       newJobApplication,
     });
   } catch (err) {
-    console.error('Error creating job application:', err.message);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error("Error creating job application:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 
 

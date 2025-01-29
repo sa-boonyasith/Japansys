@@ -12,16 +12,23 @@ const storage = multer.diskStorage({
   },
 });
 
-// ตรวจสอบประเภทไฟล์ (Optional)
+// ตรวจสอบประเภทไฟล์ (รองรับทั้งรูปภาพและเอกสาร PDF)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true); // ยอมรับไฟล์
+  const allowedTypes = {
+    photo: ['image/jpeg', 'image/png', 'image/gif'],  // รูปภาพ
+    documents: ['application/pdf'], // เอกสาร PDF เท่านั้น
+  };
+
+  if (file.fieldname === "photo" && allowedTypes.photo.includes(file.mimetype)) {
+    cb(null, true);
+  } else if (file.fieldname === "documents" && allowedTypes.documents.includes(file.mimetype)) {
+    cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only JPEG, PNG, and GIF are allowed.'), false); // ปฏิเสธไฟล์
+    cb(new Error('Invalid file type. Allowed: JPEG, PNG, GIF (photo) | PDF (documents)'), false);
   }
 };
 
+// กำหนดการอัปโหลดให้รองรับหลายไฟล์
 const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // จำกัดขนาดไฟล์ 5MB

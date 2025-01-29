@@ -129,16 +129,15 @@ const AddJob = () => {
       }
     });
   
-    // Debug: ดูข้อมูลใน FormData ก่อนส่ง
-    console.log("FormData preview:");
-    for (let [key, value] of formDataToSend.entries()) {
-      console.log(`${key}:`, value);
-    }
-  
     try {
       const response = await axios.post(
         "http://localhost:8080/api/jobaplication",
-        formDataToSend // FormData ที่จัดการแล้ว
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", // กำหนด header สำหรับการอัปโหลดไฟล์
+          },
+        }
       );
       alert("เพิ่มผู้สมัครสำเร็จ!");
   
