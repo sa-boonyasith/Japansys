@@ -1,38 +1,35 @@
-const multer = require('multer');
-const path = require('path');
+const multer = require("multer");
 
-// กำหนด storage สำหรับการอัปโหลดไฟล์
+// ตั้งค่าการเก็บไฟล์
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads')); // บันทึกไฟล์ในโฟลเดอร์ uploads
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // โฟลเดอร์ที่เก็บไฟล์
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `${uniqueSuffix}-${file.originalname}`); // ตั้งชื่อไฟล์ใหม่
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // ตั้งชื่อไฟล์
   },
 });
 
-// ตรวจสอบประเภทไฟล์ (รองรับทั้งรูปภาพและเอกสาร PDF)
+// ตั้งค่าการกรองประเภทไฟล์
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = {
-    photo: ['image/jpeg', 'image/png', 'image/gif'],  // รูปภาพ
-    documents: ['application/pdf'], // เอกสาร PDF เท่านั้น
-  };
-
-  if (file.fieldname === "photo" && allowedTypes.photo.includes(file.mimetype)) {
-    cb(null, true);
-  } else if (file.fieldname === "documents" && allowedTypes.documents.includes(file.mimetype)) {
+  const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Allowed: JPEG, PNG, GIF (photo) | PDF (documents)'), false);
+    cb(new Error("ประเภทไฟล์ไม่ถูกต้อง"), false);
   }
 };
 
-// กำหนดการอัปโหลดให้รองรับหลายไฟล์
+// ตั้งค่าขนาดไฟล์สูงสุด
+const limits = {
+  fileSize: 10 * 1024 * 1024, // 10MB
+};
+
+// สร้าง middleware สำหรับอัปโหลด
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // จำกัดขนาดไฟล์ 5MB
   fileFilter: fileFilter,
+  limits: limits,
 });
 
 module.exports = upload;
