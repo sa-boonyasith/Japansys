@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { ClipboardList, Clock, CheckCircle } from "lucide-react";
 
 const Todo = () => {
   const [todos, setTodos] = useState([]);
@@ -17,6 +18,7 @@ const Todo = () => {
   });
   const [editingTask, setEditingTask] = useState(null);
 
+  // Existing fetch and handling functions remain the same
   const fetchTodos = async () => {
     try {
       const response = await axios.get("http://localhost:8080/api/todo");
@@ -29,6 +31,11 @@ const Todo = () => {
     }
   };
 
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
+  // Existing CRUD operations remain the same
   const updateTaskStatus = async (todo_id, newStatus) => {
     try {
       const taskToUpdate = todos.find((todo) => todo.todo_id === todo_id);
@@ -65,7 +72,7 @@ const Todo = () => {
 
   const handleAddTask = async () => {
     try {
-      const response = await axios.post("http://localhost:8080/api/todo", {
+      await axios.post("http://localhost:8080/api/todo", {
         project_name: newTask.project_name,
         employee_id: employeeId,
         todo: [
@@ -76,7 +83,7 @@ const Todo = () => {
         ],
       });
   
-      setTodos((prevTodos) => [...prevTodos, ...response.data.tasks]);
+      await fetchTodos();  // 🔥 เรียก fetchTodos() เพื่อรีเฟรชข้อมูล
       setIsModalOpen(false);
       setNewTask({
         project_name: "",
@@ -85,17 +92,16 @@ const Todo = () => {
       });
     } catch (err) {
       console.error("Error adding task:", err);
-      alert(
-        "Failed to create task: " + (err.response?.data?.message || err.message)
-      );
+      alert("Failed to create task: " + (err.response?.data?.message || err.message));
     }
   };
+  
   
 
   const handleEditTask = async () => {
     try {
       const payload = {
-        project_name: editingTask.project_name,  // ชื่อโปรเจกต์ใหม่
+        project_name: editingTask.project_name,
         employee_id: employeeId,
         todo: [
           {
@@ -105,25 +111,22 @@ const Todo = () => {
           },
         ],
       };
-  
-      await axios.put("http://localhost:8080/api/todo", payload);  // ตรวจสอบ URL API ให้ถูกต้อง
-  
+
+      await axios.put("http://localhost:8080/api/todo", payload);
+
       setTodos((prevTodos) =>
         prevTodos.map((todo) =>
           todo.todo_id === editingTask.todo_id ? editingTask : todo
         )
       );
-  
+
       setIsEditModalOpen(false);
       setEditingTask(null);
     } catch (err) {
       console.error("Error editing task:", err);
-      alert(
-        "Failed to edit task: " + (err.response?.data?.message || err.message)
-      );
+      alert("Failed to edit task: " + (err.response?.data?.message || err.message));
     }
   };
-  
 
   const handleDeleteTask = async (todo_id) => {
     try {
@@ -137,12 +140,19 @@ const Todo = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTodos();
-  }, []);
-
-  if (loading) return <p className="text-center">Loading...</p>;
-  if (error) return <p className="text-center text-red-500">{error}</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        {error}
+      </div>
+    </div>
+  );
 
   const tasksToDo = todos.filter((todo) => todo.status === "mustdo");
   const tasksInProgress = todos.filter((todo) => todo.status === "inprogress");
@@ -150,13 +160,17 @@ const Todo = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="container mx-auto p-2 ">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 mb-6"
-          onClick={() => setIsModalOpen(true)}
-        >
-          สร้าง Task
-        </button>
+      <div className="container mx-auto p-6 bg-gray-50 min-h-screen">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Task Management</h1>
+          <button
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center gap-2 shadow-lg"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <ClipboardList size={20} />
+            สร้าง Task
+          </button>
+        </div>
 
         {isModalOpen && (
           <TaskModal
@@ -178,10 +192,13 @@ const Todo = () => {
           />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <TaskColumn
             title="งานที่ต้องทำ"
+            icon={<ClipboardList className="text-yellow-500" size={24} />}
             tasks={tasksToDo}
+            bgColor="bg-yellow-50"
+            borderColor="border-yellow-200"
             onDrop={(todo_id) => updateTaskStatus(todo_id, "mustdo")}
             onEdit={(task) => {
               setEditingTask(task);
@@ -191,7 +208,10 @@ const Todo = () => {
           />
           <TaskColumn
             title="งานที่กำลังทำ"
+            icon={<Clock className="text-blue-500" size={24} />}
             tasks={tasksInProgress}
+            bgColor="bg-blue-50"
+            borderColor="border-blue-200"
             onDrop={(todo_id) => updateTaskStatus(todo_id, "inprogress")}
             onEdit={(task) => {
               setEditingTask(task);
@@ -201,7 +221,10 @@ const Todo = () => {
           />
           <TaskColumn
             title="งานเสร็จแล้ว"
+            icon={<CheckCircle className="text-green-500" size={24} />}
             tasks={tasksDone}
+            bgColor="bg-green-50"
+            borderColor="border-green-200"
             onDrop={(todo_id) => updateTaskStatus(todo_id, "finish")}
             onEdit={(task) => {
               setEditingTask(task);
@@ -215,23 +238,36 @@ const Todo = () => {
   );
 };
 
-const TaskColumn = ({ title, tasks, onDrop, onEdit, onDelete }) => {
+const TaskColumn = ({ title, icon, tasks, bgColor, borderColor, onDrop, onEdit, onDelete }) => {
   const [, drop] = useDrop({
     accept: "task",
     drop: (item) => onDrop && onDrop(item.todo_id),
   });
 
   return (
-    <div ref={drop} className="bg-gray-100 p-4 rounded-lg shadow-md max-h-[430px] overflow-y-auto">
-      <h2 className="text-xl font-semibold text-center mb-4 ">{title}</h2>
-      {tasks.map((task) => (
-        <Task
-          key={task.todo_id}
-          task={task}
-          onEdit={() => onEdit(task)}
-          onDelete={() => onDelete(task.todo_id)}
-        />
-      ))}
+    <div
+      ref={drop}
+      className={`${bgColor} border ${borderColor} rounded-xl shadow-lg overflow-hidden`}
+    >
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center gap-2 justify-center">
+          {icon}
+          <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        </div>
+        <div className="mt-2 text-center text-sm text-gray-600">
+          {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+        </div>
+      </div>
+      <div className="p-4 max-h-[370px] overflow-y-auto">
+        {tasks.map((task) => (
+          <Task
+            key={task.todo_id}
+            task={task}
+            onEdit={() => onEdit(task)}
+            onDelete={() => onDelete(task.todo_id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -248,33 +284,35 @@ const Task = ({ task, onEdit, onDelete }) => {
   return (
     <div
       ref={drag}
-      className={`bg-white p-4 rounded-lg shadow-md mb-4 ${
+      className={`bg-white p-4 rounded-lg shadow-md mb-4 transform transition-all duration-200 hover:scale-102 ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
-      <p>
-        <strong>ชื่อโปรเจกต์:</strong> {task.project_name}
-      </p>
-      <p>
-        <strong>ชื่อ:</strong> {task.name}
-      </p>
-      <p>
-        <strong>รายละเอียด:</strong> {task.desc}
-      </p>
+      <div className="border-b pb-2 mb-2">
+        <h3 className="font-semibold text-lg text-gray-800">{task.project_name}</h3>
+      </div>
+      <div className="space-y-2">
+        <p className="text-gray-700">
+          <span className="font-medium">ชื่องาน:</span> {task.name}
+        </p>
+        <p className="text-gray-600">
+          <span className="font-medium">รายละเอียด:</span> {task.desc}
+        </p>
+      </div>
       <div className="flex justify-end space-x-2 mt-4">
         <button
-          className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
+          className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition duration-200"
           onClick={onEdit}
         >
           แก้ไข
         </button>
         <button
-           className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-           onClick={() => {
-             if (window.confirm("คุณต้องการลบข้อมูลนี้ใช่หรือไม่?")) {
-               onDelete(); // Call the delete function if confirmed
-             }
-           }}
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200"
+          onClick={() => {
+            if (window.confirm("คุณต้องการลบข้อมูลนี้ใช่หรือไม่?")) {
+              onDelete();
+            }
+          }}
         >
           ลบ
         </button>
@@ -284,68 +322,65 @@ const Task = ({ task, onEdit, onDelete }) => {
 };
 
 const TaskModal = ({ title, task, setTask, onSave, onClose }) => (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-    <div className="bg-white w-1/3 p-6 rounded-lg shadow-lg">
-      <h2 className="text-xl font-bold mb-4">{title}</h2>
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">{title}</h2>
       
-      {/* Project Name Input */}
-      <div className="mb-4">
-        <label className="block font-medium mb-2">ชื่อโปรเจกต์</label>
-        <input
-          type="text"
-          className="w-full px-4 py-2 border rounded-lg"
-          value={task.project_name || ''}
-          onChange={(e) => setTask({ ...task, project_name: e.target.value })}
-          placeholder="กรอกชื่อโปรเจกต์"
-        />
+      <div className="space-y-4">
+        <div>
+          <label className="block font-medium mb-2 text-gray-700">ชื่อโปรเจกต์</label>
+          <input
+            type="text"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={task.project_name || ''}
+            onChange={(e) => setTask({ ...task, project_name: e.target.value })}
+            placeholder="กรอกชื่อโปรเจกต์"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-2 text-gray-700">ชื่อ Task</label>
+          <input
+            type="text"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={task.name || ''}
+            onChange={(e) => setTask({ ...task, name: e.target.value })}
+            placeholder="กรอกชื่อ Task"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-2 text-gray-700">รายละเอียด</label>
+          <textarea
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            rows="4"
+            value={task.desc || ''}
+            onChange={(e) => setTask({ ...task, desc: e.target.value })}
+            placeholder="กรอกรายละเอียดของ Task"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-2 text-gray-700">Employee ID</label>
+          <input
+            type="number"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={task.employee_id || ''}
+            onChange={(e) => setTask({ ...task, employee_id: parseInt(e.target.value) || '' })}
+            placeholder="กรอก Employee ID"
+          />
+        </div>
       </div>
 
-      {/* Task Name Input */}
-      <div className="mb-4">
-        <label className="block font-medium mb-2">ชื่อ Task</label>
-        <input
-          type="text"
-          className="w-full px-4 py-2 border rounded-lg"
-          value={task.name || ''}
-          onChange={(e) => setTask({ ...task, name: e.target.value })}
-          placeholder="กรอกชื่อ Task"
-        />
-      </div>
-
-      {/* Task Description Input */}
-      <div className="mb-4">
-        <label className="block font-medium mb-2">รายละเอียด</label>
-        <textarea
-          className="w-full px-4 py-2 border rounded-lg"
-          rows="4"
-          value={task.desc || ''}
-          onChange={(e) => setTask({ ...task, desc: e.target.value })}
-          placeholder="กรอกรายละเอียดของ Task"
-        ></textarea>
-      </div>
-
-      {/* Employee ID Input */}
-      <div className="mb-4">
-        <label className="block font-medium mb-2">Employee ID</label>
-        <input
-          type="number"
-          className="w-full px-4 py-2 border rounded-lg"
-          value={task.employee_id || ''}
-          onChange={(e) => setTask({ ...task, employee_id: parseInt(e.target.value) || '' })}
-          placeholder="กรอก Employee ID"
-        />
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end space-x-3 mt-6">
         <button
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          className="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition duration-200 text-gray-800"
           onClick={onClose}
         >
           ยกเลิก
         </button>
         <button
-          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+          className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-200 text-white"
           onClick={onSave}
         >
           บันทึก
@@ -354,6 +389,5 @@ const TaskModal = ({ title, task, setTask, onSave, onClose }) => (
     </div>
   </div>
 );
-
 
 export default Todo;
