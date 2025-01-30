@@ -95,71 +95,79 @@ const AddJob = () => {
     const formDataToSend = new FormData();
 
     Object.entries(formData).forEach(([key, value]) => {
-      if (typeof value === "object" && value !== null) {
-        formDataToSend.append(key, JSON.stringify(value));
-      } else {
-        formDataToSend.append(key, value);
-      }
+        if (key === "expected_salary" || key === "age") {
+            // แปลง expected_salary และ age เป็นตัวเลขก่อนส่งไป backend
+            const numericValue = Number(String(value).replace(/,/g, ""));
+            formDataToSend.append(key, numericValue);
+        } else if (typeof value === "object" && value !== null) {
+            formDataToSend.append(key, JSON.stringify(value));
+        } else {
+            formDataToSend.append(key, value);
+        }
     });
 
     Object.entries(fileUploads).forEach(([key, file]) => {
-      if (file) {
-        formDataToSend.append(key, file);
-      }
+        if (file) {
+            formDataToSend.append(key, file);
+        }
     });
 
     try {
-      await axios.post(
-        "http://localhost:8080/api/jobaplication",
-        formDataToSend
-      );
-      alert("เพิ่มผู้สมัครสำเร็จ!");
-      setFormData({
-        firstname: "",
-        lastname: "",
-        job_position: "",
-        expected_salary: "",
-        age: "",
-        phone_number: "",
-        email: "",
-        liveby: "",
-        birth_date: "",
-        ethnicity: "",
-        nationality: "",
-        religion: "",
-        marital_status: "",
-        military_status: "",
-        documents: {
-          id_card: false,
-          house_registration: false,
-          certificate: false,
-          bank_statement: false,
-          other: false,
-        },
-        personal_info: {
-          address: "",
-          city: "",
-          zip_code: "",
-        },
-      });
-      setFileUploads({
-        id_card: null,
-        house_registration: null,
-        certificate: null,
-        bank_statement: null,
-        other: null,
-        photo: null,
-      });
+        await axios.post(
+            "http://localhost:8080/api/jobaplication",
+            formDataToSend
+        );
+        alert("เพิ่มผู้สมัครสำเร็จ!");
+
+        setFormData({
+            firstname: "",
+            lastname: "",
+            job_position: "",
+            expected_salary: "",
+            age: "",
+            phone_number: "",
+            email: "",
+            liveby: "",
+            birth_date: "",
+            ethnicity: "",
+            nationality: "",
+            religion: "",
+            marital_status: "",
+            military_status: "",
+            documents: {
+                id_card: false,
+                house_registration: false,
+                certificate: false,
+                bank_statement: false,
+                other: false,
+            },
+            personal_info: {
+                address: "",
+                city: "",
+                zip_code: "",
+            },
+        });
+
+        setFileUploads({
+            id_card: null,
+            house_registration: null,
+            certificate: null,
+            bank_statement: null,
+            other: null,
+            photo: null,
+        });
+
     } catch (error) {
-      console.error(
-        "Error adding application:",
-        error.response?.data || error.message
-      );
-      alert(
-        "เกิดข้อผิดพลาด: " + (error.response?.data?.message || "ไม่ทราบสาเหตุ")
-      );
+        console.error(
+            "Error adding application:",
+            error.response?.data || error.message
+        );
+        alert(
+            "เกิดข้อผิดพลาด: " + (error.response?.data?.message || "ไม่ทราบสาเหตุ")
+        );
     }
-  };
+};
+
 
 
   return (
