@@ -235,6 +235,17 @@ model attendhistory {
   employee Employee @relation(fields: [employee_id], references: [id])
 }
 
+model customer {
+  customer_id      Int      @id @default(autoincrement())
+  cus_company_name String
+  contact_name     String
+  cus_address      String
+  cus_phone        String
+  cus_tax_id       String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
 enum Attend {
   check_in
   check_out
