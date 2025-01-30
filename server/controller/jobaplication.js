@@ -82,7 +82,7 @@ exports.create = async (req, res) => {
     const checkemail = await prisma.jobApplication.findUnique({
       where: { email },
     });
-
+ 
     if (checkemail) {
       return res.status(400).json({ message: "Email already exists" });
     }
@@ -144,8 +144,20 @@ exports.update = async (req, res) => {
       marital_status,
       military_status,
       status,
-      photo,
     } = req.body;
+
+    let updatedJobData = {};
+
+    // ตรวจสอบว่าไฟล์ photo และ documents มีหรือไม่
+    if (req.files?.photo) {
+      updatedJobData.photo = `/uploads/${req.files.photo[0].filename}`;
+    }
+
+    if (req.files?.documents) {
+      updatedJobData.documents = req.files.documents.map(
+        (file) => `/uploads/${file.filename}`
+      );
+    }
 
     // ตรวจสอบสถานะก่อนการอัปเดต
     const validStatus = ["new", "wait", "pass", "reject"];
@@ -175,45 +187,35 @@ exports.update = async (req, res) => {
         firstname,
         lastname,
         job_position,
-        expected_salary,
-        documents,
+        expected_salary: Number(expected_salary),
+        documents: updatedJobData.documents || documents,
         personal_info,
         phone_number,
         email,
         liveby,
         birth_date,
-        age,
+        age: Number(age),
         ethnicity,
         nationality,
         religion,
         marital_status,
         military_status,
         status,
-        photo,
+        photo: updatedJobData.photo || existingApplication.photo,
       },
     });
 
-    // ส่งผลลัพธ์กลับไปยัง client
     res.status(200).json({
       message: "Job application updated successfully",
       application: updatedApplication,
+      data: updatedJobData,
     });
   } catch (err) {
     console.error("Error updating job application:", err.message);
-
-    // ตรวจสอบข้อผิดพลาดของ Prisma
-    if (err.code === "P2025") {
-      return res
-        .status(404)
-        .json({ message: "Job application not found for update" });
-    }
-
-    // ข้อผิดพลาดทั่วไป
-    res
-      .status(500)
-      .json({ message: "Server error, please try again later" });
+    res.status(500).json({ message: "Server error, please try again later" });
   }
 };
+
 
 exports.remove = async (req, res) => {
   try {

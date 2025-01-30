@@ -23,7 +23,21 @@ router.post(
 // Routes อื่นๆ
 router.get("/jobaplication", list); // ดึงข้อมูลทั้งหมด
 router.get("/jobaplication/:id", listspecific); // ดึงข้อมูลเฉพาะ ID
-router.put("/jobaplication/:id", update); // อัปเดตข้อมูล
+router.put(
+    "/jobaplication/:id",
+    upload.fields([
+      { name: "photo", maxCount: 1 }, // รองรับการอัปโหลดรูปภาพ (1 รูป)
+    ]),
+    (err, req, res, next) => {
+      // จัดการข้อผิดพลาดที่เกิดขึ้นระหว่างอัปโหลดไฟล์
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      next();
+    },
+    update // ฟังก์ชันสำหรับอัปเดตข้อมูล
+  );
+  
 router.delete("/jobaplication/:id", remove); // ลบข้อมูล
 
 module.exports = router;

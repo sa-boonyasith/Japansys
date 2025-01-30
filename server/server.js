@@ -14,6 +14,7 @@ app.use(cors());
 // เสิร์ฟไฟล์ในโฟลเดอร์ uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+
 // Dynamically load routes
 readdirSync('routes').map((file) => {
   app.use('/api', require('./routes/' + file));

@@ -25,23 +25,44 @@ const Job = () => {
         console.error("Error fetching applications:", error);
       });
   };
-
-  const handleEdit = (application) => {
-    setEditedApplication({
-      ...application,
-      expected_salary: application.expected_salary.toString(),
-      age: application.age.toString(),
-    });
-    setEditMode(true);
-  };
-
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditedApplication(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  
+    // ฟังก์ชันจัดรูปแบบเบอร์โทรศัพท์
+    const formatPhoneNumber = (value) => {
+      const cleaned = value.replace(/\D/g, "").slice(0, 10); // ลบอักขระที่ไม่ใช่ตัวเลข และจำกัด 10 ตัว
+      if (cleaned.length <= 3) {
+        return cleaned;
+      } else if (cleaned.length <= 6) {
+        return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+      } else {
+        return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+      }
+    };
+  
+    setEditedApplication((prev) => {
+      // ตรวจสอบว่าชื่อฟิลด์เป็น nested หรือไม่
+      if (name.includes(".")) {
+        const [parent, child] = name.split("."); // แยก key เป็น parent และ child
+        return {
+          ...prev,
+          [parent]: {
+            ...prev[parent], // คงค่าเดิมของ parent object
+            [child]: child === "phone_number" ? formatPhoneNumber(value) : value, // จัดรูปแบบเบอร์โทร
+          },
+        };
+      }
+  
+      // กรณีเป็น key ปกติ
+      return {
+        ...prev,
+        [name]: name === "phone_number" ? formatPhoneNumber(value) : value, // จัดรูปแบบเบอร์โทร
+      };
+    });
   };
+  
+  
 
   const handleEditStatus = (id, newStatus) => {
     axios
@@ -71,33 +92,63 @@ const Job = () => {
     }
   };
 
-  const handleImageChange = async (event, applicationId) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    const file = files[0];
+
+    // อัปเดตไฟล์ที่เลือกใน state
+    setFileUploads((prev) => ({
+      ...prev,
+      [name]: file,
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [name]: !!file,
+      },
+    }));
+  };
+
+  const handleImageChange = async (e, jobId) => {
+    const file = fileUploads['photo']; // ใช้ไฟล์จาก state
+
+    if (!file) {
+      console.error('No file selected');
+      return;
+    }
 
     const formData = new FormData();
-    formData.append("photo", file);
+    formData.append('photo', file);
 
     try {
-      await axios.put(`http://localhost:8080/api/jobaplication/${applicationId}/photo`, formData, {
+      const response = await axios.put(`/update-job/${jobId}`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
       });
-      fetchApplications();
+      console.log('Image updated successfully:', response.data);
     } catch (error) {
-      console.error("Error updating photo:", error);
-      alert("เกิดข้อผิดพลาด ในการอัพโหลดรูปภาพ");
+      console.error('Error updating photo:', error);
     }
   };
 
   const handleUpdateApplication = async () => {
     try {
+      const updatedData = {
+        ...editedApplication,
+        expected_salary: Number(editedApplication.expected_salary), // แปลงเป็นตัวเลข
+        age: Number(editedApplication.age) // แปลงเป็นตัวเลข
+      };
+
+      console.log(updatedData);
+  
       const response = await axios.put(
         `http://localhost:8080/api/jobaplication/${editedApplication.job_id}`,
-        editedApplication
+        updatedData
       );
-      
+  
       if (response.status === 200) {
         fetchApplications();
         setEditMode(false);
@@ -109,6 +160,7 @@ const Job = () => {
       alert("เกิดข้อผิดพลาด ในการอัพเดทข้อมูล");
     }
   };
+  
 
   const filterByStatus = (status) =>
     applications.filter((app) => app.status === status);
@@ -137,6 +189,7 @@ const Job = () => {
     };
     return styles[status] || "bg-gray-100 text-gray-800 border-gray-200";
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -236,7 +289,7 @@ const Job = () => {
                         setIsModalOpen(false);
                         setEditMode(false);
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-red-500 hover:text-red-700"
                     >
                       ✕
                     </button>
@@ -259,32 +312,223 @@ const Job = () => {
                           type="file"
                           className="hidden"
                           accept="image/*"
-                          onChange={(e) => handleImageChange(e, selectedApplication.job_id)}
+                          onChange={(e) => handleFileChange(e, selectedApplication.job_id)}
                         />
                       </label>
                     )}
                   </div>
                   <div>
                     {editMode ? (
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={editedApplication.firstname}
-                          onChange={(e) => setEditedApplication({
-                            ...editedApplication,
-                            firstname: e.target.value
-                          })}
-                          className="block w-full rounded-lg border-gray-300"
-                        />
-                        <input
-                          type="text"
-                          value={editedApplication.lastname}
-                          onChange={(e) => setEditedApplication({
-                            ...editedApplication,
-                            lastname: e.target.value
-                          })}
-                          className="block w-full rounded-lg border-gray-300"
-                        />
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                ชื่อ
+                              </label>
+                              <input
+                                type="text"
+                                name="firstname"
+                                value={editedApplication.firstname}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                นามสกุล
+                              </label>
+                              <input
+                                type="text"
+                                name="lastname"
+                                value={editedApplication.lastname}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                อีเมล
+                              </label>
+                              <input
+                                type="email"
+                                name="email"
+                                value={editedApplication.email}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                เบอร์โทร
+                              </label>
+                              <input
+                                type="text"
+                                name="phone_number"
+                                maxLength={12}
+                                value={editedApplication.phone_number}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                ที่อยู่ปัจจุบัน
+                              </label>
+                              <input
+                                type="text"
+                                name="personal_info.address"
+                                value={editedApplication.personal_info.address}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                จังหวัด
+                              </label>
+                              <input
+                                type="text"
+                                name="personal_info.city"
+                                value={editedApplication.personal_info.city}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                รหัสไปรษณีย์
+                              </label>
+                              <input
+                              maxLength={5}
+                                type="text"
+                                name="personal_info.zip_code"
+                                value={editedApplication.personal_info.zip_code}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                ตำแหน่ง
+                              </label>
+                              <input
+                                type="text"
+                                name="job_position"
+                                value={editedApplication.job_position}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                เงินเดือนที่คาดหวัง
+                              </label>
+                              <input
+                                type="number"
+                                name="expected_salary"
+                                value={editedApplication.expected_salary}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                อายุ
+                              </label>
+                              <input
+                                type="number"
+                                name="age"
+                                value={editedApplication.age}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                เชื้อชาติ
+                              </label>
+                              <input
+                                type="text"
+                                name="ethnicity"
+                                value={editedApplication.ethnicity}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                สัญชาติ
+                              </label>
+                              <input
+                                type="text"
+                                name="nationality"
+                                value={editedApplication.nationality}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                ศาสนา
+                              </label>
+                              <input
+                                type="text"
+                                name="religion"
+                                value={editedApplication.religion}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                สถานภาพ
+                              </label>
+                              <select
+                                name="marital_status"
+                                value={editedApplication.marital_status}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              >
+                                <option value="โสด">โสด</option>
+                                <option value="สมรส">สมรส</option>
+                                <option value="หย่าร้าง">หย่าร้าง</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                ภาวะทางการทหาร
+                              </label>
+                              <select
+                                name="military_status"
+                                value={editedApplication.military_status}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              >
+                                <option value="ได้รับการยกเว้น">ได้รับการยกเว้น</option>
+                                <option value="ปลดเป็นทหารกองหนุน">ปลดเป็นทหารกองหนุน</option>
+                                <option value="ยังไม่ได้รับการเกณฑ์">ยังไม่ได้รับการเกณฑ์</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-3 mt-6">
+                          <button
+                            onClick={handleUpdateApplication}
+                            className="flex-1 bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition"
+                          >
+                            บันทึกการแก้ไข
+                          </button>
+                          <button
+                            onClick={() => handleDelete(editedApplication.job_id)}
+                            className="flex-1 bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600 transition"
+                          >
+                            ลบข้อมูล
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <>
@@ -294,54 +538,48 @@ const Job = () => {
                         <p className="text-gray-600 mt-1">
                           ตำแหน่ง: {selectedApplication.job_position}
                         </p>
+                        <p className="text-gray-600 mt-1"><span className="text-gray-600 mt-1">เงินเดือนที่คาดหวัง:</span> {Number(selectedApplication.expected_salary).toLocaleString()} บาท/เดือน</p>
+                              
+                        <div className="mt-2">
+                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(selectedApplication.status)}`}>
+                            {selectedApplication.status === "new"
+                              ? "ผู้สมัครใหม่"
+                              : selectedApplication.status === "wait"
+                              ? "รอสัมภาษณ์"
+                              : "ผ่านสัมภาษณ์"}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6 mt-6">
+                          <div>
+                            <h5 className="font-semibold text-gray-900 mb-3">ประวัติส่วนตัว</h5>
+                            <div className="space-y-2 text-gray-600">
+                              <p><span className="font-medium">อีเมล:</span> {selectedApplication.email}</p>
+                              <p><span className="font-medium">เบอร์โทร:</span> {selectedApplication.phone_number}</p>
+                              <p><span className="font-medium">อาศัยอยู่กับ</span> {selectedApplication.liveby}</p>
+                              <p><span className="font-medium">ที่อยู่ปัจจุบัน:</span> {selectedApplication.personal_info.address}</p>
+                              <p><span className="font-medium">จังหวัด:</span> {selectedApplication.personal_info.city}</p>
+                              <p><span className="font-medium">รหัสไปรษณีย์:</span> {selectedApplication.personal_info.zip_code}</p>
+                            </div>
+                          </div>
+                          <div>
+                            
+                            <div className="space-y-2 text-gray-600 mt-9">
+                              <p><span className="font-medium">อายุ:</span> {selectedApplication.age} ปี</p>
+                              <p>
+                                <span className="font-medium">วัน/เดือน/ปีเกิด:</span> {new Date(selectedApplication.birth_date).toLocaleDateString('th-TH')}
+                              </p>
+                              <p><span className="font-medium">เชื้อชาติ</span> {selectedApplication.ethnicity}</p>
+                              <p><span className="font-medium">สัญชาติ</span> {selectedApplication.nationality}</p>
+                              <p><span className="font-medium">ศาสนา</span> {selectedApplication.religion}</p>
+                              <p><span className="font-medium">สถานภาพ:</span> {selectedApplication.marital_status}</p>
+                              <p><span className="font-medium">ภาวะทางการทหาร:</span> {selectedApplication.military_status}</p>
+                            </div>
+                          </div>
+                        </div>
                       </>
                     )}
-                    <div className="mt-2">
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(selectedApplication.status)}`}>
-                        {selectedApplication.status === "new"
-                          ? "ผู้สมัครใหม่"
-                          : selectedApplication.status === "wait"
-                          ? "รอสัมภาษณ์"
-                          : "ผ่านสัมภาษณ์"}
-                      </span>
-                    </div>
                   </div>
                 </div>
-
-                {editMode ? (
-                  <div className="space-y-4">
-                    <button
-                      onClick={handleUpdateApplication}
-                      className="w-full bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition"
-                    >
-                      บันทึกการแก้ไข
-                    </button>
-                    <button
-                      onClick={() => handleDelete(selectedApplication.job_id)}
-                      className="w-full bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600 transition"
-                    >
-                      ลบข้อมูล
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <h5 className="font-semibold text-gray-900 mb-3">ข้อมูลการติดต่อ</h5>
-                      <div className="space-y-2 text-gray-600">
-                        <p><span className="font-medium">อีเมล:</span> {selectedApplication.email}</p>
-                        <p><span className="font-medium">เบอร์โทร:</span> {selectedApplication.phone_number}</p>
-                        <p><span className="font-medium">เงินเดือนที่คาดหวัง:</span> {selectedApplication.expected_salary} บาท/เดือน</p>
-                      </div>
-                    </div>
-                    <div>
-                      <h5 className="font-semibold text-gray-900 mb-3">ข้อมูลส่วนตัว</h5>
-                      <div className="space-y-2 text-gray-600">
-                        <p><span className="font-medium">อายุ:</span> {selectedApplication.age} ปี</p>
-                        <p><span className="font-medium">สถานภาพ:</span> {selectedApplication.marital_status}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
