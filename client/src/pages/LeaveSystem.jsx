@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Calendar, Search, Plus, X, ChevronDown } from "lucide-react";
 
 const LeaveSystem = () => {
   const [leaves, setLeaves] = useState([]);
@@ -113,24 +114,17 @@ const LeaveSystem = () => {
         "http://localhost:8080/api/leaverequest",
         newLeave
       );
-  
-      // Ensure the response contains the new leave request
+
       if (response.data && response.data.newRequest) {
         const addedLeave = response.data.newRequest;
-  
-        // Update the leaves and filteredLeaves states
         setLeaves((prevLeaves) => [...prevLeaves, addedLeave]);
         setFilteredLeaves((prevFiltered) => [...prevFiltered, addedLeave]);
-  
-        // Reset the form fields
         setNewLeave({
-          employee_id:"",
+          employee_id: "",
           leavetype: "",
           startdate: "",
           enddate: "",
         });
-  
-        // Close the modal
         setIsModalOpen(false);
       } else {
         throw new Error("Unexpected response structure");
@@ -140,161 +134,257 @@ const LeaveSystem = () => {
       alert("Failed to add new leave request. Please try again.");
     }
   };
-  
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-red-50 text-red-800 p-4 rounded-lg shadow flex items-center gap-2">
+        <X className="w-5 h-5" />
+        {error}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-6 ">
-      {/* Search and Filters */}
-      <div className="flex flex-wrap shadow-md p-2 rounded-md gap-4 mb-6">
-        <input
-          type="text"
-          name="search"
-          placeholder="Search for Name"
-          className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-          value={filters.search}
-          onChange={handleFilterChange}
-        />
-        <select
-          name="leaveType"
-          className="border text-gray-400 border-gray-300 p-2 rounded w-full md:w-1/5"
-          value={filters.leaveType}
-          onChange={handleFilterChange}
-        >
-          <option value="">Select a Leave Type</option>
-          <option value="Sick Leave">Sick Leave</option>
-          <option value="Private Leave">Private Leave</option>
-          <option value="Annual Leave">Annual Leave</option>
-        </select>
-        <div className="flex gap-2 w-full md:w-2/5">
-          <input
-            type="date"
-            name="startDate"
-            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-            value={filters.startDate}
-            onChange={handleFilterChange}
-          />
-          <input
-            type="date"
-            name="endDate"
-            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-            value={filters.endDate}
-            onChange={handleFilterChange}
-          />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Leave Management System</h1>
         </div>
-        <div className="flex gap-2 w-full ">
-        <button
-          onClick={resetFilters}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          Reset
-        </button>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-green-500 text-white px-4 py-2 rounded"
-        >
-          Add Leave Request
-        </button>
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                name="search"
+                placeholder="Search by name"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.search}
+                onChange={handleFilterChange}
+              />
+            </div>
+
+            <div className="relative">
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                name="leaveType"
+                className="w-full appearance-none pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.leaveType}
+                onChange={handleFilterChange}
+              >
+                <option value="">All Leave Types</option>
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Private Leave">Private Leave</option>
+                <option value="Annual Leave">Annual Leave</option>
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="date"
+                name="startDate"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.startDate}
+                onChange={handleFilterChange}
+              />
+            </div>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="date"
+                name="endDate"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.endDate}
+                onChange={handleFilterChange}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between mt-4 pt-4 border-t border-gray-100">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Reset Filters
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              New Request
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Employee</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Leave Type</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date Range</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredLeaves.map((leave) => (
+                  <tr key={leave.leave_id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">
+                        {leave.firstname} {leave.lastname}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{leave.leavetype}</td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {formatDate(leave.startdate)} - {formatDate(leave.enddate)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
+                        {leave.status || 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Add New Leave Modal */}
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-lg font-bold mb-4">Add New Leave Request</h2>
-            <form onSubmit={handleAddSubmit}>
-              <div className="grid grid-cols-1 gap-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-6">New Leave Request</h2>
+
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Employee ID
+                </label>
                 <input
                   type="text"
                   name="employee_id"
-                  placeholder="Employee ID"
-                  className="border border-gray-300 p-2 rounded"
+                  placeholder="Enter employee ID"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={newLeave.employee_id}
                   onChange={handleAddChange}
                   required
                 />
-                <select
-                  name="leavetype"
-                  className="border border-gray-300 p-2 rounded"
-                  value={newLeave.leavetype}
-                  onChange={handleAddChange}
-                  required
-                >
-                  <option value="">Select Leave Type</option>
-                  <option value="Sick Leave">Sick Leave</option>
-                  <option value="Private Leave">Private Leave</option>
-                  <option value="Annual Leave">Annual Leave</option>
-                </select>
-                <input
-                  type="date"
-                  name="startdate"
-                  className="border border-gray-300 p-2 rounded"
-                  value={newLeave.startdate}
-                  onChange={handleAddChange}
-                  required
-                />
-                <input
-                  type="date"
-                  name="enddate"
-                  className="border border-gray-300 p-2 rounded"
-                  value={newLeave.enddate}
-                  onChange={handleAddChange}
-                  required
-                />
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Leave Type
+                </label>
+                <div className="relative">
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  <select
+                    name="leavetype"
+                    className="w-full appearance-none px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={newLeave.leavetype}
+                    onChange={handleAddChange}
+                    required
+                  >
+                    <option value="">Select type</option>
+                    <option value="Sick Leave">Sick Leave</option>
+                    <option value="Private Leave">Private Leave</option>
+                    <option value="Annual Leave">Annual Leave</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="date"
+                      name="startdate"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={newLeave.startdate}
+                      onChange={handleAddChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="date"
+                      name="enddate"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={newLeave.enddate}
+                      onChange={handleAddChange}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Add Leave Request
+                  Submit Request
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* Leave Table */}
-      <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="border border-gray-300 p-2">Employee name</th>
-            <th className="border border-gray-300 p-2">Leave type</th>
-            <th className="border border-gray-300 p-2">Date</th>
-            <th className="border border-gray-300 p-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredLeaves.map((leave) => (
-            <tr key={leave.leave_id}>
-              <td className="border text-center border-gray-300 p-2">
-                {leave.firstname} {leave.lastname}
-              </td>
-              <td className="border text-center border-gray-300 p-2">{leave.leavetype}</td>
-              <td className="border border-gray-300 p-2 text-center">
-                {formatDate(leave.startdate)} - {formatDate(leave.enddate)}
-              </td>
-              <td className="border border-gray-300 p-2 text-center">
-                {leave.status}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 };
 
 export default LeaveSystem;
-

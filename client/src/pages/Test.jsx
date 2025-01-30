@@ -49,18 +49,29 @@ const Job = () => {
           ...prev,
           [parent]: {
             ...prev[parent], // คงค่าเดิมของ parent object
-            [child]: child === "phone_number" ? formatPhoneNumber(value) : value, // จัดรูปแบบเบอร์โทร
+            [child]:
+              child === "phone_number"
+                ? formatPhoneNumber(value) // จัดรูปแบบเบอร์โทร
+                : child === "age" || child === "expected_salary"
+                ? value === "" ? "" : Number(value) // แปลงเป็นตัวเลขเฉพาะ age และ expected_salary
+                : value, // อื่นๆ คงค่าเดิม
           },
         };
+      } else {
+        return {
+          ...prev,
+          [name]:
+            name === "phone_number"
+              ? formatPhoneNumber(value)
+              : name === "age" || name === "expected_salary"
+              ? value === "" ? "" : Number(value)
+              : value,
+        };
       }
-  
-      // กรณีเป็น key ปกติ
-      return {
-        ...prev,
-        [name]: name === "phone_number" ? formatPhoneNumber(value) : value, // จัดรูปแบบเบอร์โทร
-      };
     });
   };
+  
+  
   
   
 
@@ -370,6 +381,22 @@ const Job = () => {
                                 onChange={handleInputChange}
                                 className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                อาศัยอยู่กับ
+                              </label>
+                              <select
+                                name="liveby"
+                                value={editedApplication.liveby}
+                                onChange={handleInputChange}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              >
+                                <option value="อาศัยกับครอบครัว">อาศัยกับครอบครัว</option>
+                                <option value="บ้านตัวเอง">บ้านตัวเอง</option>
+                                <option value="บ้านเช่า">บ้านเช่า</option>
+                                <option value="คอนโด">คอนโด</option>
+                              </select>
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">

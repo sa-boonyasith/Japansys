@@ -159,7 +159,7 @@ const Checkout = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    จำนวนพนักงาน
+                    ไอดีพนักงาน
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ชื่อ
@@ -179,7 +179,7 @@ const Checkout = () => {
                 {attend.map((record) => (
                   <tr key={record.attend_id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                      {record.attend_id}
+                      {record.employee_id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                       {record.firstname}

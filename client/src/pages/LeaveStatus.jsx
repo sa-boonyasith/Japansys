@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const Status = () => {
+const LeaveStatus = () => {
   const [leaves, setLeaves] = useState([]);
   const [filteredLeaves, setFilteredLeaves] = useState([]);
   const [filters, setFilters] = useState({
@@ -305,4 +305,4 @@ const Status = () => {
   );
 };
 
-export default Status;
+export default LeaveStatus;

@@ -19,12 +19,12 @@ import ExpenseSystem from "./pages/ExpenseSystem";
 import Trial from "./pages/Trial"
 import Checkout from "./pages/Checkout";
 import Progress from "./pages/Progress";
-import Status from "./pages/Status";
 import Test from "./pages/Test"
 import Test2 from "./pages/Test2"
 import EditCarbooking from "./pages/EditCarbooking";
 import EditMeeting from "./pages/EditMeeting";
 import EditExpense from "./pages/EditExpense";
+import LeaveStatus from "./pages/LeaveStatus";
 
 
 const App = () => {
@@ -105,7 +105,7 @@ const App = () => {
             <Route path="editexpense" element={<EditExpense />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="progress" element={<Progress />} />
-            <Route path="leave-status" element={<Status />} />
+            <Route path="leave-status" element={<LeaveStatus />} />
             
           </Route>
         ) : (

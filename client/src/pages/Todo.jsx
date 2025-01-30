@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ClipboardList, Clock, CheckCircle } from "lucide-react";
@@ -11,6 +10,7 @@ const Todo = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState(1);
+  const [selectedProject, setSelectedProject] = useState('all'); // เพิ่ม state สำหรับการกรอง
   const [newTask, setNewTask] = useState({
     project_name: "",
     name: "",
@@ -18,11 +18,11 @@ const Todo = () => {
   });
   const [editingTask, setEditingTask] = useState(null);
 
-  // Existing fetch and handling functions remain the same
   const fetchTodos = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/todo");
-      setTodos(response.data.listTodo);
+      const response = await fetch("http://localhost:8080/api/todo");
+      const data = await response.json();
+      setTodos(data.listTodo);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching todos:", err);
@@ -35,7 +35,14 @@ const Todo = () => {
     fetchTodos();
   }, []);
 
-  // Existing CRUD operations remain the same
+  // สร้างรายการ Project ที่ไม่ซ้ำกัน
+  const projectList = ['all', ...new Set(todos.map(todo => todo.project_name))];
+
+  // กรองข้อมูลตาม Project ที่เลือก
+  const filteredTodos = selectedProject === 'all' 
+    ? todos 
+    : todos.filter(todo => todo.project_name === selectedProject);
+
   const updateTaskStatus = async (todo_id, newStatus) => {
     try {
       const taskToUpdate = todos.find((todo) => todo.todo_id === todo_id);
@@ -57,7 +64,13 @@ const Todo = () => {
         ],
       };
 
-      await axios.put(`http://localhost:8080/api/todo`, payload);
+      await fetch(`http://localhost:8080/api/todo`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
 
       setTodos((prevTodos) =>
         prevTodos.map((todo) =>
@@ -72,18 +85,24 @@ const Todo = () => {
 
   const handleAddTask = async () => {
     try {
-      await axios.post("http://localhost:8080/api/todo", {
-        project_name: newTask.project_name,
-        employee_id: employeeId,
-        todo: [
-          {
-            name: newTask.name,
-            desc: newTask.desc,
-          },
-        ],
+      await fetch("http://localhost:8080/api/todo", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          project_name: newTask.project_name,
+          employee_id: employeeId,
+          todo: [
+            {
+              name: newTask.name,
+              desc: newTask.desc,
+            },
+          ],
+        })
       });
   
-      await fetchTodos();  //  เรียก fetchTodos() เพื่อรีเฟรชข้อมูล
+      await fetchTodos();
       setIsModalOpen(false);
       setNewTask({
         project_name: "",
@@ -92,11 +111,9 @@ const Todo = () => {
       });
     } catch (err) {
       console.error("Error adding task:", err);
-      alert("Failed to create task: " + (err.response?.data?.message || err.message));
+      alert("Failed to create task: " + err.message);
     }
   };
-  
-  
 
   const handleEditTask = async () => {
     try {
@@ -112,7 +129,13 @@ const Todo = () => {
         ],
       };
 
-      await axios.put("http://localhost:8080/api/todo", payload);
+      await fetch("http://localhost:8080/api/todo", {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
 
       setTodos((prevTodos) =>
         prevTodos.map((todo) =>
@@ -124,13 +147,15 @@ const Todo = () => {
       setEditingTask(null);
     } catch (err) {
       console.error("Error editing task:", err);
-      alert("Failed to edit task: " + (err.response?.data?.message || err.message));
+      alert("Failed to edit task: " + err.message);
     }
   };
 
   const handleDeleteTask = async (todo_id) => {
     try {
-      await axios.delete(`http://localhost:8080/api/todo/${todo_id}`);
+      await fetch(`http://localhost:8080/api/todo/${todo_id}`, {
+        method: 'DELETE'
+      });
       setTodos((prevTodos) =>
         prevTodos.filter((todo) => todo.todo_id !== todo_id)
       );
@@ -154,15 +179,29 @@ const Todo = () => {
     </div>
   );
 
-  const tasksToDo = todos.filter((todo) => todo.status === "mustdo");
-  const tasksInProgress = todos.filter((todo) => todo.status === "inprogress");
-  const tasksDone = todos.filter((todo) => todo.status === "finish");
+  const tasksToDo = filteredTodos.filter((todo) => todo.status === "mustdo");
+  const tasksInProgress = filteredTodos.filter((todo) => todo.status === "inprogress");
+  const tasksDone = filteredTodos.filter((todo) => todo.status === "finish");
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="container mx-auto p-6 bg-gray-50 min-h-screen">
+      <div className="container mx-auto p-6 bg-gray-50 ">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Task Management</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold text-gray-800">Task Management</h1>
+            <select
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="all">ทั้งหมด</option>
+              {projectList.filter(project => project !== 'all').map((project) => (
+                <option key={project} value={project}>
+                  {project}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center gap-2 shadow-lg"
             onClick={() => setIsModalOpen(true)}
@@ -238,6 +277,7 @@ const Todo = () => {
   );
 };
 
+// TaskColumn component remains the same
 const TaskColumn = ({ title, icon, tasks, bgColor, borderColor, onDrop, onEdit, onDelete }) => {
   const [, drop] = useDrop({
     accept: "task",
@@ -272,6 +312,7 @@ const TaskColumn = ({ title, icon, tasks, bgColor, borderColor, onDrop, onEdit, 
   );
 };
 
+// Task component remains the same
 const Task = ({ task, onEdit, onDelete }) => {
   const [{ isDragging }, drag] = useDrag({
     type: "task",
@@ -321,6 +362,7 @@ const Task = ({ task, onEdit, onDelete }) => {
   );
 };
 
+// TaskModal component remains the same
 const TaskModal = ({ title, task, setTask, onSave, onClose }) => (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">

@@ -252,8 +252,8 @@ const DashboardLayout = ({
         </div>
 
         {/* Content Area */}
-        <div className="h-full bg-white overflow-y-auto">
-          <Outlet />
+        <div className="h-full bg-white overflow-y-auto ">
+          <Outlet/>
         </div>
       </div>
     </div>
