@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Calendar, Search, ChevronDown, X } from "lucide-react";
 
 const LeaveStatus = () => {
   const [leaves, setLeaves] = useState([]);
@@ -16,7 +17,6 @@ const LeaveStatus = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
 
-  // Fetch leave data from API
   useEffect(() => {
     const fetchLeaves = async () => {
       try {
@@ -25,7 +25,7 @@ const LeaveStatus = () => {
         );
         if (Array.isArray(response.data.listLeaveRequest)) {
           setLeaves(response.data.listLeaveRequest);
-          setFilteredLeaves(response.data.listLeaveRequest); // Set initial filtered data
+          setFilteredLeaves(response.data.listLeaveRequest);
         } else {
           setError(
             "Expected an array of leave requests, but got something else."
@@ -94,7 +94,7 @@ const LeaveStatus = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-GB"); // Format: DD/MM/YYYY
+    return new Date(dateString).toLocaleDateString("en-GB");
   };
 
   const handleDelete = async (leaveId) => {
@@ -125,178 +125,238 @@ const LeaveStatus = () => {
       if (!editData || !editData.leave_id) {
         console.error("No leave data or leave_id found.");
         alert("Invalid leave data.");
-        return; // Stop execution if no data
+        return;
       }
-  
-      console.log("Saving...", editData); // Debug: Log the editData being saved
-  
-      // Send the PUT request to update the leave
+
       const response = await axios.put(
         `http://localhost:8080/api/leaverequest/${editData.leave_id}`,
         editData
       );
-  
-      console.log("Response:", response.data); // Debug: Log the entire API response
-  
-      // Get the leaveRequest from the response
+
       const updatedLeave = response.data.leaveRequest;
-  
-      // Check if the updatedLeave is valid
+
       if (!updatedLeave || !updatedLeave.leave_id) {
         console.error("Updated leave is invalid. Response data:", response.data);
         alert("Error: Unable to update leave.");
         return;
       }
-  
-      // Update the leaves list
+
       setLeaves((prevLeaves) =>
         prevLeaves.map((leave) =>
           leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
         )
       );
-  
-      // Update the filtered leaves list
+
       setFilteredLeaves((prevFilteredLeaves) =>
         prevFilteredLeaves.map((leave) =>
           leave && leave.leave_id === updatedLeave.leave_id ? updatedLeave : leave
         )
       );
-  
-      // Close the modal and reset edit data
+
       setIsEditModalOpen(false);
       setEditData(null);
-  
     } catch (error) {
-      // Log the error in case of failure
       console.error("Error saving:", error);
       alert("Failed to save changes.");
     }
   };
-  
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'allowed':
+        return 'bg-green-100 text-green-800';
+      case 'not allowed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-yellow-100 text-yellow-800';
+    }
+  };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-red-50 text-red-800 p-4 rounded-lg shadow flex items-center gap-2">
+        <X className="w-5 h-5" />
+        {error}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-6 min-h-screen ">
-      {/* Search and Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <input
-          type="text"
-          name="search"
-          placeholder="Search for Name"
-          className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-          value={filters.search}
-          onChange={handleFilterChange}
-        />
-        <select
-          name="leaveType"
-          className="border text-gray-400 border-gray-300 p-2 rounded w-full md:w-1/5"
-          value={filters.leaveType}
-          onChange={handleFilterChange}
-        >
-          <option value="">Select a Leave Type</option>
-          <option value="Sick Leave">Sick Leave</option>
-          <option value="Private Leave">Private Leave</option>
-          <option value="Annual Leave">Annual Leave</option>
-        </select>
-        <div className="flex gap-2 w-full md:w-2/5">
-          <input
-            type="date"
-            name="startDate"
-            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-            value={filters.startDate}
-            onChange={handleFilterChange}
-          />
-          <input
-            type="date"
-            name="endDate"
-            className="border text-gray-400 border-gray-300 p-2 rounded flex-1"
-            value={filters.endDate}
-            onChange={handleFilterChange}
-          />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Leave Status Management</h1>
         </div>
-        <button
-          onClick={resetFilters}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          Reset
-        </button>
-      </div>
 
-      {/* Leave Table */}
-      <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="border border-gray-300 p-2">Employee name</th>
-            <th className="border border-gray-300 p-2">Leave type</th>
-            <th className="border border-gray-300 p-2">Date</th>
-            <th className="border border-gray-300 p-2">Status</th>
-            <th className="border border-gray-300 p-2">Actions</th> 
-          </tr>
-        </thead>
-        <tbody>
-          {filteredLeaves.map((leave) => (
-            <tr key={leave.leave_id}>
-              <td className="border text-center border-gray-300 p-2">
-                {leave.firstname} {leave.lastname}
-              </td>
-              <td className="border text-center border-gray-300 p-2">{leave.leavetype}</td>
-              <td className="border border-gray-300 p-2 text-center">
-                {formatDate(leave.startdate)} - {formatDate(leave.enddate)}
-              </td>
-              <td className="border border-gray-300 p-2 text-center">
-                {leave.status}
-              </td>
-              <td className="border border-gray-300 p-2 text-center">
-                <button
-                  onClick={() => handleEdit(leave)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(leave.leave_id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                name="search"
+                placeholder="Search by name"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.search}
+                onChange={handleFilterChange}
+              />
+            </div>
+
+            <div className="relative">
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                name="leaveType"
+                className="w-full appearance-none pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.leaveType}
+                onChange={handleFilterChange}
+              >
+                <option value="">All Leave Types</option>
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Private Leave">Private Leave</option>
+                <option value="Annual Leave">Annual Leave</option>
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="date"
+                name="startDate"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.startDate}
+                onChange={handleFilterChange}
+              />
+            </div>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="date"
+                name="endDate"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.endDate}
+                onChange={handleFilterChange}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Employee</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Leave Type</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date Range</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredLeaves.map((leave) => (
+                  <tr key={leave.leave_id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">
+                        {leave.firstname} {leave.lastname}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{leave.leavetype}</td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {formatDate(leave.startdate)} - {formatDate(leave.enddate)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
+                        {leave.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleEdit(leave)}
+                        className="text-blue-600 hover:text-blue-700 font-medium text-sm mr-3"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(leave.leave_id)}
+                        className="text-red-600 hover:text-red-700 font-medium text-sm"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Status</label>
-              <select
-                name="status"
-                value={editData.status}
-                onChange={handleEditChange}
-                className="border border-gray-300 p-2 rounded w-full"
-              >
-                <option value="">Select Status</option>
-                <option value="Allowed">Allowed</option>
-                <option value="Not Allowed">Not Allowed</option>
-              </select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveEdit}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Update Leave Status</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <div className="relative">
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  <select
+                    name="status"
+                    className="w-full appearance-none px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={editData?.status || ''}
+                    onChange={handleEditChange}
+                  >
+                    <option value="">Select Status</option>
+                    <option value="Allowed">Allowed</option>
+                    <option value="Not Allowed">Not Allowed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-100">
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEdit}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>
