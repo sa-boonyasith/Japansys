@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Calendar, Search, ChevronDown, X } from "lucide-react";
+import { Calendar, Search, ChevronDown, X , Edit, Trash2 } from "lucide-react";
 
 const LeaveStatus = () => {
   const [leaves, setLeaves] = useState([]);
@@ -293,13 +293,13 @@ const LeaveStatus = () => {
                         onClick={() => handleEdit(leave)}
                         className="text-blue-600 hover:text-blue-700 font-medium text-sm mr-3"
                       >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(leave.leave_id)}
-                        className="text-red-600 hover:text-red-700 font-medium text-sm"
-                      >
-                        Delete
+                        <Edit className="w-4 h-4"/> 
+                      </button> 
+                      <button 
+                        onClick={() => handleDelete(leave.leave_id)} 
+                        className="text-red-600 hover:text-red-700 font-medium text-sm" 
+                      > 
+                        <Trash2 className="w-4 h-4"/>
                       </button>
                     </td>
                   </tr>

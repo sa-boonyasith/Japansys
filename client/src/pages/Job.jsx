@@ -15,8 +15,8 @@ const Job = () => {
     fetchApplications();
   }, []);
 
-  const fetchApplications = () => {
-    axios
+  const fetchApplications = async () => {
+    await axios
       .get("http://localhost:8080/api/jobaplication")
       .then((response) => {
         setApplications(response.data.listjobaplication);
@@ -70,10 +70,6 @@ const Job = () => {
       }
     });
   };
-  
-  
-  
-  
 
   const handleEditStatus = (id, newStatus) => {
     axios
