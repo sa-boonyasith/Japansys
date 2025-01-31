@@ -61,79 +61,79 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    try {
+  try {
       const { id } = req.params; // รับ ID ของลูกค้าที่ต้องการอัปเดต
       const {
-        cus_company_name,
-        contact_name,
-        cus_address,
-        cus_phone,
-        cus_tax_id,
-      } = req.body;
-  
-      // ตรวจสอบว่ามี ID หรือไม่
-      if (!id) {
-        return res.status(400).json({ error: "Customer ID is required" });
-      }
-  
-      // ตรวจสอบว่าลูกค้ามีอยู่หรือไม่
-      const existingCustomer = await prisma.customer.findUnique({
-        where: { id: Number(id) },
-      });
-  
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-  
-      // อัปเดตข้อมูลลูกค้า
-      const updatedCustomer = await prisma.customer.update({
-        where: { id: Number(id) },
-        data: {
           cus_company_name,
           contact_name,
           cus_address,
           cus_phone,
           cus_tax_id,
-        },
-      });
-  
-      res.status(200).json({
-        message: "Customer updated successfully",
-        updatedCustomer,
-      });
-    } catch (err) {
-      console.error("Error updating customer:", err);
-      res.status(500).json({ error: "Failed to update customer" });
-    }
-  };
-  
-  exports.remove = async (req, res) => {
-    try {
-      const { id } = req.params; // รับ ID ของลูกค้าที่ต้องการลบ
-  
+      } = req.body;
+
       // ตรวจสอบว่ามี ID หรือไม่
       if (!id) {
-        return res.status(400).json({ error: "Customer ID is required" });
+          return res.status(400).json({ error: "Customer ID is required" });
       }
-  
+
       // ตรวจสอบว่าลูกค้ามีอยู่หรือไม่
       const existingCustomer = await prisma.customer.findUnique({
-        where: { id: Number(id) },
+          where: { customer_id: Number(id) }, // เปลี่ยน id เป็น customer_id
       });
-  
+
       if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
+          return res.status(404).json({ error: "Customer not found" });
       }
+
+      // อัปเดตข้อมูลลูกค้า
+      const updatedCustomer = await prisma.customer.update({
+          where: { customer_id: Number(id) }, // เปลี่ยน id เป็น customer_id
+          data: {
+              cus_company_name,
+              contact_name,
+              cus_address,
+              cus_phone,
+              cus_tax_id,
+          },
+      });
+
+      res.status(200).json({
+          message: "Customer updated successfully",
+          updatedCustomer,
+      });
+  } catch (err) {
+      console.error("Error updating customer:", err);
+      res.status(500).json({ error: "Failed to update customer" });
+  }
+};
+
   
+exports.remove = async (req, res) => {
+  try {
+      const { id } = req.params; // รับ ID ของลูกค้าที่ต้องการลบ
+
+      // ตรวจสอบว่ามี ID หรือไม่
+      if (!id) {
+          return res.status(400).json({ error: "Customer ID is required" });
+      }
+
+      // ตรวจสอบว่าลูกค้ามีอยู่หรือไม่
+      const existingCustomer = await prisma.customer.findUnique({
+          where: { customer_id: Number(id) }, // เปลี่ยน id เป็น customer_id
+      });
+
+      if (!existingCustomer) {
+          return res.status(404).json({ error: "Customer not found" });
+      }
+
       // ลบข้อมูลลูกค้า
       await prisma.customer.delete({
-        where: { id: Number(id) },
+          where: { customer_id: Number(id) }, // เปลี่ยน id เป็น customer_id
       });
-  
+
       res.status(200).json({ message: "Customer deleted successfully" });
-    } catch (err) {
+  } catch (err) {
       console.error("Error deleting customer:", err);
       res.status(500).json({ error: "Failed to delete customer" });
-    }
-  };
-  
+  }
+};
