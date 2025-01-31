@@ -265,9 +265,9 @@ const Meeting = () => {
                 onChange={handleFilterChange}
               >
                 <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="allowed">Allowed</option>
-                <option value="rejected">Rejected</option>
+                <option value="Pending">Pending</option>
+                <option value="Allowed">Allowed</option>
+                <option value="Rejected">Rejected</option>
               </select>
             </div>
           </div>

@@ -307,9 +307,9 @@ const Editmeeting = () => {
             onChange={handleFilterChange}
           >
             <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="allowed">Allowed</option>
-            <option value="rejected">Rejected</option>
+            <option value="Pending">Pending</option>
+            <option value="Allowed">Allowed</option>
+            <option value="Rejected">Rejected</option>
           </select>
           <button
             onClick={resetFilters}
@@ -478,9 +478,9 @@ const Editmeeting = () => {
             value={editMeeting.status}
             onChange={handleEditModalChange}
           >
-            <option value="pending">Pending</option>
-            <option value="allowed">Allowed</option>
-            <option value="rejected">Rejected</option>
+            <option value="Pending">Pending</option>
+            <option value="Allowed">Allowed</option>
+            <option value="Rejected">Rejected</option>
           </select>
             <div className="flex justify-end">
               <button

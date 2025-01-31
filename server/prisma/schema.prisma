@@ -133,7 +133,7 @@ model Meetingroom {
   enddate   DateTime @db.Date
   timestart String
   timeend   String
-  status    Status   @default(pending)
+  status    String   @default("Pending")
 }
 
 model Rentcar {
