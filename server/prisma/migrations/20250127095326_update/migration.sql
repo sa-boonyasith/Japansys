@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `salary` ADD COLUMN `salaryX12` DOUBLE NOT NULL DEFAULT 0;

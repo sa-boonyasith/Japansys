@@ -246,6 +246,69 @@ model customer {
   updated_at       DateTime @updatedAt
 }
 
+model quotation {
+  quotation_id     Int      @id @default(autoincrement())
+  cus_name         String
+  tax_id           String
+  address          String
+  date             DateTime @db.Date
+  credit_term      Int
+  contract_name    String
+  sale_name        String
+  project_name     String
+  no_item          Int
+  description      String
+  quantity         Int
+  price            Float
+  discount         Float
+  amount           Float
+  subtotal         Float
+  special_discount Float
+  after_discount   Float
+  vat              Float
+  total            Float
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+model Invoice {
+  invoice_id       Int       @id @default(autoincrement())
+  cus_name         String
+  address          String
+  tax_id           String
+  date             DateTime  @db.Date
+  total_amount     Float
+  customer_receipt String?
+  payment_term     String
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  invoiceItems     InvoiceItem[]
+}
+
+model Item {
+  item_id      Int      @id @default(autoincrement())
+  description  String
+  price        Float
+
+  invoiceItems InvoiceItem[]
+}
+
+model InvoiceItem {
+  invoice_id Int
+  item_id    Int
+  quantity   Int
+  unit       String
+  amount     Float
+
+  invoice    Invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
+  item       Item    @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
+
+  @@id([invoice_id, item_id]) // Composite Primary Key
+}
+
+
+
 enum Attend {
   check_in
   check_out

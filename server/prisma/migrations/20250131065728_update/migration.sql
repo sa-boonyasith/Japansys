@@ -115,7 +115,7 @@ CREATE TABLE `Meetingroom` (
     `enddate` DATE NOT NULL,
     `timestart` VARCHAR(191) NOT NULL,
     `timeend` VARCHAR(191) NOT NULL,
-    `status` ENUM('pending', 'allowed', 'rejected') NOT NULL DEFAULT 'pending',
+    `status` VARCHAR(191) NOT NULL DEFAULT 'Pending',
 
     PRIMARY KEY (`meeting_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -181,6 +181,7 @@ CREATE TABLE `Salary` (
     `absent_late` DOUBLE NOT NULL DEFAULT 0,
     `overtime` DOUBLE NOT NULL DEFAULT 0,
     `bonus` DOUBLE NOT NULL DEFAULT 0,
+    `bonus_total` DOUBLE NOT NULL DEFAULT 0,
     `tax` DOUBLE NOT NULL DEFAULT 0,
     `providentfund` DOUBLE NOT NULL DEFAULT 0,
     `socialsecurity` DOUBLE NOT NULL DEFAULT 0,
@@ -224,6 +225,84 @@ CREATE TABLE `attendhistory` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `customer` (
+    `customer_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `cus_company_name` VARCHAR(191) NOT NULL,
+    `contact_name` VARCHAR(191) NOT NULL,
+    `cus_address` VARCHAR(191) NOT NULL,
+    `cus_phone` VARCHAR(191) NOT NULL,
+    `cus_tax_id` VARCHAR(191) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`customer_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `quotation` (
+    `quotation_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `cus_name` VARCHAR(191) NOT NULL,
+    `tax_id` VARCHAR(191) NOT NULL,
+    `address` VARCHAR(191) NOT NULL,
+    `date` DATE NOT NULL,
+    `credit_term` INTEGER NOT NULL,
+    `contract_name` VARCHAR(191) NOT NULL,
+    `sale_name` VARCHAR(191) NOT NULL,
+    `project_name` VARCHAR(191) NOT NULL,
+    `no_item` INTEGER NOT NULL,
+    `description` VARCHAR(191) NOT NULL,
+    `quantity` INTEGER NOT NULL,
+    `price` DOUBLE NOT NULL,
+    `discount` DOUBLE NOT NULL,
+    `amount` DOUBLE NOT NULL,
+    `subtotal` DOUBLE NOT NULL,
+    `special_discount` DOUBLE NOT NULL,
+    `after_discount` DOUBLE NOT NULL,
+    `vat` DOUBLE NOT NULL,
+    `total` DOUBLE NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`quotation_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Invoice` (
+    `invoice_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `cus_name` VARCHAR(191) NOT NULL,
+    `address` VARCHAR(191) NOT NULL,
+    `tax_id` VARCHAR(191) NOT NULL,
+    `date` DATE NOT NULL,
+    `total_amount` DOUBLE NOT NULL,
+    `customer_receipt` VARCHAR(191) NULL,
+    `payment_term` VARCHAR(191) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`invoice_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Item` (
+    `item_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `description` VARCHAR(191) NOT NULL,
+    `price` DOUBLE NOT NULL,
+
+    PRIMARY KEY (`item_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `InvoiceItem` (
+    `invoice_id` INTEGER NOT NULL,
+    `item_id` INTEGER NOT NULL,
+    `quantity` INTEGER NOT NULL,
+    `unit` VARCHAR(191) NOT NULL,
+    `amount` DOUBLE NOT NULL,
+
+    PRIMARY KEY (`invoice_id`, `item_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `attend` ADD CONSTRAINT `attend_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -253,3 +332,9 @@ ALTER TABLE `Expense` ADD CONSTRAINT `Expense_employee_id_fkey` FOREIGN KEY (`em
 
 -- AddForeignKey
 ALTER TABLE `attendhistory` ADD CONSTRAINT `attendhistory_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `InvoiceItem` ADD CONSTRAINT `InvoiceItem_invoice_id_fkey` FOREIGN KEY (`invoice_id`) REFERENCES `Invoice`(`invoice_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `InvoiceItem` ADD CONSTRAINT `InvoiceItem_item_id_fkey` FOREIGN KEY (`item_id`) REFERENCES `Item`(`item_id`) ON DELETE CASCADE ON UPDATE CASCADE;
