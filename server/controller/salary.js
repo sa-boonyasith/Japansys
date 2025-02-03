@@ -15,17 +15,11 @@ exports.create = async (req, res) => {
       employee_id,
       payroll_startdate,
       payroll_enddate,
-      payment_date,
       bonus = 0,
     } = req.body;
 
     // Validate required fields
-    if (
-      !employee_id ||
-      !payroll_startdate ||
-      !payroll_enddate ||
-      !payment_date
-    ) {
+    if (!employee_id || !payroll_startdate || !payroll_enddate) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -55,12 +49,6 @@ exports.create = async (req, res) => {
       return res
         .status(400)
         .json({ error: "Payroll end date must be after start date" });
-    }
-
-    if (new Date(payment_date) < new Date(payroll_enddate)) {
-      return res
-        .status(400)
-        .json({ error: "Payment date must be after payroll end date" });
     }
 
     // Fetch employee details
@@ -116,10 +104,10 @@ exports.create = async (req, res) => {
       where: {
         employee_id: Number(employee_id),
         date: {
-          gte: new Date(payroll_startdate), // เริ่มต้นจาก payroll_startdate
-          lte: new Date(payroll_enddate), // สิ้นสุดที่ payroll_enddate
+          gte: new Date(payroll_startdate),
+          lte: new Date(payroll_enddate),
         },
-        status: "Allowed", // เฉพาะสถานะ Allowed เท่านั้น
+        status: "Allowed",
       },
       select: { money: true },
     });
@@ -186,7 +174,7 @@ exports.create = async (req, res) => {
         position: job_position,
         payroll_startdate: new Date(payroll_startdate),
         payroll_enddate: new Date(payroll_enddate),
-        payment_date: new Date(payment_date),
+        payment_date: null, // ตั้งค่า payment_date เป็น null
         banking,
         banking_id,
         salary,
@@ -212,6 +200,7 @@ exports.create = async (req, res) => {
   }
 };
 
+
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
@@ -221,7 +210,6 @@ exports.update = async (req, res) => {
       employee_id,
       payroll_startdate,
       payroll_enddate,
-      payment_date,
       bonus = 0,
       status,
     } = req.body;
@@ -234,8 +222,7 @@ exports.update = async (req, res) => {
     if (
       !employee_id ||
       !payroll_startdate ||
-      !payroll_enddate ||
-      !payment_date
+      !payroll_enddate
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -246,11 +233,6 @@ exports.update = async (req, res) => {
         .json({ error: "Payroll end date must be after start date" });
     }
 
-    if (new Date(payment_date) < new Date(payroll_enddate)) {
-      return res
-        .status(400)
-        .json({ error: "Payment date must be after payroll end date" });
-    }
 
     // ตรวจสอบว่า record นี้มีอยู่จริงหรือไม่
     const existingSalary = await prisma.salary.findUnique({
@@ -298,11 +280,6 @@ exports.update = async (req, res) => {
         .json({ error: "Payroll end date must be after start date" });
     }
 
-    if (new Date(payment_date) < new Date(payroll_enddate)) {
-      return res
-        .status(400)
-        .json({ error: "Payment date must be after payroll end date" });
-    }
 
     // ดึงข้อมูล Attendance
     const attendanceRecords = await prisma.attend.findMany({
@@ -408,7 +385,7 @@ exports.update = async (req, res) => {
         employee_id: Number(employee_id),
         payroll_startdate: new Date(payroll_startdate),
         payroll_enddate: new Date(payroll_enddate),
-        payment_date: new Date(payment_date),
+        payment_date: new Date(), // ใช้วันที่ปัจจุบันเสมอ
         firstname,
         lastname,
         position: job_position,
@@ -418,7 +395,7 @@ exports.update = async (req, res) => {
         absent_late,
         overtime,
         bonus,
-        bonus_total: bonus_total,
+        bonus_total,
         tax: parseFloat(tax.toFixed(2)),
         providentfund,
         socialsecurity,
@@ -428,6 +405,8 @@ exports.update = async (req, res) => {
         status,
       },
     });
+    
+    
 
     console.log("รายได้รวม : ", annualIncome);
     console.log("ค่าใช้จ่าย : ", salary50);

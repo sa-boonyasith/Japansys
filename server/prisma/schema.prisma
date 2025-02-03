@@ -185,23 +185,23 @@ model Salary {
   lastname    String
   position    String
 
-  payroll_startdate DateTime @db.Date
-  payroll_enddate   DateTime @db.Date
-  payment_date      DateTime @db.Date
+  payroll_startdate DateTime  @db.Date
+  payroll_enddate   DateTime  @db.Date
+  payment_date      DateTime? @db.Date
   banking           String
   banking_id        Int
-  salary            Float    @default(0)
-  absent_late       Float    @default(0)
-  overtime          Float    @default(0)
-  bonus             Float    @default(0)
-  bonus_total       Float    @default(0)
-  tax               Float    @default(0) //ภาษี
-  providentfund     Float    @default(0) //กองทุนสำรองชีพ
-  socialsecurity    Float    @default(0) //ประกันสังคม
-  expense           Float    @default(0) //ค่าเบิกเงิน
-  tax_total         Float    @default(0) //ภาษีทั้งหมด
-  salary_total      Float    @default(0) //เงินเดือนทั้งหมด
-  status            String   @default("Pending")
+  salary            Float     @default(0)
+  absent_late       Float     @default(0)
+  overtime          Float     @default(0)
+  bonus             Float     @default(0)
+  bonus_total       Float     @default(0)
+  tax               Float     @default(0) //ภาษี
+  providentfund     Float     @default(0) //กองทุนสำรองชีพ
+  socialsecurity    Float     @default(0) //ประกันสังคม
+  expense           Float     @default(0) //ค่าเบิกเงิน
+  tax_total         Float     @default(0) //ภาษีทั้งหมด
+  salary_total      Float     @default(0) //เงินเดือนทั้งหมด
+  status            String    @default("Pending")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -272,24 +272,24 @@ model quotation {
 }
 
 model Invoice {
-  invoice_id       Int       @id @default(autoincrement())
+  invoice_id       Int      @id @default(autoincrement())
   cus_name         String
   address          String
   tax_id           String
-  date             DateTime  @db.Date
+  date             DateTime @db.Date
   total_amount     Float
   customer_receipt String?
   payment_term     String
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @updatedAt
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
-  invoiceItems     InvoiceItem[]
+  invoiceItems InvoiceItem[]
 }
 
 model Item {
-  item_id      Int      @id @default(autoincrement())
-  description  String
-  price        Float
+  item_id     Int    @id @default(autoincrement())
+  description String
+  price       Float
 
   invoiceItems InvoiceItem[]
 }
@@ -301,13 +301,11 @@ model InvoiceItem {
   unit       String
   amount     Float
 
-  invoice    Invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
-  item       Item    @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
+  item    Item    @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
 
   @@id([invoice_id, item_id]) // Composite Primary Key
 }
-
-
 
 enum Attend {
   check_in

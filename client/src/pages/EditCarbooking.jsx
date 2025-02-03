@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Car,
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  AlertTriangle,
+} from "lucide-react";
 
 const CarBooking = () => {
   const [carBooking, setCarBooking] = useState([]);
@@ -20,13 +31,15 @@ const CarBooking = () => {
     timeend: "",
     place: "",
     car: "",
-    status:"pending"
+    status: "pending",
   });
   const [editRentCar, setEditRentCar] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState(null);
 
   useEffect(() => {
     const fetchCarBooking = async () => {
@@ -42,7 +55,9 @@ const CarBooking = () => {
           setCarBooking(sortedCarBookings);
           setFilteredCarBookings(sortedCarBookings);
         } else {
-          setError("Expected an array of car bookings, but got something else.");
+          setError(
+            "Expected an array of car bookings, but got something else."
+          );
         }
       } catch (err) {
         setError("Failed to fetch data.");
@@ -61,12 +76,18 @@ const CarBooking = () => {
   };
 
   const applyFilters = (currentFilters) => {
-    const filtered = carBooking.filter((car) => {
+    let filtered = carBooking.filter((car) => {
       const searchFilter = currentFilters.search
-        ? car.firstname.toLowerCase().includes(currentFilters.search.toLowerCase()) ||
-          car.lastname.toLowerCase().includes(currentFilters.search.toLowerCase())
+        ? car.firstname
+            ?.toLowerCase()
+            .includes(currentFilters.search.toLowerCase()) ||
+          car.lastname
+            ?.toLowerCase()
+            .includes(currentFilters.search.toLowerCase())
         : true;
-      const statusFilter = currentFilters.status ? car.status === currentFilters.status : true;
+      const statusFilter = currentFilters.status
+        ? car.status === currentFilters.status
+        : true;
       const startDateFilter = currentFilters.startDate
         ? new Date(car.startdate) >= new Date(currentFilters.startDate)
         : true;
@@ -90,14 +111,14 @@ const CarBooking = () => {
       );
     });
 
-    const sorted = filtered.sort((a, b) => {
+    filtered = filtered.sort((a, b) => {
       const today = new Date();
       const diffA = Math.abs(new Date(a.startdate) - today);
       const diffB = Math.abs(new Date(b.startdate) - today);
       return diffA - diffB;
     });
 
-    setFilteredCarBookings(sorted);
+    setFilteredCarBookings(filtered);
   };
 
   const resetFilters = () => {
@@ -140,10 +161,16 @@ const CarBooking = () => {
         employee_id: parseInt(newRentCar.employee_id, 10),
       };
 
-      const response = await axios.post("http://localhost:8080/api/rentcar", payload);
+      const response = await axios.post(
+        "http://localhost:8080/api/rentcar",
+        payload
+      );
       if (response.data && response.data.newrentcar) {
         setCarBooking([...carBooking, response.data.newrentcar]);
-        setFilteredCarBookings([...filteredCarBookings, response.data.newrentcar]);
+        setFilteredCarBookings([
+          ...filteredCarBookings,
+          response.data.newrentcar,
+        ]);
         setShowAddModal(false);
         setNewRentCar({
           employee_id: "",
@@ -153,7 +180,7 @@ const CarBooking = () => {
           timeend: "",
           place: "",
           car: "",
-          status:"",
+          status: "pending",
         });
       } else {
         alert("Unexpected response from the server.");
@@ -165,30 +192,27 @@ const CarBooking = () => {
   };
 
   const handleEditRentCar = async () => {
-    if (!editRentCar) {
-      alert("Please select a car booking to edit.");
-      return;
-    }
-  
+    if (!editRentCar) return;
+
     try {
       const payload = {
         ...editRentCar,
-        employee_id: parseInt(editRentCar.employee_id, 10), // Ensure employee_id is an integer
+        employee_id: parseInt(editRentCar.employee_id, 10),
       };
-  
+
       const response = await axios.put(
         `http://localhost:8080/api/rentcar/${editRentCar.rentcar_id}`,
         payload
       );
-  
+
       if (response.status === 201 && response.data.update) {
-        const updatedCarBooking = carBooking.map((car) =>
+        const updatedBookings = carBooking.map((car) =>
           car.rentcar_id === editRentCar.rentcar_id
             ? { ...car, ...response.data.update }
             : car
         );
-        setCarBooking(updatedCarBooking);
-        setFilteredCarBookings(updatedCarBooking);
+        setCarBooking(updatedBookings);
+        setFilteredCarBookings(updatedBookings);
         setShowEditModal(false);
         setEditRentCar(null);
       } else {
@@ -199,326 +223,543 @@ const CarBooking = () => {
       alert("Error editing car booking. Please try again.");
     }
   };
-  
 
-  const handleDeleteRentCar = async (carId) => {
-    if (window.confirm("Are you sure you want to delete this booking?")) {
-      try {
-        const response = await axios.delete(`http://localhost:8080/api/rentcar/${carId}`);
+  const initiateDelete = (carId) => {
+    setDeleteItemId(carId);
+    setShowConfirmDialog(true);
+  };
 
-        if (response.data && response.data.delete) {
-          const updatedCarBooking = carBooking.filter(
-            (car) => car.rentcar_id !== carId
-          );
-          setCarBooking(updatedCarBooking);
-          setFilteredCarBookings(updatedCarBooking);
-        } else {
-          alert("Unexpected response from the server.");
-        }
-      } catch (error) {
-        console.error("Failed to delete car booking:", error);
-        alert("Error deleting car booking. Please try again.");
+  const handleDeleteConfirm = async () => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8080/api/rentcar/${deleteItemId}`
+      );
+
+      if (response.data && response.data.delete) {
+        const updatedBookings = carBooking.filter(
+          (car) => car.rentcar_id !== deleteItemId
+        );
+        setCarBooking(updatedBookings);
+        setFilteredCarBookings(updatedBookings);
+        setShowConfirmDialog(false);
+        setDeleteItemId(null);
+      } else {
+        alert("Unexpected response from the server.");
       }
+    } catch (error) {
+      console.error("Failed to delete car booking:", error);
+      alert("Error deleting car booking. Please try again.");
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "allowed":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
-  return (
-    <div className="p-6">
-      <div className="bg-white shadow-md p-4 rounded-lg mb-6">
-        <div className="flex flex-wrap gap-4">
-          <input
-            type="text"
-            name="search"
-            placeholder="Search for Name or Place"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-            value={filters.search}
-            onChange={handleFilterChange}
-          />
-          <div className="flex gap-2 w-full md:w-2/5">
-            <input
-              type="date"
-              name="startDate"
-              className="border border-gray-300 p-2 rounded flex-1"
-              value={filters.startDate}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="date"
-              name="endDate"
-              className="border border-gray-300 p-2 rounded flex-1"
-              value={filters.endDate}
-              onChange={handleFilterChange}
-            />
-          </div>
-          <div className="flex gap-2 w-full md:w-2/5">
-            <input
-              type="time"
-              name="startTime"
-              className="border border-gray-300 p-2 rounded flex-1"
-              value={filters.startTime}
-              onChange={handleFilterChange}
-            />
-            <input
-              type="time"
-              name="endTime"
-              className="border border-gray-300 p-2 rounded flex-1"
-              value={filters.endTime}
-              onChange={handleFilterChange}
-            />
-          </div>
-          <select
-            name="status"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/5"
-            value={filters.status}
-            onChange={handleFilterChange}
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="allowed">Allowed</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <button
-            onClick={resetFilters}
-            className="bg-gray-500 text-white px-4 py-2 rounded"
-          >
-            Reset
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-green-500 text-white px-4 py-2 rounded"
-          >
-            Add Booking
-          </button>
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-red-50 text-red-800 p-4 rounded-lg shadow">
+          <p>{error}</p>
         </div>
       </div>
+    );
 
-      <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-md">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="border border-gray-300 p-2">Name</th>
-            <th className="border border-gray-300 p-2">Date</th>
-            <th className="border border-gray-300 p-2">Time</th>
-            <th className="border border-gray-300 p-2">Place</th>
-            <th className="border border-gray-300 p-2">Car</th>
-            <th className="border border-gray-300 p-2">Status</th>
-            <th className="border border-gray-300 p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredCarBookings.map((car) => (
-            <tr key={car.rentcar_id} className="text-center">
-              <td className="border border-gray-300 p-2">
-                {car.firstname} {car.lastname}
-              </td>
-              <td className="border border-gray-300 p-2">
-                {new Date(car.startdate).toLocaleDateString()} -{" "}
-                {new Date(car.enddate).toLocaleDateString()}
-              </td>
-              <td className="border border-gray-300 p-2">
-                {car.timestart} - {car.timeend}
-              </td>
-              <td className="border border-gray-300 p-2">{car.place}</td>
-              <td className="border border-gray-300 p-2">{car.car}</td>
-              <td className="border border-gray-300 p-2 capitalize">
-                {car.status}
-              </td>
-              <td className="border border-gray-300 p-2">
-                <button
-                  className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
-                  onClick={() => {
-                    setEditRentCar(car);
-                    setShowEditModal(true);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                  onClick={() => handleDeleteRentCar(car.rentcar_id)}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-          {filteredCarBookings.length === 0 && (
-            <tr>
-              <td colSpan="7" className="text-center p-4 text-gray-500">
-                No car bookings found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+        </div>
 
-      {/* Add Booking Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-4/5 md:w-1/3">
-            <h2 className="text-xl mb-4">Add New Booking</h2>
-            <div className="flex flex-col gap-4">
+        {/* Filter Section */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3  text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                name="employee_id"
-                placeholder="Employee ID"
-                className="border border-gray-300 p-2 rounded"
-                value={newRentCar.employee_id}
-                onChange={handleModalChange}
+                name="search"
+                placeholder="Search by name or place..."
+                className="pl-10 w-full  rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                value={filters.search}
+                onChange={handleFilterChange}
               />
-              <input
-                type="date"
-                name="startdate"
-                placeholder="Start Date"
-                className="border border-gray-300 p-2 rounded"
-                value={newRentCar.startdate}
-                onChange={handleModalChange}
-              />
-              <input
-                type="date"
-                name="enddate"
-                placeholder="End Date"
-                className="border border-gray-300 p-2 rounded"
-                value={newRentCar.enddate}
-                onChange={handleModalChange}
-              />
-              <input
-                type="time"
-                name="timestart"
-                placeholder="Start Time"
-                className="border border-gray-300 p-2 rounded"
-                value={newRentCar.timestart}
-                onChange={handleModalChange}
-              />
-              <input
-                type="time"
-                name="timeend"
-                placeholder="End Time"
-                className="border border-gray-300 p-2 rounded"
-                value={newRentCar.timeend}
-                onChange={handleModalChange}
-              />
-              <input
-                type="text"
-                name="place"
-                placeholder="Place"
-                className="border border-gray-300 p-2 rounded"
-                value={newRentCar.place}
-                onChange={handleModalChange}
-              />
-              <input
-                type="text"
-                name="car"
-                placeholder="Car"
-                className="border border-gray-300 p-2 rounded"
-                value={newRentCar.car}
-                onChange={handleModalChange}
-              />
-              <div className="flex justify-end gap-4">
+            </div>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="date"
+                  name="startDate"
+                  className="pl-5 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  value={filters.startDate}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div className="relative flex-1">
+                <input
+                  type="date"
+                  name="endDate"
+                  className="pl-10 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  value={filters.endDate}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="time"
+                  name="startTime"
+                  className="pl-10 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  value={filters.startTime}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div className="relative flex-1">
+                <input
+                  type="time"
+                  name="endTime"
+                  className="pl-10 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  value={filters.endTime}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            <select
+              name="status"
+              className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+              value={filters.status}
+              onChange={handleFilterChange}
+            >
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="allowed">Allowed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+
+            <div className="flex gap-2">
+              <button
+                onClick={resetFilters}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition duration-200"
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Booking
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bookings Table */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                    Name
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                    Date & Time
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                    Location
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                    Vehicle
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-right text-sm font-medium text-gray-600">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredCarBookings.map((car) => (
+                  <tr key={car.rentcar_id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">
+                        {car.firstname} {car.lastname}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        ID: {car.employee_id}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {new Date(car.startdate).toLocaleDateString()}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {car.timestart} - {car.timeend}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-900">
+                          {car.place}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <Car className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-900">{car.car}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                          car.status
+                        )}`}
+                      >
+                        {car.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setEditRentCar(car);
+                            setShowEditModal(true);
+                          }}
+                          className="p-1 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => initiateDelete(car.rentcar_id)}
+                          className="p-1 text-gray-500 hover:text-red-600 transition-colors duration-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Add Booking Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+              <h2 className="text-xl font-bold mb-4">Add New Booking</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Employee ID
+                  </label>
+                  <input
+                    type="number"
+                    name="employee_id"
+                    value={newRentCar.employee_id}
+                    onChange={handleModalChange}
+                    className="w-full rounded-lg border-gray-200"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      name="startdate"
+                      value={newRentCar.startdate}
+                      onChange={handleModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      name="enddate"
+                      value={newRentCar.enddate}
+                      onChange={handleModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      name="timestart"
+                      value={newRentCar.timestart}
+                      onChange={handleModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      name="timeend"
+                      value={newRentCar.timeend}
+                      onChange={handleModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    name="place"
+                    value={newRentCar.place}
+                    onChange={handleModalChange}
+                    className="w-full rounded-lg border-gray-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vehicle
+                  </label>
+                  <input
+                    type="text"
+                    name="car"
+                    value={newRentCar.car}
+                    onChange={handleModalChange}
+                    className="w-full rounded-lg border-gray-200"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
                 <button
-                  className="bg-gray-500 text-white px-4 py-2 rounded"
                   onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition duration-200"
                 >
                   Cancel
                 </button>
                 <button
-                  className="bg-green-500 text-white px-4 py-2 rounded"
                   onClick={handleAddRentCar}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
                 >
-                  Add
+                  Add Booking
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Edit Booking Modal */}
-      {showEditModal && editRentCar && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-4/5 md:w-1/3">
-            <h2 className="text-xl mb-4">Edit Booking</h2>
-            <div className="flex flex-col gap-4">
-              <input
-                type="text"
-                name="employee_id"
-                placeholder="Employee ID"
-                className="border border-gray-300 p-2 rounded"
-                value={editRentCar.employee_id}
-                onChange={handleEditModalChange}
-              />
-              <input
-                type="date"
-                name="startdate"
-                className="border border-gray-300 p-2 rounded"
-                value={formatInputDate(editRentCar.startdate)}
-                onChange={handleEditModalChange}
-              />
-              <input
-                type="date"
-                name="enddate"
-                className="border border-gray-300 p-2 rounded"
-                value={formatInputDate(editRentCar.enddate)}
-                onChange={handleEditModalChange}
-              />
-              <input
-                type="time"
-                name="timestart"
-                className="border border-gray-300 p-2 rounded"
-                value={editRentCar.timestart}
-                onChange={handleEditModalChange}
-              />
-              <input
-                type="time"
-                name="timeend"
-                className="border border-gray-300 p-2 rounded"
-                value={editRentCar.timeend}
-                onChange={handleEditModalChange}
-              />
-              <input
-                type="text"
-                name="place"
-                className="border border-gray-300 p-2 rounded"
-                value={editRentCar.place}
-                onChange={handleEditModalChange}
-              />
-              <input
-                type="text"
-                name="car"
-                className="border border-gray-300 p-2 rounded"
-                value={editRentCar.car}
-                onChange={handleEditModalChange}
-              />
-              <select
-            name="status"
-            className="border border-gray-300 p-2 rounded"
-            value={editRentCar.status}
-            onChange={handleEditModalChange}
-          >
-            <option value="pending">Pending</option>
-            <option value="allowed">Allowed</option>
-            <option value="rejected">Rejected</option>
-          </select>
-              <div className="flex justify-end gap-4">
+        {/* Edit Booking Modal */}
+        {showEditModal && editRentCar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+              <h2 className="text-xl font-bold mb-4">Edit Booking</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Employee ID
+                  </label>
+                  <input
+                    type="number"
+                    name="employee_id"
+                    value={editRentCar.employee_id}
+                    onChange={handleEditModalChange}
+                    className="w-full rounded-lg border-gray-200"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      name="startdate"
+                      value={formatInputDate(editRentCar.startdate)}
+                      onChange={handleEditModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      name="enddate"
+                      value={formatInputDate(editRentCar.enddate)}
+                      onChange={handleEditModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      name="timestart"
+                      value={editRentCar.timestart}
+                      onChange={handleEditModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      name="timeend"
+                      value={editRentCar.timeend}
+                      onChange={handleEditModalChange}
+                      className="w-full rounded-lg border-gray-200"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    name="place"
+                    value={editRentCar.place}
+                    onChange={handleEditModalChange}
+                    className="w-full rounded-lg border-gray-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vehicle
+                  </label>
+                  <input
+                    type="text"
+                    name="car"
+                    value={editRentCar.car}
+                    onChange={handleEditModalChange}
+                    className="w-full rounded-lg border-gray-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    value={editRentCar.status}
+                    onChange={handleEditModalChange}
+                    className="w-full rounded-lg border-gray-200"
+                    required
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="allowed">Allowed</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
                 <button
-                  className="bg-gray-500 text-white px-4 py-2 rounded"
-                  onClick={() => setShowEditModal(false)}
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditRentCar(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition duration-200"
                 >
                   Cancel
                 </button>
                 <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
                   onClick={handleEditRentCar}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
                 >
                   Save Changes
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {showConfirmDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertTriangle className="w-6 h-6 text-red-500" />
+                <h2 className="text-xl font-bold">Confirm Delete</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this booking? This action cannot
+                be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowConfirmDialog(false);
+                    setDeleteItemId(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
