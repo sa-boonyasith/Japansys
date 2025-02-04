@@ -288,15 +288,15 @@ const CarBooking = () => {
         </div>
 
         {/* Filter Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="relative">
-              <Search className="absolute left-3  text-gray-400 w-5 h-5" />
+              <Search className="absolute left-2 bottom-[6px]  text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 name="search"
                 placeholder="Search by name or place..."
-                className="pl-10 w-full  rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 w-full border h-8  rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 value={filters.search}
                 onChange={handleFilterChange}
               />
@@ -307,7 +307,7 @@ const CarBooking = () => {
                 <input
                   type="date"
                   name="startDate"
-                  className="pl-5 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-5 w-full rounded-lg border h-8 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   value={filters.startDate}
                   onChange={handleFilterChange}
                 />
@@ -316,7 +316,7 @@ const CarBooking = () => {
                 <input
                   type="date"
                   name="endDate"
-                  className="pl-10 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-10 w-full rounded-lg border h-8 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   value={filters.endDate}
                   onChange={handleFilterChange}
                 />
@@ -328,7 +328,7 @@ const CarBooking = () => {
                 <input
                   type="time"
                   name="startTime"
-                  className="pl-10 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-10 w-full rounded-lg border h-8 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   value={filters.startTime}
                   onChange={handleFilterChange}
                 />
@@ -337,7 +337,7 @@ const CarBooking = () => {
                 <input
                   type="time"
                   name="endTime"
-                  className="pl-10 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-10 w-full rounded-lg border h-8 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   value={filters.endTime}
                   onChange={handleFilterChange}
                 />
@@ -346,7 +346,7 @@ const CarBooking = () => {
 
             <select
               name="status"
-              className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+              className="rounded-lg border-gray-200 border h-8 focus:border-blue-500 focus:ring-blue-500"
               value={filters.status}
               onChange={handleFilterChange}
             >
@@ -375,27 +375,27 @@ const CarBooking = () => {
         </div>
 
         {/* Bookings Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Name
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
                     Date & Time
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
                     Location
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
                     Vehicle
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
                     Status
                   </th>
-                  {/* <th className="px-6 py-4 text-right text-sm font-medium text-gray-600">
+                  {/* <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Actions
                   </th> */}
                 </tr>
@@ -471,7 +471,7 @@ const CarBooking = () => {
         {/* Add Booking Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="bg-white rounded-xl shadow-md max-w-md w-full p-6">
               <h2 className="text-xl font-bold mb-4">Add New Booking</h2>
               <div className="space-y-4">
                 <div>

@@ -1,17 +1,10 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Search, Plus, Edit2, Trash2, X } from "lucide-react";
+import { Edit2, Trash2, X, Plus } from "lucide-react";
 
 const ExpenseSystem = () => {
   const [expenses, setExpenses] = useState([]);
   const [filterExpenses, setFilterExpenses] = useState([]);
-  const [filters, setFilters] = useState({
-    search: "",
-    date: "",
-    type: "",
-    money: "",
-    status: "",
-  });
+  const [filters, setFilters] = useState({ search: "" });
   const [newExpense, setNewExpense] = useState({
     employee_id: "",
     date: new Date().toISOString().substring(0, 10),
@@ -19,19 +12,24 @@ const ExpenseSystem = () => {
     money: "",
     desc: "",
   });
-  const [showEditModal, setShowEditModal] = useState(false);
   const [editExpense, setEditExpense] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addError, setAddError] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
+  // Fetch expenses from the API using fetch
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/expense");
-        setExpenses(response.data.listExpense);
-        setFilterExpenses(response.data.listExpense);
+        const response = await fetch("http://localhost:8080/api/expense");
+        if (!response.ok) {
+          throw new Error("Failed to fetch expenses");
+        }
+        const data = await response.json();
+        setExpenses(data.listExpense);
+        setFilterExpenses(data.listExpense);
       } catch (err) {
         setError("Failed to fetch expenses.");
       } finally {
@@ -80,64 +78,21 @@ const ExpenseSystem = () => {
         ? parseFloat(expense.money) === parseFloat(filters.money)
         : true;
 
-      return matchesSearch && matchesStatus && matchesDate && matchesType && matchesMoney;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesDate &&
+        matchesType &&
+        matchesMoney
+      );
     });
 
     setFilterExpenses(filtered);
   };
 
-  const handleEditExpense = async () => {
-    if (!editExpense) return;
-
-    try {
-      const res = await axios.put(
-        `http://localhost:8080/api/expense/${editExpense.expen_id}`,
-        editExpense
-      );
-
-      if (res.status === 200 && res.data?.data) {
-        const updatedExpenses = expenses.map((expense) =>
-          expense.expen_id === editExpense.expen_id
-            ? { ...expense, ...res.data.data }
-            : expense
-        );
-
-        setExpenses(updatedExpenses);
-        setFilterExpenses(updatedExpenses);
-        setShowEditModal(false);
-        setEditExpense(null);
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to update expense. Please try again.");
-    }
-  };
-
-  const handleDeleteExpense = async (expenseId) => {
-    if (window.confirm("Are you sure you want to delete this expense?")) {
-      try {
-        const res = await axios.delete(
-          `http://localhost:8080/api/expense/${expenseId}`
-        );
-        if (res.status === 200 && res.data?.delete) {
-          const updatedExpenses = expenses.filter(
-            (expense) => expense.expen_id !== expenseId
-          );
-          setExpenses(updatedExpenses);
-          setFilterExpenses(updatedExpenses);
-        }
-      } catch (err) {
-        alert("Failed to delete expense. Please try again.");
-      }
-    }
-  };
-
-  const formatInputDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
-  };
-
   const handleAddExpense = async () => {
     try {
+      // Validate fields
       if (!newExpense.employee_id || !newExpense.date || !newExpense.money) {
         setAddError("Please fill out all required fields.");
         return;
@@ -148,10 +103,26 @@ const ExpenseSystem = () => {
         date: new Date(newExpense.date).toISOString(),
       };
 
-      await axios.post("http://localhost:8080/api/expense", expenseData);
-      const response = await axios.get("http://localhost:8080/api/expense");
-      setExpenses(response.data.listExpense);
-      setFilterExpenses(response.data.listExpense);
+      // POST new expense
+      const response = await fetch("http://localhost:8080/api/expense", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(expenseData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add expense");
+      }
+
+      // Fetch updated expenses
+      const updatedResponse = await fetch("http://localhost:8080/api/expense");
+      const data = await updatedResponse.json();
+      setExpenses(data.listExpense);
+      setFilterExpenses(data.listExpense);
+
+      // Reset form and close modal
       setShowAddModal(false);
       setNewExpense({
         employee_id: "",
@@ -162,81 +133,133 @@ const ExpenseSystem = () => {
       });
       setAddError("");
     } catch (err) {
+      console.error("Error adding expense:", err);
       setAddError("Failed to add expense. Please try again.");
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'allowed':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handleEditExpense = async () => {
+    if (!editExpense) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/expense/${editExpense.expen_id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...editExpense,
+            date: new Date(editExpense.date).toISOString(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update expense");
+      }
+
+      // Fetch updated expenses
+      const updatedResponse = await fetch("http://localhost:8080/api/expense");
+      const data = await updatedResponse.json();
+      setExpenses(data.listExpense);
+      setFilterExpenses(data.listExpense);
+
+      // Close edit modal
+      setShowEditModal(false);
+      setEditExpense(null);
+    } catch (err) {
+      console.error("Error updating expense:", err);
+      alert("Failed to update expense. Please try again.");
     }
   };
 
-  const Modal = ({ children, title, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={20} />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
+  const handleDeleteExpense = async (expenseId) => {
+    if (!window.confirm("Are you sure you want to delete this expense?"))
+      return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/expense/${expenseId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete expense");
+      }
+
+      // Fetch updated expenses
+      const updatedResponse = await fetch("http://localhost:8080/api/expense");
+      const data = await updatedResponse.json();
+      setExpenses(data.listExpense);
+      setFilterExpenses(data.listExpense);
+    } catch (err) {
+      console.error("Error deleting expense:", err);
+      alert("Failed to delete expense. Please try again.");
+    }
+  };
+
+  const closeModal = () => {
+    setShowAddModal(false);
+    setShowEditModal(false);
+    setAddError("");
+    setEditExpense(null);
+  };
+
+  const formatInputDate = (dateString) => {
+    return new Date(dateString).toISOString().split("T")[0];
+  };
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "allowed":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-              <input
-                type="text"
-                name="search"
-                value={filters.search}
-                onChange={handleFilterChange}
-                placeholder="Search..."
-                className="pl-10 w-full h-8  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+    <div className="bg-gray-50 min-h-screen p-8">
+      <div className="">
+        <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
+          {/* Filter Section */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <input
+              type="text"
+              name="search"
+              value={filters.search}
+              onChange={handleFilterChange}
+              placeholder="Search expenses..."
+              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none col-span-2"
+            />
             <input
               type="date"
               name="date"
               value={filters.date}
               onChange={handleFilterChange}
-              className="h-8  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             <input
               type="text"
-              placeholder="Type"
+              placeholder="Expense Type"
               name="type"
               value={filters.type}
               onChange={handleFilterChange}
-              className="h-8  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Amount"
-              name="money"
-              value={filters.money}
-              onChange={handleFilterChange}
-              className="h-8  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             <select
               name="status"
+              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               value={filters.status}
               onChange={handleFilterChange}
-              className="h-8  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">All Status</option>
               <option value="Pending">Pending</option>
@@ -244,217 +267,326 @@ const ExpenseSystem = () => {
               <option value="Rejected">Rejected</option>
             </select>
           </div>
-          
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus size={20} />
-            Add Expense
-          </button>
+
+          <div className="mb-6">
+            <button
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              onClick={() => setShowAddModal(true)}
+            >
+              <Plus size={20} />
+              Add New Expense
+            </button>
+          </div>
         </div>
 
+        {/* Expenses Table */}
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+          <div className="text-center py-8">
+            <div className="animate-spin inline-block w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+            <p className="text-gray-600 mt-2">Loading expenses...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-100 text-red-700 p-4 rounded-lg">{error}</div>
+          <div
+            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+            role="alert"
+          >
+            {error}
+          </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {["Employee Name", "Date", "Type", "Amount", "Description", "Status"].map((header) => (
-                      <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filterExpenses.length > 0 ? (
-                    filterExpenses.map((expense) => (
-                      <tr key={expense.expen_id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {expense.firstname} {expense.lastname}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(expense.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {expense.type_expense}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          ${Number(expense.money).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {expense.desc}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(expense.status)}`}>
-                            {expense.status}
-                          </span>
-                        </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => {
-                              setEditExpense(expense);
-                              setShowEditModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteExpense(expense.expen_id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td> */}
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                        No expenses found
+          <div className="overflow-x-auto">
+            <table className="w-full bg-white shadow-md rounded-lg overflow-hidden">
+              <thead className="bg-gray-50">
+                <tr>
+                  {[
+                    "Employee Name",
+                    "Date",
+                    "Type",
+                    "Amount",
+                    "Description",
+                    "Status",
+                  ].map((header) => (
+                    <th
+                      key={header}
+                      className="px-4 py-3 text-left font-semibold"
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filterExpenses.length > 0 ? (
+                  filterExpenses.map((expense) => (
+                    <tr
+                      key={expense.expen_id}
+                      className="border-b hover:bg-gray-100 transition"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {expense.firstname} {expense.lastname}
+                        </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(expense.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {expense.type_expense}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${expense.money}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {expense.desc}
+                      </td>
+                      <td className="py-4 whitespace-nowrap text-xs font-medium ">
+                        <span
+                          className={`px-3 py-1 rounded-full ${getStatusColor(
+                            expense.status
+                          )}`}
+                        >
+                          {expense.status}
+                        </span>
+                      </td>
+                      {/* <td className="px-3  whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => {
+                            setEditExpense(expense);
+                            setShowEditModal(true);
+                          }}
+                          className="text-blue-600 p-2 hover:text-blue-800 transition"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExpense(expense.expen_id)}
+                          className="text-red-600 hover:text-red-800 transition"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td> */}
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="text-center text-gray-500 p-6">
+                      No expenses found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Add Expense Modal */}
+        {/* Add Expense Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white w-96 p-6 rounded-lg shadow-2xl relative">
+              <button
+                onClick={closeModal}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+              <h2 className="text-2xl font-bold text-blue-800 mb-6">
+                Add New Expense
+              </h2>
+
+              <input
+                type="number"
+                placeholder="ไอดีพนักงาน"
+                name="employee_id"
+                value={newExpense.employee_id}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    [e.target.name]: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              <input
+                type="date"
+                name="date"
+                value={newExpense.date}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    [e.target.name]: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              <select
+                name="type_expense"
+                value={newExpense.type_expense}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    [e.target.name]: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ค่าใช้จ่ายประจำ">ค่าใช้จ่ายประจำ</option>
+                <option value="ค่าใช้จ่ายผันแปร">ค่าใช้จ่ายผันแปร</option>
+                <option value="ค่าใช้จ่ายทางการเงิน">
+                  ค่าใช้จ่ายทางการเงิน
+                </option>
+                <option value="ค่าใช้จ่ายลงทุน">ค่าใช้จ่ายลงทุน</option>
+                <option value="ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก">
+                  ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก
+                </option>
+                <option value="ค่าใช้จ่ายฉุกเฉิน">ค่าใช้จ่ายฉุกเฉิน</option>
+              </select>
+
+              <input
+                type="number"
+                placeholder="จำนวนเงิน"
+                name="money"
+                value={newExpense.money}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    [e.target.name]: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              <input
+                type="text"
+                placeholder="คำอธิบาย"
+                name="desc"
+                value={newExpense.desc}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    [e.target.name]: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              {addError && <p className="text-red-500 mb-4">{addError}</p>}
+
+              <div className="flex justify-between">
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-300"
+                  onClick={handleAddExpense}
+                >
+                  Add Expense
+                </button>
+                <button
+                  className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {showAddModal && (
-          <Modal title="Add New Expense" onClose={() => setShowAddModal(false)}>
-            <div className="p-6">
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Employee ID"
-                  value={newExpense.employee_id}
-                  onChange={(e) => setNewExpense({ ...newExpense, employee_id: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <input
-                  type="date"
-                  value={newExpense.date}
-                  onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Type of Expense"
-                  value={newExpense.type_expense}
-                  onChange={(e) => setNewExpense({ ...newExpense, type_expense: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <input
-                  type="number"
-                  placeholder="Amount"
-                  value={newExpense.money}
-                  onChange={(e) => setNewExpense({ ...newExpense, money: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <textarea
-                  placeholder="Description"
-                  value={newExpense.desc}
-                  onChange={(e) => setNewExpense({ ...newExpense, desc: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows="3"
-                />
-                {addError && (
-                  <div className="text-red-500 text-sm">{addError}</div>
-                )}
-                <div className="flex justify-end gap-4 mt-6">
-                  <button
-                    onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleAddExpense}
-                    className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    Add Expense
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Modal>
-        )}
-
+        {/* Edit Expense Modal */}
         {showEditModal && editExpense && (
-          <Modal title="Edit Expense" onClose={() => setShowEditModal(false)}>
-            <div className="p-6">
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Employee ID"
-                  value={editExpense.employee_id}
-                  onChange={(e) => setEditExpense({ ...editExpense, employee_id: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <input
-                  type="date"
-                  value={formatInputDate(editExpense.date)}
-                  onChange={(e) => setEditExpense({ ...editExpense, date: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Type of Expense"
-                  value={editExpense.type_expense}
-                  onChange={(e) => setEditExpense({ ...editExpense, type_expense: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <input
-                  type="number"
-                  placeholder="Amount"
-                  value={editExpense.money}
-                  onChange={(e) => setEditExpense({ ...editExpense, money: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <textarea
-                  placeholder="Description"
-                  value={editExpense.desc}
-                  onChange={(e) => setEditExpense({ ...editExpense, desc: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows="3"
-                />
-                <select
-                  value={editExpense.status}
-                  onChange={(e) => setEditExpense({ ...editExpense, status: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white w-96 p-6 rounded-lg shadow-2xl relative">
+              <button
+                onClick={closeModal}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+              <h2 className="text-2xl font-bold text-blue-800 mb-6">
+                Edit Expense
+              </h2>
+              <input
+                type="text"
+                name="employee_id"
+                placeholder="EMPLOYEE ID"
+                value={editExpense.employee_id}
+                onChange={(e) =>
+                  setEditExpense({
+                    ...editExpense,
+                    employee_id: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="date"
+                name="date"
+                value={formatInputDate(editExpense.date)}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, date: e.target.value })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="text"
+                name="type_expense"
+                placeholder="TYPE OF EXPENSE"
+                value={editExpense.type_expense}
+                onChange={(e) =>
+                  setEditExpense({
+                    ...editExpense,
+                    type_expense: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="number"
+                name="money"
+                placeholder="AMOUNT"
+                value={editExpense.money}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, money: e.target.value })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <textarea
+                name="desc"
+                placeholder="DESCRIPTION"
+                value={editExpense.desc}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, desc: e.target.value })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows="3"
+              />
+              <select
+                name="status"
+                value={editExpense.status}
+                onChange={(e) =>
+                  setEditExpense({ ...editExpense, status: e.target.value })
+                }
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Pending">Pending</option>
+                <option value="Allowed">Allowed</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <div className="flex justify-between">
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-300"
+                  onClick={handleEditExpense}
                 >
-                  <option value="Pending">Pending</option>
-                  <option value="Allowed">Allowed</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-                <div className="flex justify-end gap-4 mt-6">
-                  <button
-                    onClick={() => setShowEditModal(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleEditExpense}
-                    className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    Save Changes
-                  </button>
-                </div>
+                  Save Changes
+                </button>
+                <button
+                  className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
-          </Modal>
+          </div>
         )}
       </div>
     </div>

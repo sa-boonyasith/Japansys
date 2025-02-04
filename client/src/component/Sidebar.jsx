@@ -51,7 +51,10 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
     } else if (menu ==="leave-status") {
       onToggleJobButtons("leave-status")
       navigate("/dashboard/leave-status")
-    } 
+    } else if (menu ==="addcus"){
+      onToggleJobButtons("addcus")
+      navigate("/dashboard/addcustomer")
+    }
     
     else {
       onToggleJobButtons(null); // ซ่อนปุ่ม
@@ -164,8 +167,12 @@ const Sidebar = ({ onToggleJobButtons,  }) => {
             </div>
             {activeSection === "customerService" && (
               <ul className="text-center text-sm text-white">
-                <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                  <Link to="/dashboard/service-requests">เพิ่มข้อมูลลูกค้า</Link>
+                <li
+                  className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                  onClick={() => handleSubMenuClick("addcus")}
+                  role="button"
+                >
+                  เพิ่มข้อมูลลูกค้า
                 </li>
                 <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
                   <Link to="/register/feedback">Quotation/ใบเสนอราคา</Link>

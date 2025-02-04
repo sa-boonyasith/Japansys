@@ -25,6 +25,7 @@ import EditCarbooking from "./pages/EditCarbooking";
 import EditMeeting from "./pages/EditMeeting";
 import EditExpense from "./pages/EditExpense";
 import LeaveStatus from "./pages/LeaveStatus";
+import AddCustomer from "./pages/AddCustomer";
 
 
 const App = () => {
@@ -106,6 +107,7 @@ const App = () => {
             <Route path="checkout" element={<Checkout />} />
             <Route path="progress" element={<Progress />} />
             <Route path="leave-status" element={<LeaveStatus />} />
+            <Route path="addcustomer" element={<AddCustomer/>}/>
             
           </Route>
         ) : (
