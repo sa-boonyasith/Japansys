@@ -449,13 +449,13 @@ const CarBooking = () => {
                             setEditRentCar(car);
                             setShowEditModal(true);
                           }}
-                          className="p-1 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+                          className="p-1 text-blue-500 hover:text-blue-800 transition-colors duration-200"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => initiateDelete(car.rentcar_id)}
-                          className="p-1 text-gray-500 hover:text-red-600 transition-colors duration-200"
+                          className="p-1 text-red-500 hover:text-red-800 transition-colors duration-200"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

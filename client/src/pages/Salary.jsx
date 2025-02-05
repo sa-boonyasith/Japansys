@@ -101,15 +101,15 @@ const Salary = () => {
 
   const handleEdit = async (e) => {
     e.preventDefault();
-  
+
     if (!selectedItem || !selectedItem.salary_id) {
       console.error("Error: selectedItem หรือ selectedItem.id เป็น undefined");
       setError("เกิดข้อผิดพลาด: ไม่พบ ID ของเงินเดือนที่ต้องแก้ไข");
       return;
     }
-  
+
     console.log("Updating salary with ID:", selectedItem.salary_id);
-  
+
     try {
       const response = await fetch(
         `http://localhost:8080/api/salary/${selectedItem.salary_id}`,
@@ -119,9 +119,9 @@ const Salary = () => {
           body: JSON.stringify(formData),
         }
       );
-  
+
       if (!response.ok) throw new Error("Failed to update salary record");
-  
+
       await fetchSalaryData();
       setIsModalOpen(false);
       setSelectedItem(null);
@@ -132,8 +132,6 @@ const Salary = () => {
       console.error(err);
     }
   };
-  
-  
 
   const handleDelete = async () => {
     try {
@@ -203,6 +201,22 @@ const Salary = () => {
     setCurrentPage(pageNumber);
   };
 
+  useEffect(() => {
+    // When editing, set the month input value based on payroll_startdate
+    if (isEditing && formData.payroll_startdate) {
+      const date = new Date(formData.payroll_startdate);
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const monthInputValue = `${year}-${month}`;
+
+      // Update the month input value
+      const monthInput = document.querySelector('input[type="month"]');
+      if (monthInput) {
+        monthInput.value = monthInputValue;
+      }
+    }
+  }, [isEditing, formData.payroll_startdate]);
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("th-TH", {
       style: "currency",
@@ -231,7 +245,7 @@ const Salary = () => {
 
   return (
     <div className="w-full">
-      <div className="bg-white rounded-lg shadow-lg">
+      <div className="bg-white rounded-lg ">
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h2 className="text-2xl font-bold">Salary Data</h2>
@@ -263,7 +277,7 @@ const Salary = () => {
 
               <div className="relative">
                 <input
-                  type="text"
+                  type="number"
                   placeholder="ใส่รหัสพนักงาน..."
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
@@ -621,14 +635,26 @@ const Salary = () => {
                       </label>
                       <input
                         type="month"
+                        defaultValue={
+                          formData.payroll_startdate
+                            ? `${new Date(
+                                formData.payroll_startdate
+                              ).getFullYear()}-${(
+                                new Date(
+                                  formData.payroll_startdate
+                                ).getMonth() + 1
+                              )
+                                .toString()
+                                .padStart(2, "0")}`
+                            : ""
+                        }
                         onChange={(e) => {
                           const selectedMonth = e.target.value; // Format: YYYY-MM
                           const [year, month] = selectedMonth
                             .split("-")
                             .map(Number);
-
-                          const startDate = `${selectedMonth}-01`; // วันที่เริ่มต้นของเดือน
-                          const endDate = new Date(year, month, 0); // วันที่สิ้นสุดของเดือน
+                          const startDate = `${selectedMonth}-01`;
+                          const endDate = new Date(year, month, 0);
 
                           setFormData({
                             ...formData,

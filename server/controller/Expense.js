@@ -136,34 +136,34 @@ exports.update = async (req, res) => {
 };
 
 exports.remove = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res
-        .status(400)
-        .json({ message: "Expense ID is required for deletion" });
+    try {
+      console.log("Request params:", req.params); // ✅ Debug
+      const { id } = req.params;
+  
+      if (!id) {
+        return res.status(400).json({ message: "Expense ID is required for deletion" });
+      }
+  
+      console.log("Parsed ID:", Number(id)); // ✅ Debug
+  
+      const existingExpense = await prisma.expense.findUnique({
+        where: { expen_id: Number(id) },
+      });
+  
+      console.log("Existing Expense:", existingExpense); // ✅ Debug
+  
+      if (!existingExpense) {
+        return res.status(404).json({ message: "Expense not found" });
+      }
+  
+      await prisma.expense.delete({
+        where: { expen_id: Number(id) },
+      });
+  
+      return res.status(204).send();
+    } catch (err) {
+      console.error("Error deleting Expense:", err);
+      return res.status(500).json({ error: "Failed to delete Expense", details: err.message });
     }
-
-    const existingExpense = await prisma.expense.findUnique({
-      where: { expen_id: Number(id) },
-    });
-
-    if (!existingExpense) {
-      return res.status(404).json({ message: "Expense not found" });
-    }
-
-    const deleted = await prisma.expense.delete({
-      where: { expen_id: Number(id) },
-    });
-
-    res.json(
-      { message: "Expense deleted successfully", data: deleted }.status(200)
-    );
-  } catch (err) {
-    console.error("Error deleting Expense:", err);
-    res
-      .status(500)
-      .json({ error: "Failed to delete Expense", details: err.message });
-  }
-};
+  };
+  

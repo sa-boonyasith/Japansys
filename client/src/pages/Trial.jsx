@@ -114,16 +114,16 @@ const Trial = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg m-4">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ">
+      <div className="px-6 py-4 border-b border-gray-200 mb-5">
         <h2 className="text-2xl font-semibold text-gray-800">รายชื่อผู้ทดลองงาน</h2>
       </div>
       
-      <div className="p-6">
+      <div className="bg-white  rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="w-full">
             <thead>
-              <tr className="bg-gray-50">
+              <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
                   ชื่อ-นามสกุล
                 </th>

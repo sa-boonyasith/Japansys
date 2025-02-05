@@ -75,6 +75,7 @@ exports.update = async (req, res) => {
       if (!id) {
           return res.status(400).json({ error: "Customer ID is required" });
       }
+      
 
       // ตรวจสอบว่าลูกค้ามีอยู่หรือไม่
       const existingCustomer = await prisma.customer.findUnique({

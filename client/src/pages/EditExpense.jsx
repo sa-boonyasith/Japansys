@@ -175,9 +175,12 @@ const ExpenseSystem = () => {
     }
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleDeleteExpense = async (expenseId) => {
-    if (!window.confirm("Are you sure you want to delete this expense?"))
-      return;
+    if (isDeleting) return;
+
+    setIsDeleting(true);
 
     try {
       const response = await fetch(
@@ -191,14 +194,18 @@ const ExpenseSystem = () => {
         throw new Error("Failed to delete expense");
       }
 
-      // Fetch updated expenses
-      const updatedResponse = await fetch("http://localhost:8080/api/expense");
-      const data = await updatedResponse.json();
-      setExpenses(data.listExpense);
-      setFilterExpenses(data.listExpense);
+      // Update local state immediately after successful deletion
+      setExpenses((prevExpenses) =>
+        prevExpenses.filter((expense) => expense.expen_id !== expenseId)
+      );
+      setFilterExpenses((prevFilterExpenses) =>
+        prevFilterExpenses.filter((expense) => expense.expen_id !== expenseId)
+      );
     } catch (err) {
       console.error("Error deleting expense:", err);
-      alert("Failed to delete expense. Please try again.");
+      alert("An error occurred while deleting the expense. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -380,7 +387,6 @@ const ExpenseSystem = () => {
         )}
 
         {/* Add Expense Modal */}
-        {/* Add Expense Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white w-96 p-6 rounded-lg shadow-2xl relative">
@@ -432,6 +438,7 @@ const ExpenseSystem = () => {
                 }
                 className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
+                <option value="">เลือกค่าใช้จ่าย</option>
                 <option value="ค่าใช้จ่ายประจำ">ค่าใช้จ่ายประจำ</option>
                 <option value="ค่าใช้จ่ายผันแปร">ค่าใช้จ่ายผันแปร</option>
                 <option value="ค่าใช้จ่ายทางการเงิน">
@@ -502,8 +509,8 @@ const ExpenseSystem = () => {
               >
                 <X size={24} />
               </button>
-              <h2 className="text-2xl font-bold text-blue-800 mb-6">
-                Edit Expense
+              <h2 className="text-2xl font-bold text-black mb-6">
+                แก้ไขข้อมูล
               </h2>
               <input
                 type="text"
@@ -527,10 +534,8 @@ const ExpenseSystem = () => {
                 }
                 className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <input
-                type="text"
+              <select
                 name="type_expense"
-                placeholder="TYPE OF EXPENSE"
                 value={editExpense.type_expense}
                 onChange={(e) =>
                   setEditExpense({
@@ -539,7 +544,19 @@ const ExpenseSystem = () => {
                   })
                 }
                 className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="">เลือกค่าใช้จ่าย</option>
+                <option value="ค่าใช้จ่ายประจำ">ค่าใช้จ่ายประจำ</option>
+                <option value="ค่าใช้จ่ายผันแปร">ค่าใช้จ่ายผันแปร</option>
+                <option value="ค่าใช้จ่ายทางการเงิน">
+                  ค่าใช้จ่ายทางการเงิน
+                </option>
+                <option value="ค่าใช้จ่ายลงทุน">ค่าใช้จ่ายลงทุน</option>
+                <option value="ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก">
+                  ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก
+                </option>
+                <option value="ค่าใช้จ่ายฉุกเฉิน">ค่าใช้จ่ายฉุกเฉิน</option>
+              </select>
               <input
                 type="number"
                 name="money"
