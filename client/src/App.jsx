@@ -26,6 +26,8 @@ import EditMeeting from "./pages/EditMeeting";
 import EditExpense from "./pages/EditExpense";
 import LeaveStatus from "./pages/LeaveStatus";
 import AddCustomer from "./pages/AddCustomer";
+import Quotation from "./pages/Quotation";
+import Invoice from "./pages/Invoice";
 
 
 const App = () => {
@@ -108,6 +110,9 @@ const App = () => {
             <Route path="progress" element={<Progress />} />
             <Route path="leave-status" element={<LeaveStatus />} />
             <Route path="addcustomer" element={<AddCustomer/>}/>
+            <Route path="quotation" element={<Quotation/>}/>
+            <Route path="invoice" element={<Invoice/>}/>
+
             
           </Route>
         ) : (
