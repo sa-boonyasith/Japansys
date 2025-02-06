@@ -1,11 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const {create,list,update,remove} = require('../controller/Invoice')
+const {create,list,update,removeitem, removeInvoice} = require('../controller/Invoice')
 
 router.get('/invoice',list)
 router.post('/invoice',create)
 router.put('/invoice',update)
-router.delete('/invoice/:id',remove)
+router.patch('/invoice/:id',removeitem)
+router.delete('/invoice/:invoice_id',removeInvoice)
 
 
 

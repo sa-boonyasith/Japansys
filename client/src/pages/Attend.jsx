@@ -76,7 +76,7 @@ const Attend = () => {
         totalToday: prev.totalToday + 1
       }));
     } catch (err) {
-      console.error('เช็คอินไม่สำเร็จ', err);
+      console.error('เช็คอินไม่สำเร็จ', err); 
       alert('เช็คอินไม่สำเร็จ: ' + (err.response?.data?.message || err.message));
     }
   };

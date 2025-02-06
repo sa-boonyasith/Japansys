@@ -152,7 +152,7 @@ exports.update = async (req, res) => {
 
 
 // 🟢 ลบสินค้าออกจากใบแจ้งหนี้
-exports.remove = async (req, res) => {
+exports.removeitem = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (!id || isNaN(id)) {
@@ -192,6 +192,34 @@ exports.remove = async (req, res) => {
   } catch (err) {
     console.error("Error deleting invoice item:", err);
     res.status(500).json({ error: "Failed to delete invoice item" });
+  }
+};
+
+exports.removeInvoice = async (req, res) => {
+  try {
+    const invoice_id = parseInt(req.params.invoice_id, 10);
+
+    if (!invoice_id || isNaN(invoice_id)) {
+      return res.status(400).json({ error: "Invalid or missing invoice_id" });
+    }
+
+    // ตรวจสอบว่าใบแจ้งหนี้มีอยู่หรือไม่
+    const existingInvoice = await prisma.invoice.findUnique({
+      where: { invoice_id },
+    });
+
+    if (!existingInvoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    await prisma.invoice.delete({
+      where: { invoice_id },
+    });
+
+    res.json({ message: "Invoice deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting invoice:", err);
+    res.status(500).json({ error: "Failed to delete invoice" });
   }
 };
 
