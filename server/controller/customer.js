@@ -15,37 +15,30 @@ exports.create = async (req, res) => {
     const {
       cus_company_name,
       contact_name,
+      cus_position,
       cus_address,
       cus_phone,
+      cus_bankname,
+      cus_banknumber,
       cus_tax_id,
     } = req.body;
 
     // ตรวจสอบว่าข้อมูลที่จำเป็นถูกส่งมาหรือไม่
-    if (!cus_company_name || !contact_name || !cus_phone || !cus_tax_id) {
+    if (!cus_company_name || !contact_name || !cus_phone || !cus_tax_id ||!cus_position ||!cus_bankname || !cus_banknumber) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // ตรวจสอบว่าหมายเลขโทรศัพท์เป็นตัวเลขและมีความยาวที่เหมาะสม
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(cus_phone)) {
-      return res.status(400).json({ error: "Invalid phone number format" });
-    }
-
-    // ตรวจสอบว่าหมายเลขผู้เสียภาษี (cus_tax_id) เป็นตัวเลข 13 หลัก
-    const taxIdRegex = /^[0-9]{13}$/;
-    if (!taxIdRegex.test(cus_tax_id)) {
-      return res
-        .status(400)
-        .json({ error: "Invalid tax ID format (must be 13 digits)" });
-    }
 
     // สร้างข้อมูลลูกค้า
     const newCustomer = await prisma.customer.create({
       data: {
         cus_company_name,
         contact_name,
+        cus_position,
         cus_address,
         cus_phone,
+        cus_bankname,
+        cus_banknumber,
         cus_tax_id,
       },
     });
@@ -66,8 +59,11 @@ exports.update = async (req, res) => {
       const {
           cus_company_name,
           contact_name,
+          cus_position,
           cus_address,
           cus_phone,
+          cus_bankname,
+          cus_banknumber,
           cus_tax_id,
       } = req.body;
 
@@ -92,6 +88,7 @@ exports.update = async (req, res) => {
           data: {
               cus_company_name,
               contact_name,
+              cus_position,
               cus_address,
               cus_phone,
               cus_tax_id,

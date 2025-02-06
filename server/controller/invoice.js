@@ -1,93 +1,197 @@
 const prisma = require("../config/prisma");
 
+// 🟢 ดึงรายการสินค้าในใบแจ้งหนี้
 exports.list = async (req, res) => {
   try {
-    const listInvoice = await prisma.invoice.findMany();
-    res.json({ listInvoice });
+    const { invoice_id } = req.params;
+
+    const items = await prisma.invoice_item.findMany({
+      where: { invoice_id: Number(invoice_id) },
+      include: { product: true }, // ดึงข้อมูลสินค้า
+    });
+
+    res.json(items);
   } catch (err) {
-    console.error("Error retrieving Invoice records:", err);
-    res.status(500).json({ error: "Failed to retrieve Invoice records" });
+    console.error("Error retrieving invoice items:", err);
+    res.status(500).json({ error: "Failed to retrieve invoice items" });
   }
 };
 
 exports.create = async (req, res) => {
   try {
-    const {
-      cus_name,
-      address,
-      tax_id,
-      date,
-      total_amount,
-      customer_receipt,
-      payment_term,
-      items,
-    } = req.body;
+    const { customer_id, items } = req.body;
+    const vat_rate = 7.0; // กำหนด VAT เป็น 7%
 
+    // ตรวจสอบว่าลูกค้ามีอยู่จริง
+    const customer = await prisma.customer.findUnique({
+      where: { customer_id },
+    });
+
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // สร้างใบแจ้งหนี้ใหม่
     const newInvoice = await prisma.invoice.create({
       data: {
-        cus_name,
-        address,
-        tax_id,
-        date: new Date(date),
-        total_amount,
-        customer_receipt,
-        payment_term,
-        items: {
-          create: items,
-        },
+        customer_id,
+        vat_rate,
+        subtotal: 0,
+        vat: 0,
+        discount: 0,
+        total: 0,
       },
-      include: { items: true },
     });
 
-    res.status(200).json({
-      message: "Invoice created successfully",
-      data: newInvoice,
+    let invoice_id = newInvoice.invoice_id;
+    let totalAddedItems = [];
+    let subtotal = 0;
+
+    for (const item of items) {
+      const { product_id, quantity, discount = 0 } = item;
+
+      // ดึงข้อมูลสินค้า
+      const product = await prisma.product.findUnique({
+        where: { product_id },
+      });
+
+      if (!product) {
+        return res.status(404).json({ error: `Product ID ${product_id} not found` });
+      }
+
+      const totalPrice = product.price * quantity - discount;
+      subtotal += totalPrice;
+
+      // เพิ่มสินค้าเข้าใบแจ้งหนี้
+      const invoiceItem = await prisma.invoice_item.create({
+        data: {
+          invoice_id,
+          product_id,
+          quantity,
+          discount,
+          total: totalPrice,
+        },
+      });
+
+      totalAddedItems.push(invoiceItem);
+    }
+
+    // คำนวณ VAT และยอดรวม
+    const vat = (subtotal * vat_rate) / 100;
+    const grandTotal = subtotal + vat;
+
+    // อัปเดตใบแจ้งหนี้
+    const updatedInvoice = await prisma.invoice.update({
+      where: { invoice_id },
+      data: { subtotal, vat, total: grandTotal },
+    });
+
+    res.json({
+      message: "Invoice created and items added successfully",
+      invoice: updatedInvoice,
+      items: totalAddedItems,
     });
   } catch (err) {
-    console.error("Error creating Invoice:", err);
-    res.status(500).json({ error: "Failed to create Invoice" });
+    console.error("Error creating invoice:", err);
+    res.status(500).json({ error: "Failed to create invoice" });
   }
 };
 
 exports.update = async (req, res) => {
   try {
-    const { invoice_id, cus_name, address, tax_id, date, total_amount, customer_receipt, payment_term, items } = req.body;
+    const { item_id, quantity, discount } = req.body;
 
-    const updatedInvoice = await prisma.invoice.update({
-      where: { invoice_id },
-      data: {
-        cus_name,
-        address,
-        tax_id,
-        date: new Date(date),
-        total_amount,
-        customer_receipt,
-        payment_term,
-        items: {
-          deleteMany: {},
-          create: items,
-        },
-      },
-      include: { items: true },
+    // ตรวจสอบว่ามี invoice item นี้หรือไม่
+    const existingItem = await prisma.invoice_item.findUnique({
+      where: { item_id },
     });
 
-    res.status(200).json({ message: "Invoice updated successfully", invoice: updatedInvoice });
+    if (!existingItem) {
+      return res.status(404).json({ error: "Invoice item not found" });
+    }
+
+    // ดึงข้อมูลสินค้าเพื่อคำนวณราคาใหม่
+    const product = await prisma.product.findUnique({
+      where: { product_id: existingItem.product_id },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // คำนวณราคาสินค้าใหม่
+    const totalPrice = product.price * quantity - discount;
+
+    // อัปเดตข้อมูล invoice item
+    await prisma.invoice_item.update({
+      where: { item_id },
+      data: { quantity, discount, total: totalPrice },
+    });
+
+    // คำนวณยอดรวมใบแจ้งหนี้ใหม่
+    const invoiceItems = await prisma.invoice_item.findMany({
+      where: { invoice_id: existingItem.invoice_id },
+    });
+
+    const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
+    const vat = (subtotal * 7) / 100;
+    const grandTotal = subtotal + vat;
+
+    // อัปเดตใบแจ้งหนี้
+    await prisma.invoice.update({
+      where: { invoice_id: existingItem.invoice_id },
+      data: { subtotal, vat, total: grandTotal },
+    });
+
+    res.json({ message: "Invoice item updated successfully" });
   } catch (err) {
-    console.error("Error updating Invoice:", err);
-    res.status(500).json({ error: "Failed to update Invoice" });
+    console.error("Error updating invoice item:", err);
+    res.status(500).json({ error: "Failed to update invoice item" });
   }
 };
 
+
+// 🟢 ลบสินค้าออกจากใบแจ้งหนี้
 exports.remove = async (req, res) => {
   try {
-    const { invoice_id } = req.body;
+    const id = parseInt(req.params.id, 10);
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "Invalid or missing item_id" });
+    }
 
-    await prisma.item.deleteMany({ where: { invoice_id } });
-    await prisma.invoice.delete({ where: { invoice_id } });
+    // หา Invoice Item ก่อนลบ
+    const existingItem = await prisma.invoice_item.findUnique({
+      where: { item_id: id },
+    });
 
-    res.status(200).json({ message: "Invoice deleted successfully" });
+    if (!existingItem) {
+      return res.status(404).json({ error: "Invoice item not found" });
+    }
+
+    // ลบ Invoice Item
+    await prisma.invoice_item.delete({
+      where: { item_id: id },
+    });
+
+    // คำนวณยอดรวมใบแจ้งหนี้ใหม่
+    const invoiceItems = await prisma.invoice_item.findMany({
+      where: { invoice_id: existingItem.invoice_id },
+    });
+
+    const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
+    const vat = (subtotal * 7) / 100;
+    const grandTotal = subtotal + vat;
+
+    // อัปเดตใบแจ้งหนี้หลังจากลบรายการสินค้า
+    await prisma.invoice.update({
+      where: { invoice_id: existingItem.invoice_id },
+      data: { subtotal, vat, total: grandTotal },
+    });
+
+    res.json({ message: "Invoice item deleted successfully" });
   } catch (err) {
-    console.error("Error deleting Invoice:", err);
-    res.status(500).json({ error: "Failed to delete Invoice" });
+    console.error("Error deleting invoice item:", err);
+    res.status(500).json({ error: "Failed to delete invoice item" });
   }
 };
+

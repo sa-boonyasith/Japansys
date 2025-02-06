@@ -174,7 +174,7 @@ CREATE TABLE `Salary` (
     `position` VARCHAR(191) NOT NULL,
     `payroll_startdate` DATE NOT NULL,
     `payroll_enddate` DATE NOT NULL,
-    `payment_date` DATE NOT NULL,
+    `payment_date` DATE NULL,
     `banking` VARCHAR(191) NOT NULL,
     `banking_id` INTEGER NOT NULL,
     `salary` DOUBLE NOT NULL DEFAULT 0,
@@ -226,20 +226,6 @@ CREATE TABLE `attendhistory` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `customer` (
-    `customer_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `cus_company_name` VARCHAR(191) NOT NULL,
-    `contact_name` VARCHAR(191) NOT NULL,
-    `cus_address` VARCHAR(191) NOT NULL,
-    `cus_phone` VARCHAR(191) NOT NULL,
-    `cus_tax_id` VARCHAR(191) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL,
-
-    PRIMARY KEY (`customer_id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `quotation` (
     `quotation_id` INTEGER NOT NULL AUTO_INCREMENT,
     `cus_name` VARCHAR(191) NOT NULL,
@@ -268,39 +254,63 @@ CREATE TABLE `quotation` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Invoice` (
-    `invoice_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `cus_name` VARCHAR(191) NOT NULL,
-    `address` VARCHAR(191) NOT NULL,
-    `tax_id` VARCHAR(191) NOT NULL,
-    `date` DATE NOT NULL,
-    `total_amount` DOUBLE NOT NULL,
-    `customer_receipt` VARCHAR(191) NULL,
-    `payment_term` VARCHAR(191) NOT NULL,
+CREATE TABLE `customer` (
+    `customer_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `cus_company_name` VARCHAR(191) NOT NULL,
+    `contact_name` VARCHAR(191) NOT NULL,
+    `cus_position` VARCHAR(191) NOT NULL,
+    `cus_address` VARCHAR(191) NOT NULL,
+    `cus_phone` VARCHAR(191) NOT NULL,
+    `cus_tax_id` VARCHAR(191) NOT NULL,
+    `cus_bankname` VARCHAR(191) NOT NULL,
+    `cus_banknumber` VARCHAR(191) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
+    PRIMARY KEY (`customer_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `invoice` (
+    `invoice_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `invoice_number` VARCHAR(191) NOT NULL,
+    `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `customer_id` INTEGER NOT NULL,
+    `subtotal` DOUBLE NOT NULL,
+    `vat_rate` DOUBLE NOT NULL,
+    `vat` DOUBLE NOT NULL,
+    `discount` DOUBLE NOT NULL DEFAULT 0,
+    `total` DOUBLE NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `invoice_invoice_number_key`(`invoice_number`),
     PRIMARY KEY (`invoice_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Item` (
-    `item_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `description` VARCHAR(191) NOT NULL,
+CREATE TABLE `product` (
+    `product_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
     `price` DOUBLE NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-    PRIMARY KEY (`item_id`)
+    UNIQUE INDEX `product_name_key`(`name`),
+    PRIMARY KEY (`product_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `InvoiceItem` (
+CREATE TABLE `invoice_item` (
+    `item_id` INTEGER NOT NULL AUTO_INCREMENT,
     `invoice_id` INTEGER NOT NULL,
-    `item_id` INTEGER NOT NULL,
+    `product_id` INTEGER NOT NULL,
     `quantity` INTEGER NOT NULL,
-    `unit` VARCHAR(191) NOT NULL,
-    `amount` DOUBLE NOT NULL,
+    `total` DOUBLE NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-    PRIMARY KEY (`invoice_id`, `item_id`)
+    PRIMARY KEY (`item_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
@@ -334,7 +344,10 @@ ALTER TABLE `Expense` ADD CONSTRAINT `Expense_employee_id_fkey` FOREIGN KEY (`em
 ALTER TABLE `attendhistory` ADD CONSTRAINT `attendhistory_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `InvoiceItem` ADD CONSTRAINT `InvoiceItem_invoice_id_fkey` FOREIGN KEY (`invoice_id`) REFERENCES `Invoice`(`invoice_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `invoice` ADD CONSTRAINT `invoice_customer_id_fkey` FOREIGN KEY (`customer_id`) REFERENCES `customer`(`customer_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `InvoiceItem` ADD CONSTRAINT `InvoiceItem_item_id_fkey` FOREIGN KEY (`item_id`) REFERENCES `Item`(`item_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `invoice_item` ADD CONSTRAINT `invoice_item_invoice_id_fkey` FOREIGN KEY (`invoice_id`) REFERENCES `invoice`(`invoice_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `invoice_item` ADD CONSTRAINT `invoice_item_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

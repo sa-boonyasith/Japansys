@@ -235,17 +235,6 @@ model attendhistory {
   employee Employee @relation(fields: [employee_id], references: [id])
 }
 
-model customer {
-  customer_id      Int      @id @default(autoincrement())
-  cus_company_name String
-  contact_name     String
-  cus_address      String
-  cus_phone        String
-  cus_tax_id       String
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-}
-
 model quotation {
   quotation_id     Int      @id @default(autoincrement())
   cus_name         String
@@ -271,41 +260,63 @@ model quotation {
   updated_at       DateTime @updatedAt
 }
 
-model Invoice {
-  invoice_id       Int      @id @default(autoincrement())
-  cus_name         String
-  address          String
-  tax_id           String
-  date             DateTime @db.Date
-  total_amount     Float
-  customer_receipt String?
-  payment_term     String
+model customer {
+  customer_id      Int      @id @default(autoincrement())
+  cus_company_name String
+  contact_name     String
+  cus_position     String
+  cus_address      String
+  cus_phone        String
+  cus_tax_id       String
+  cus_bankname     String // ชื่อธนาคาร
+  cus_banknumber   String // เลขบัญชีธนาคาร
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
-  invoiceItems InvoiceItem[]
+  invoices invoice[] // ความสัมพันธ์กับใบแจ้งหนี้
 }
 
-model Item {
-  item_id     Int    @id @default(autoincrement())
-  description String
-  price       Float
+model invoice {
+  invoice_id     Int      @id @default(autoincrement())
+  date           DateTime @default(now()) // วันที่ออกใบแจ้งหนี้
+  customer_id    Int
+  customer       customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade) // ดึงข้อมูลจาก customer
+  subtotal       Float // ยอดรวมก่อนภาษี
+  vat_rate       Float // อัตราภาษี เช่น 7.0
+  vat            Float // ภาษีมูลค่าเพิ่ม
+  discount       Float    @default(0) // ส่วนลด
+  total          Float // ยอดรวมทั้งหมด
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-  invoiceItems InvoiceItem[]
+  items invoice_item[] // รายการสินค้าในใบแจ้งหนี้
 }
 
-model InvoiceItem {
-  invoice_id Int
-  item_id    Int
-  quantity   Int
-  unit       String
-  amount     Float
+model product {
+  product_id Int      @id @default(autoincrement())
+  name       String   @unique
+  price      Float // ราคาสินค้า
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  invoice Invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
-  item    Item    @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
-
-  @@id([invoice_id, item_id]) // Composite Primary Key
+  invoiceItems invoice_item[]
 }
+
+model invoice_item {
+  item_id    Int     @id @default(autoincrement())
+  invoice_id Int // เชื่อมโยงกับใบแจ้งหนี้
+  invoice    invoice @relation(fields: [invoice_id], references: [invoice_id])
+  product_id Int // เชื่อมโยงกับสินค้า
+  product    product @relation(fields: [product_id], references: [product_id])
+  quantity   Int // จำนวนสินค้า
+  discount   Float  @default(0) // ส่วนลดสำหรับแต่ละสินค้า
+  total      Float // รวมราคา (product.price * quantity - discount)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+
 
 enum Attend {
   check_in

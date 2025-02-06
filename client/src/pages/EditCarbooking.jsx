@@ -483,7 +483,7 @@ const CarBooking = () => {
                     name="employee_id"
                     value={newRentCar.employee_id}
                     onChange={handleModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -497,7 +497,7 @@ const CarBooking = () => {
                       name="startdate"
                       value={newRentCar.startdate}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -510,7 +510,7 @@ const CarBooking = () => {
                       name="enddate"
                       value={newRentCar.enddate}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -525,7 +525,7 @@ const CarBooking = () => {
                       name="timestart"
                       value={newRentCar.timestart}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -538,7 +538,7 @@ const CarBooking = () => {
                       name="timeend"
                       value={newRentCar.timeend}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -552,7 +552,7 @@ const CarBooking = () => {
                     name="place"
                     value={newRentCar.place}
                     onChange={handleModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -565,7 +565,7 @@ const CarBooking = () => {
                     name="car"
                     value={newRentCar.car}
                     onChange={handleModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -603,7 +603,7 @@ const CarBooking = () => {
                     name="employee_id"
                     value={editRentCar.employee_id}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -617,12 +617,12 @@ const CarBooking = () => {
                       name="startdate"
                       value={formatInputDate(editRentCar.startdate)}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm  font-medium text-gray-700 mb-1">
                       End Date
                     </label>
                     <input
@@ -630,7 +630,7 @@ const CarBooking = () => {
                       name="enddate"
                       value={formatInputDate(editRentCar.enddate)}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -645,7 +645,7 @@ const CarBooking = () => {
                       name="timestart"
                       value={editRentCar.timestart}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -658,7 +658,7 @@ const CarBooking = () => {
                       name="timeend"
                       value={editRentCar.timeend}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -672,7 +672,7 @@ const CarBooking = () => {
                     name="place"
                     value={editRentCar.place}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -685,7 +685,7 @@ const CarBooking = () => {
                     name="car"
                     value={editRentCar.car}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -697,7 +697,7 @@ const CarBooking = () => {
                     name="status"
                     value={editRentCar.status}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   >
                     <option value="pending">Pending</option>
