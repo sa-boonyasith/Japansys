@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const {create,list,update,remove} = require('../controller/invoice')
+const {create,list,update,remove} = require('../controller/Invoice')
 
 router.get('/invoice',list)
 router.post('/invoice',create)
