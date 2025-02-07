@@ -12,7 +12,6 @@ const DashboardLayout = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ตั้งค่า activeButton เริ่มต้นตามเส้นทางปัจจุบัน
   const [activeButton, setActiveButton] = useState("");
   const [meetings, setMeetings] = useState([]);
   const [filteredMeetings, setFilteredMeetings] = useState([]);
@@ -20,7 +19,6 @@ const DashboardLayout = ({
   const [filteredCarBookings, setFilteredCarBookings] = useState([]);
 
   useEffect(() => {
-    // ตรวจสอบ `pathname` แล้วตั้งค่า `activeButton`
     const menuMapping = {
       "/dashboard/Job": "สมัครงาน",
       "/dashboard/trial": "ทดลองงาน",
@@ -32,11 +30,10 @@ const DashboardLayout = ({
       "/dashboard/leave-status": "leave-status",
       "/dashboard/meeting": "meeting",
       "/dashboard/car-booking": "car-booking",
-      "/dashboard/editcar":"editcar",
-      "/dashboard/editmeeting":"editmeeting",
+      "/dashboard/editcar": "editcar",
+      "/dashboard/editmeeting": "editmeeting",
       "/dashboard/expense-system": "expense-system",
       "/dashboard/editexpense": "editexpense",
-      
     };
 
     const currentPath = Object.keys(menuMapping).find((key) =>
@@ -69,6 +66,32 @@ const DashboardLayout = ({
   }, [activeMenu]);
 
   const handleButtonClick = (button) => {
+    
+    if (user?.role === "user") {
+      const restrictedButtons = [
+        "ทดลองงาน",
+        "leave-status",
+        "editmeeting",
+        "editcar",
+        "editexpense",
+      ];
+
+      if (restrictedButtons.includes(button)) {
+        alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
+        return;
+      }
+    }
+
+    // Check if user role is "recruit" and trying to access restricted buttons
+    else if (user?.role === "recruit") {
+      const restrictedButtons = ["ทดลองงาน"];
+
+      if (restrictedButtons.includes(button)) {
+        alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
+        return;
+      }
+    }
+
     setActiveButton(button);
 
     const buttonMapping = {
@@ -82,31 +105,44 @@ const DashboardLayout = ({
       "leave-status": "/dashboard/leave-status",
       meeting: "/dashboard/meeting",
       carbooking: "/dashboard/car-booking",
-      editcar :"/dashboard/editcar",
-      editmeeting:"/dashboard/editmeeting",
-      editexpense:"/dashboard/editexpense",
+      editcar: "/dashboard/editcar",
+      editmeeting: "/dashboard/editmeeting",
+      editexpense: "/dashboard/editexpense",
       "expense-system": "/dashboard/expense-system",
     };
 
     navigate(buttonMapping[button] || "/dashboard");
   };
 
+  // Function to check if button should be disabled
+  const isButtonDisabled = (buttonName) => {
+    if (user?.role === "user") {
+      const restrictedButtons = [
+        "ทดลองงาน",
+        "leave-status",
+        "editmeeting",
+        "editcar",
+        "editexpense",
+      ];
+      return restrictedButtons.includes(buttonName);
+    } else if (user?.role === "recruit") {
+      const restrictedButtons = ["ทดลองงาน"];
+      return restrictedButtons.includes(buttonName);
+    }
+    return false;
+  };
 
   return (
     <div className="grid grid-cols-[300px_1fr] h-screen">
-      {/* Sidebar */}
       <div className="bg-gray-800">
         <Sidebar onLogout={onLogout} onToggleJobButtons={onToggleJobButtons} />
       </div>
 
-      {/* Main Content */}
       <div className="bg-[#b3b2ae] pt-[70px] p-[60px] border-l border-gray-300 overflow-y-auto relative">
-        {/* Header */}
         <div className="absolute top-4 right-[50px] bg-[#576F73] text-white px-4 py-2 border-[3px] border-white rounded-3xl shadow-lg">
           {user?.firstname} {user?.lastname}
         </div>
 
-        {/* ปุ่มเมนู */}
         <div className="dashboard-container">
           {activeMenu === "Job" && (
             <div className="job-buttons">
@@ -121,8 +157,13 @@ const DashboardLayout = ({
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "ทดลองงาน" ? "bg-white" : "bg-gray-300"
+                } ${
+                  isButtonDisabled("ทดลองงาน")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() => handleButtonClick("ทดลองงาน")}
+                disabled={isButtonDisabled("ทดลองงาน")}
               >
                 ทดลองงาน
               </button>
@@ -141,8 +182,13 @@ const DashboardLayout = ({
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "เวลาออก" ? "bg-white" : "bg-gray-300"
+                } ${
+                  isButtonDisabled("เวลาออก")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() => handleButtonClick("เวลาออก")}
+                disabled={isButtonDisabled("เวลาออก")}
               >
                 เวลาออก
               </button>
@@ -161,8 +207,13 @@ const DashboardLayout = ({
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "progress" ? "bg-white" : "bg-gray-300"
+                } ${
+                  isButtonDisabled("progress")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() => handleButtonClick("progress")}
+                disabled={isButtonDisabled("progress")}
               >
                 ความคืบหน้า
               </button>
@@ -181,8 +232,13 @@ const DashboardLayout = ({
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "leave-status" ? "bg-white" : "bg-gray-300"
+                } ${
+                  isButtonDisabled("leave-status")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() => handleButtonClick("leave-status")}
+                disabled={isButtonDisabled("leave-status")}
               >
                 สถานะการลา
               </button>
@@ -190,7 +246,7 @@ const DashboardLayout = ({
           )}
           {activeMenu === "meeting" && (
             <div className="">
-               <button
+              <button
                 className={`p-2 rounded-t-lg ${
                   activeButton === "meeting" ? "bg-white" : "bg-gray-300"
                 }`}
@@ -201,8 +257,13 @@ const DashboardLayout = ({
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "editmeeting" ? "bg-white" : "bg-gray-300"
+                } ${
+                  isButtonDisabled("editmeeting")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() => handleButtonClick("editmeeting")}
+                disabled={isButtonDisabled("editmeeting")}
               >
                 สถานะการยืนยันคำขอ
               </button>
@@ -221,14 +282,19 @@ const DashboardLayout = ({
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "editcar" ? "bg-white" : "bg-gray-300"
+                } ${
+                  isButtonDisabled("editcar")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() => handleButtonClick("editcar")}
+                disabled={isButtonDisabled("editcar")}
               >
                 สถานะการยืนยันคำขอ
               </button>
             </div>
           )}
-           {activeMenu === "expense-system" && (
+          {activeMenu === "expense-system" && (
             <div className="">
               <button
                 className={`p-2 rounded-t-lg ${
@@ -241,19 +307,22 @@ const DashboardLayout = ({
               <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "editexpense" ? "bg-white" : "bg-gray-300"
+                } ${
+                  isButtonDisabled("editexpense")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() => handleButtonClick("editexpense")}
+                disabled={isButtonDisabled("editexpense")}
               >
                 สถานะการขอเบิกเงิน
               </button>
             </div>
           )}
-        
         </div>
 
-        {/* Content Area */}
-        <div className="h-full bg-white overflow-y-auto ">
-          <Outlet/>
+        <div className="h-full bg-white overflow-y-auto">
+          <Outlet />
         </div>
       </div>
     </div>

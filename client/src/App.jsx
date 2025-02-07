@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import Login from "./Auth/Login";
 import Register from "./Auth/Register";
@@ -16,11 +17,11 @@ import Meeting from "./pages/Meeting";
 import Salary from "./pages/Salary";
 import Carbooking from "./pages/Carbooking";
 import ExpenseSystem from "./pages/ExpenseSystem";
-import Trial from "./pages/Trial"
+import Trial from "./pages/Trial";
 import Checkout from "./pages/Checkout";
 import Progress from "./pages/Progress";
-import Test from "./pages/Test"
-import Test2 from "./pages/Test2"
+import Test from "./pages/Test";
+import Test2 from "./pages/Test2";
 import EditCarbooking from "./pages/EditCarbooking";
 import EditMeeting from "./pages/EditMeeting";
 import EditExpense from "./pages/EditExpense";
@@ -29,73 +30,113 @@ import AddCustomer from "./pages/AddCustomer";
 import Quotation from "./pages/Quotation";
 import Invoice from "./pages/Invoice";
 
-
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [activeMenu, setActiveMenu] = useState(null);
-
-  const handleToggleJobButtons = (menu) => {
-    setActiveMenu(menu); // อัพเดตค่า activeMenu
-  };
-
   const [loading, setLoading] = useState(true);
 
-  
+  const handleToggleJobButtons = (menu) => {
+    setActiveMenu(menu);
+  };
 
   useEffect(() => {
-    const authStatus = localStorage.getItem("isAuthenticated") === "true";
-    const storedUser = localStorage.getItem("user");
-  
-    if (authStatus && storedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(storedUser));
-    } else {
-      setIsAuthenticated(false);
-      setUser(null);
-    }
-  
-    // เช็คว่าถ้าไม่ใช่หน้า Login ค่อย setLoading(false)
-    if (window.location.pathname == "/") {
-      setLoading(false);
-    }
+    const checkAuth = () => {
+      const authStatus = localStorage.getItem("isAuthenticated") === "true";
+      const storedUser = localStorage.getItem("user");
+      const lastPath = localStorage.getItem("lastPath");
+      const logoutTime = localStorage.getItem("logoutTime");
+
+      // Check if user has logged out recently
+      if (logoutTime) {
+        // Clear all auth data if there was a logout
+        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("user");
+        localStorage.removeItem("lastPath");
+        localStorage.removeItem("logoutTime");
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
+      }
+
+      if (authStatus && storedUser) {
+        setIsAuthenticated(true);
+        setUser(JSON.parse(storedUser));
+        if (lastPath && window.location.pathname === "/") {
+          window.location.href = lastPath;
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+        localStorage.removeItem("lastPath");
+      }
+    };
+
+    checkAuth();
+    setLoading(false);
   }, []);
-  
-  
-  
+
+  // เพิ่ม effect สำหรับเก็บ path ปัจจุบัน
+  useEffect(() => {
+    if (isAuthenticated && window.location.pathname !== "/") {
+      localStorage.setItem("lastPath", window.location.pathname);
+    }
+  }, [isAuthenticated, window.location.pathname]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-black text-white text-2xl font-bold">
-        มึงกลับไป login ซะไอสัส
+        กำลังโหลด...
       </div>
     );
   }
-  
+
   const PrivateRoute = ({ children, allowedRoles }) => {
-    if (!isAuthenticated) {
+    const logoutTime = localStorage.getItem("logoutTime");
+    
+    // Prevent access if there was a recent logout
+    if (logoutTime) {
+      localStorage.removeItem("lastPath");
       return <Navigate to="/" />;
     }
-  
-    if (user && allowedRoles && !allowedRoles.includes(user.role)) {
-      return <Navigate to="/dashboard/job" />;
+
+    if (!isAuthenticated) {
+      localStorage.setItem("lastPath", window.location.pathname);
+      return <Navigate to="/" />;
     }
-  
+
+    if (user && allowedRoles && !allowedRoles.includes(user.role)) {
+      return <Navigate to="/dashboard/Job" />;
+    }
+
     return children;
   };
-    
 
   const handleLogin = (userData) => {
+    // Clear any logout timestamp when logging in
+    localStorage.removeItem("logoutTime");
+    
     setIsAuthenticated(true);
     setUser(userData);
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("user", JSON.stringify(userData));
+    
+    const lastPath = localStorage.getItem("lastPath") || "/dashboard/job";
+    window.location.href = lastPath;
   };
 
   const handleLogout = () => {
+    // Set logout timestamp
+    localStorage.setItem("logoutTime", new Date().getTime().toString());
+    
+    // Clear auth data
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
+    localStorage.removeItem("lastPath");
+    
     setIsAuthenticated(false);
     setUser(null);
   };
-  
 
   return (
     <Router>
@@ -103,7 +144,7 @@ const App = () => {
         <Route path="/" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/1" element={<Test />} />
-        <Route path="/2" element={<Test2/>}></Route>
+        <Route path="/2" element={<Test2 />} />
         {isAuthenticated ? (
           <Route
             path="/dashboard"
@@ -111,36 +152,155 @@ const App = () => {
               <DashboardLayout
                 user={user}
                 onLogout={handleLogout}
-                activeMenu={activeMenu} // ส่ง activeMenu ไปที่ DashboardLayout
-                onToggleJobButtons={handleToggleJobButtons} // ส่งฟังก์ชันเพื่ออัพเดตเมนูที่เลือก
+                activeMenu={activeMenu}
+                onToggleJobButtons={handleToggleJobButtons}
               />
             }
           >
             <Route
-            path="job"
-            element={
-              <PrivateRoute allowedRoles={["admin", "user", "recruit"]}>
-                <Job />
-              </PrivateRoute>
-            }
-           />
-            <Route path="attend" element={<Attend />} />
-            <Route path="todo-list" element={<Todo />} />
-            <Route path="leave-system" element={<LeaveSystem />} />
-            <Route path="meeting" element={<Meeting />} />
-            <Route path="car-booking" element={<Carbooking />} />
-            <Route path="expense-system" element={<ExpenseSystem />} />
-            <Route path="salary" element={<Salary />} />
-            <Route path="trial" element={<Trial />} />
-            <Route path="editcar" element={<EditCarbooking />} />
-            <Route path="editmeeting" element={<EditMeeting />} />
-            <Route path="editexpense" element={<EditExpense />} />
-            <Route path="checkout" element={<Checkout />} />
-            <Route path="progress" element={<Progress />} />
-            <Route path="leave-status" element={<LeaveStatus />} />
-            <Route path="addcustomer" element={<AddCustomer/>}/>
-            <Route path="quotation" element={<Quotation/>}/>
-            <Route path="invoice" element={<Invoice/>}/>
+              path="job"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user", "recruit"]}>
+                  <Job />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="attend"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Attend />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="todo-list"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Todo />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="leave-system"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <LeaveSystem />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="meeting"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Meeting />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="car-booking"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Carbooking />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="expense-system"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <ExpenseSystem />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="salary"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Salary />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="trial"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Trial />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="editcar"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <EditCarbooking />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="editmeeting"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <EditMeeting />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="editexpense"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <EditExpense />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="checkout"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Checkout />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="progress"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Progress />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="leave-status"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <LeaveStatus />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="addcustomer"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <AddCustomer />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="quotation"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Quotation />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="invoice"
+              element={
+                <PrivateRoute allowedRoles={["admin", "user"]}>
+                  <Invoice />
+                </PrivateRoute>
+              }
+            />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/" />} />

@@ -326,7 +326,7 @@ enum Attend {
 
 enum Role {
   employee
-  manager
+  user
   admin
   recruit
 }
