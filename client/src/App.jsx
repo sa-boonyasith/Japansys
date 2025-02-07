@@ -41,6 +41,8 @@ const App = () => {
 
   const [loading, setLoading] = useState(true);
 
+  
+
   useEffect(() => {
     const authStatus = localStorage.getItem("isAuthenticated") === "true";
     const storedUser = localStorage.getItem("user");
@@ -48,10 +50,12 @@ const App = () => {
     if (authStatus && storedUser) {
       setIsAuthenticated(true);
       setUser(JSON.parse(storedUser));
+    } else {
+      setIsAuthenticated(false);
+      setUser(null);
     }
-  
-    setLoading(false); // การโหลดสถานะเสร็จสมบูรณ์
   }, []);
+  
   
   if (loading) {
     return <div>Loading...</div>; // แสดงหน้าจอโหลดระหว่างโหลดสถานะ
@@ -70,10 +74,12 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("user");
     setIsAuthenticated(false);
     setUser(null);
   };
+  
 
   return (
     <Router>
