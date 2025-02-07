@@ -6,6 +6,7 @@ import { Plus, Trash2, PencilIcon, Camera } from "lucide-react";
 const Job = () => {
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -25,10 +26,10 @@ const Job = () => {
         console.error("Error fetching applications:", error);
       });
   };
-  
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-  
+
     // ฟังก์ชันจัดรูปแบบเบอร์โทรศัพท์
     const formatPhoneNumber = (value) => {
       const cleaned = value.replace(/\D/g, "").slice(0, 10); // ลบอักขระที่ไม่ใช่ตัวเลข และจำกัด 10 ตัว
@@ -37,10 +38,12 @@ const Job = () => {
       } else if (cleaned.length <= 6) {
         return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
       } else {
-        return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+        return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(
+          6
+        )}`;
       }
     };
-  
+
     setEditedApplication((prev) => {
       // ตรวจสอบว่าชื่อฟิลด์เป็น nested หรือไม่
       if (name.includes(".")) {
@@ -53,7 +56,9 @@ const Job = () => {
               child === "phone_number"
                 ? formatPhoneNumber(value) // จัดรูปแบบเบอร์โทร
                 : child === "age" || child === "expected_salary"
-                ? value === "" ? "" : Number(value) // แปลงเป็นตัวเลขเฉพาะ age และ expected_salary
+                ? value === ""
+                  ? ""
+                  : Number(value) // แปลงเป็นตัวเลขเฉพาะ age และ expected_salary
                 : value, // อื่นๆ คงค่าเดิม
           },
         };
@@ -64,7 +69,9 @@ const Job = () => {
             name === "phone_number"
               ? formatPhoneNumber(value)
               : name === "age" || name === "expected_salary"
-              ? value === "" ? "" : Number(value)
+              ? value === ""
+                ? ""
+                : Number(value)
               : value,
         };
       }
@@ -72,10 +79,24 @@ const Job = () => {
   };
 
   const handleEditStatus = (id, newStatus) => {
+    // หา application ที่ต้องการอัพเดท
+    const applicationToUpdate = applications.find((app) => app.job_id === id);
+
+    if (!applicationToUpdate) {
+      console.error("Application not found");
+      return;
+    }
+
+    // ส่งข้อมูลทั้งหมดพร้อมกับ status ใหม่
+    const updatedData = {
+      ...applicationToUpdate,
+      status: newStatus,
+      expected_salary: Number(applicationToUpdate.expected_salary),
+      age: Number(applicationToUpdate.age),
+    };
+
     axios
-      .put(`http://localhost:8080/api/jobaplication/${id}`, {
-        status: newStatus,
-      })
+      .put(`http://localhost:8080/api/jobaplication/${id}`, updatedData)
       .then(() => {
         fetchApplications();
       })
@@ -99,75 +120,107 @@ const Job = () => {
     }
   };
 
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    const file = files[0];
-
-    // อัปเดตไฟล์ที่เลือกใน state
-    setFileUploads((prev) => ({
-      ...prev,
-      [name]: file,
-    }));
-
-    setFormData((prev) => ({
-      ...prev,
-      documents: {
-        ...prev.documents,
-        [name]: !!file,
-      },
-    }));
-  };
-
-  const handleImageChange = async (e, jobId) => {
-    const file = fileUploads['photo']; // ใช้ไฟล์จาก state
-
-    if (!file) {
-      console.error('No file selected');
-      return;
-    }
-
+  const handleFileChange = async (e, jobId) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
     const formData = new FormData();
     formData.append('photo', file);
-
+    
+    // ต้องแนบข้อมูลเดิมทั้งหมดไปด้วย
+    formData.append('firstname', editedApplication.firstname);
+    formData.append('lastname', editedApplication.lastname);
+    formData.append('job_position', editedApplication.job_position);
+    formData.append('expected_salary', editedApplication.expected_salary);
+    formData.append('phone_number', editedApplication.phone_number);
+    formData.append('email', editedApplication.email);
+    formData.append('liveby', editedApplication.liveby);
+    formData.append('birth_date', editedApplication.birth_date);
+    formData.append('age', editedApplication.age);
+    formData.append('ethnicity', editedApplication.ethnicity);
+    formData.append('nationality', editedApplication.nationality);
+    formData.append('religion', editedApplication.religion);
+    formData.append('marital_status', editedApplication.marital_status);
+    formData.append('military_status', editedApplication.military_status);
+    formData.append('status', editedApplication.status);
+    
+    // แปลง personal_info เป็น string ก่อนส่ง
+    if (editedApplication.personal_info) {
+      formData.append('personal_info', JSON.stringify(editedApplication.personal_info));
+    }
+  
     try {
-      const response = await axios.put(`/update-job/${jobId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log('Image updated successfully:', response.data);
+      const response = await axios.put(
+        `http://localhost:8080/api/jobaplication/${jobId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        // อัพเดท state
+        const updatedPhoto = response.data.application.photo;
+        setSelectedApplication(prev => ({
+          ...prev,
+          photo: updatedPhoto
+        }));
+        
+        setEditedApplication(prev => ({
+          ...prev,
+          photo: updatedPhoto
+        }));
+  
+        // รีเฟรชข้อมูล
+        fetchApplications();
+        
+        alert('อัพโหลดรูปภาพสำเร็จ');
+      }
     } catch (error) {
-      console.error('Error updating photo:', error);
+      console.error('Error uploading photo:', error);
+      alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
     }
   };
+
 
   const handleUpdateApplication = async () => {
     try {
+      if (!editedApplication) {
+        alert("ไม่มีข้อมูลสำหรับอัปเดต");
+        return;
+      }
+
       const updatedData = {
         ...editedApplication,
-        expected_salary: Number(editedApplication.expected_salary), // แปลงเป็นตัวเลข
-        age: Number(editedApplication.age) // แปลงเป็นตัวเลข
+        expected_salary: editedApplication.expected_salary
+          ? Number(editedApplication.expected_salary)
+          : 0,
+        age: editedApplication.age ? Number(editedApplication.age) : 0,
       };
 
-      console.log(updatedData);
-  
+      console.log("📌 Updated Data:", updatedData);
+
       const response = await axios.put(
         `http://localhost:8080/api/jobaplication/${editedApplication.job_id}`,
         updatedData
       );
-  
+
       if (response.status === 200) {
-        fetchApplications();
+        fetchApplications(); // โหลดข้อมูลใหม่
         setEditMode(false);
         setIsModalOpen(false);
-        alert("อัพเดทข้อมูลสำเร็จ");
+        alert("✅ อัปเดตข้อมูลสำเร็จ!");
+      } else {
+        alert("⚠️ อัปเดตข้อมูลไม่สำเร็จ");
+        console.log("", error);
       }
     } catch (error) {
-      console.error("Error updating application:", error);
-      alert("เกิดข้อผิดพลาด ในการอัพเดทข้อมูล");
+      console.error("❌ Error updating application:", error);
+      alert("❌ เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
     }
   };
-  
 
   const filterByStatus = (status) =>
     applications.filter((app) => app.status === status);
@@ -183,7 +236,7 @@ const Job = () => {
     const colors = {
       new: "bg-blue-500 hover:bg-blue-600",
       wait: "bg-yellow-500 hover:bg-yellow-600",
-      pass: "bg-green-500 hover:bg-green-600"
+      pass: "bg-green-500 hover:bg-green-600",
     };
     return colors[status] || "bg-gray-500 hover:bg-gray-600";
   };
@@ -192,17 +245,18 @@ const Job = () => {
     const styles = {
       new: "bg-blue-100 text-blue-800 border-blue-200",
       wait: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      pass: "bg-green-100 text-green-800 border-green-200"
+      pass: "bg-green-100 text-green-800 border-green-200",
     };
     return styles[status] || "bg-gray-100 text-gray-800 border-gray-200";
   };
-
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">ระบบจัดการผู้สมัครงาน</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            ระบบจัดการผู้สมัครงาน
+          </h1>
           <button
             onClick={() => setAddModalOpen(true)}
             className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
@@ -214,7 +268,10 @@ const Job = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {["new", "wait", "pass"].map((status) => (
-            <div key={status} className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div
+              key={status}
+              className="bg-white rounded-xl shadow-sm border border-gray-200"
+            >
               <div className={`p-4 ${getStatusColor(status)} rounded-t-xl`}>
                 <h2 className="text-xl font-semibold text-white">
                   {status === "new" && "ผู้สมัครใหม่"}
@@ -254,8 +311,12 @@ const Job = () => {
                         <div className="flex items-center gap-2">
                           <select
                             value={app.status}
-                            onChange={(e) => handleEditStatus(app.job_id, e.target.value)}
-                            className={`text-sm rounded-lg border px-3 py-1.5 ${getStatusBadge(app.status)}`}
+                            onChange={(e) =>
+                              handleEditStatus(app.job_id, e.target.value)
+                            }
+                            className={`text-sm rounded-lg border px-3 py-1.5 ${getStatusBadge(
+                              app.status
+                            )}`}
                           >
                             <option value="new">ใหม่</option>
                             <option value="wait">รอสัมภาษณ์</option>
@@ -319,7 +380,9 @@ const Job = () => {
                           type="file"
                           className="hidden"
                           accept="image/*"
-                          onChange={(e) => handleFileChange(e, selectedApplication.job_id)}
+                          onChange={(e) =>
+                            handleFileChange(e, selectedApplication.job_id)
+                          }
                         />
                       </label>
                     )}
@@ -388,7 +451,9 @@ const Job = () => {
                                 onChange={handleInputChange}
                                 className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               >
-                                <option value="อาศัยกับครอบครัว">อาศัยกับครอบครัว</option>
+                                <option value="อาศัยกับครอบครัว">
+                                  อาศัยกับครอบครัว
+                                </option>
                                 <option value="บ้านตัวเอง">บ้านตัวเอง</option>
                                 <option value="บ้านเช่า">บ้านเช่า</option>
                                 <option value="คอนโด">คอนโด</option>
@@ -423,7 +488,7 @@ const Job = () => {
                                 รหัสไปรษณีย์
                               </label>
                               <input
-                              maxLength={5}
+                                maxLength={5}
                                 type="text"
                                 name="personal_info.zip_code"
                                 value={editedApplication.personal_info.zip_code}
@@ -530,14 +595,20 @@ const Job = () => {
                                 onChange={handleInputChange}
                                 className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               >
-                                <option value="ได้รับการยกเว้น">ได้รับการยกเว้น</option>
-                                <option value="ปลดเป็นทหารกองหนุน">ปลดเป็นทหารกองหนุน</option>
-                                <option value="ยังไม่ได้รับการเกณฑ์">ยังไม่ได้รับการเกณฑ์</option>
+                                <option value="ได้รับการยกเว้น">
+                                  ได้รับการยกเว้น
+                                </option>
+                                <option value="ปลดเป็นทหารกองหนุน">
+                                  ปลดเป็นทหารกองหนุน
+                                </option>
+                                <option value="ยังไม่ได้รับการเกณฑ์">
+                                  ยังไม่ได้รับการเกณฑ์
+                                </option>
                               </select>
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="flex gap-3 mt-6">
                           <button
                             onClick={handleUpdateApplication}
@@ -546,7 +617,9 @@ const Job = () => {
                             บันทึกการแก้ไข
                           </button>
                           <button
-                            onClick={() => handleDelete(editedApplication.job_id)}
+                            onClick={() =>
+                              handleDelete(editedApplication.job_id)
+                            }
                             className="flex-1 bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600 transition"
                           >
                             ลบข้อมูล
@@ -556,15 +629,28 @@ const Job = () => {
                     ) : (
                       <>
                         <h4 className="text-2xl font-semibold text-gray-900">
-                          {selectedApplication.firstname} {selectedApplication.lastname}
+                          {selectedApplication.firstname}{" "}
+                          {selectedApplication.lastname}
                         </h4>
                         <p className="text-gray-600 mt-1">
                           ตำแหน่ง: {selectedApplication.job_position}
                         </p>
-                        <p className="text-gray-600 mt-1"><span className="text-gray-600 mt-1">เงินเดือนที่คาดหวัง:</span> {Number(selectedApplication.expected_salary).toLocaleString()} บาท/เดือน</p>
-                              
+                        <p className="text-gray-600 mt-1">
+                          <span className="text-gray-600 mt-1">
+                            เงินเดือนที่คาดหวัง:
+                          </span>{" "}
+                          {Number(
+                            selectedApplication.expected_salary
+                          ).toLocaleString()}{" "}
+                          บาท/เดือน
+                        </p>
+
                         <div className="mt-2">
-                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(selectedApplication.status)}`}>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(
+                              selectedApplication.status
+                            )}`}
+                          >
                             {selectedApplication.status === "new"
                               ? "ผู้สมัครใหม่"
                               : selectedApplication.status === "wait"
@@ -574,28 +660,78 @@ const Job = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-6 mt-6">
                           <div>
-                            <h5 className="font-semibold text-gray-900 mb-3">ประวัติส่วนตัว</h5>
+                            <h5 className="font-semibold text-gray-900 mb-3">
+                              ประวัติส่วนตัว
+                            </h5>
                             <div className="space-y-2 text-gray-600">
-                              <p><span className="font-medium">อีเมล:</span> {selectedApplication.email}</p>
-                              <p><span className="font-medium">เบอร์โทร:</span> {selectedApplication.phone_number}</p>
-                              <p><span className="font-medium">อาศัยอยู่กับ</span> {selectedApplication.liveby}</p>
-                              <p><span className="font-medium">ที่อยู่ปัจจุบัน:</span> {selectedApplication.personal_info.address}</p>
-                              <p><span className="font-medium">จังหวัด:</span> {selectedApplication.personal_info.city}</p>
-                              <p><span className="font-medium">รหัสไปรษณีย์:</span> {selectedApplication.personal_info.zip_code}</p>
+                              <p>
+                                <span className="font-medium">อีเมล:</span>{" "}
+                                {selectedApplication.email}
+                              </p>
+                              <p>
+                                <span className="font-medium">เบอร์โทร:</span>{" "}
+                                {selectedApplication.phone_number}
+                              </p>
+                              <p>
+                                <span className="font-medium">
+                                  อาศัยอยู่กับ
+                                </span>{" "}
+                                {selectedApplication.liveby}
+                              </p>
+                              <p>
+                                <span className="font-medium">
+                                  ที่อยู่ปัจจุบัน:
+                                </span>{" "}
+                                {selectedApplication.personal_info.address}
+                              </p>
+                              <p>
+                                <span className="font-medium">จังหวัด:</span>{" "}
+                                {selectedApplication.personal_info.city}
+                              </p>
+                              <p>
+                                <span className="font-medium">
+                                  รหัสไปรษณีย์:
+                                </span>{" "}
+                                {selectedApplication.personal_info.zip_code}
+                              </p>
                             </div>
                           </div>
                           <div>
-                            
                             <div className="space-y-2 text-gray-600 mt-9">
-                              <p><span className="font-medium">อายุ:</span> {selectedApplication.age} ปี</p>
                               <p>
-                                <span className="font-medium">วัน/เดือน/ปีเกิด:</span> {new Date(selectedApplication.birth_date).toLocaleDateString('th-TH')}
+                                <span className="font-medium">อายุ:</span>{" "}
+                                {selectedApplication.age} ปี
                               </p>
-                              <p><span className="font-medium">เชื้อชาติ</span> {selectedApplication.ethnicity}</p>
-                              <p><span className="font-medium">สัญชาติ</span> {selectedApplication.nationality}</p>
-                              <p><span className="font-medium">ศาสนา</span> {selectedApplication.religion}</p>
-                              <p><span className="font-medium">สถานภาพ:</span> {selectedApplication.marital_status}</p>
-                              <p><span className="font-medium">ภาวะทางการทหาร:</span> {selectedApplication.military_status}</p>
+                              <p>
+                                <span className="font-medium">
+                                  วัน/เดือน/ปีเกิด:
+                                </span>{" "}
+                                {new Date(
+                                  selectedApplication.birth_date
+                                ).toLocaleDateString("th-TH")}
+                              </p>
+                              <p>
+                                <span className="font-medium">เชื้อชาติ</span>{" "}
+                                {selectedApplication.ethnicity}
+                              </p>
+                              <p>
+                                <span className="font-medium">สัญชาติ</span>{" "}
+                                {selectedApplication.nationality}
+                              </p>
+                              <p>
+                                <span className="font-medium">ศาสนา</span>{" "}
+                                {selectedApplication.religion}
+                              </p>
+                              <p>
+                                <span className="font-medium">สถานภาพ:</span>{" "}
+                                {selectedApplication.marital_status}
+                              </p>
+                              <p>
+                                <span className="font-medium">
+                                  ภาวะทางการทหาร:
+                                </span>{" "}
+                                {selectedApplication.military_status}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -613,7 +749,9 @@ const Job = () => {
             <div className="bg-white rounded-xl shadow-xl w-[1000px] max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold text-gray-900">เพิ่มข้อมูล</h3>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    เพิ่มข้อมูล
+                  </h3>
                   <button
                     onClick={() => setAddModalOpen(false)}
                     className="text-gray-500 hover:text-gray-700"
@@ -623,10 +761,12 @@ const Job = () => {
                 </div>
               </div>
               <div className="p-6">
-                <AddJob onSuccess={() => {
-                  setAddModalOpen(false);
-                  fetchApplications();
-                }} />
+                <AddJob
+                  onSuccess={() => {
+                    setAddModalOpen(false);
+                    fetchApplications();
+                  }}
+                />
               </div>
             </div>
           </div>
