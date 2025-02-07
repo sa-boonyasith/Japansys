@@ -71,10 +71,15 @@ const App = () => {
     );
   }
   
-  const PrivateRoute = ({ children }) => {
-    if (!isAuthenticated && !loading) {
+  const PrivateRoute = ({ children, allowedRoles }) => {
+    if (!isAuthenticated) {
       return <Navigate to="/" />;
     }
+  
+    if (user && allowedRoles && !allowedRoles.includes(user.role)) {
+      return <Navigate to="/dashboard/job" />;
+    }
+  
     return children;
   };
     
@@ -111,7 +116,14 @@ const App = () => {
               />
             }
           >
-            <Route path="job" element={<Job />} />
+            <Route
+            path="job"
+            element={
+              <PrivateRoute allowedRoles={["admin", "user", "recruit"]}>
+                <Job />
+              </PrivateRoute>
+            }
+           />
             <Route path="attend" element={<Attend />} />
             <Route path="todo-list" element={<Todo />} />
             <Route path="leave-system" element={<LeaveSystem />} />
@@ -129,8 +141,6 @@ const App = () => {
             <Route path="addcustomer" element={<AddCustomer/>}/>
             <Route path="quotation" element={<Quotation/>}/>
             <Route path="invoice" element={<Invoice/>}/>
-
-            
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/" />} />
