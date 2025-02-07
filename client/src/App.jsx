@@ -54,12 +54,23 @@ const App = () => {
       setIsAuthenticated(false);
       setUser(null);
     }
+  
+    // เช็คว่าถ้าไม่ใช่หน้า Login ค่อย setLoading(false)
+    if (window.location.pathname == "/") {
+      setLoading(false);
+    }
   }, []);
   
   
+  
   if (loading) {
-    return <div>Loading...</div>; // แสดงหน้าจอโหลดระหว่างโหลดสถานะ
+    return (
+      <div className="flex justify-center items-center h-screen bg-black text-white text-2xl font-bold">
+        มึงกลับไป login ซะไอสัส
+      </div>
+    );
   }
+  
   const PrivateRoute = ({ children }) => {
     if (!isAuthenticated && !loading) {
       return <Navigate to="/" />;
