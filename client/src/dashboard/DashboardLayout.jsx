@@ -66,7 +66,6 @@ const DashboardLayout = ({
   }, [activeMenu]);
 
   const handleButtonClick = (button) => {
-    
     if (user?.role === "user") {
       const restrictedButtons = [
         "ทดลองงาน",

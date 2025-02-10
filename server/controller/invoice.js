@@ -150,8 +150,6 @@ exports.update = async (req, res) => {
   }
 };
 
-
-// 🟢 ลบสินค้าออกจากใบแจ้งหนี้
 exports.removeitem = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
