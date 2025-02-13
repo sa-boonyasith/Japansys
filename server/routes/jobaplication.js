@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../middleware/uploads"); // เรียกใช้ upload middleware
-const { create, list, update, remove, listspecific } = require("../controller/jobaplication");
+const { create, list, update, remove, listspecific, transfer } = require("../controller/jobaplication");
 
 // อัปโหลดหลายไฟล์พร้อมกัน (photo 1 รูป, documents ได้สูงสุด 5 ไฟล์)
 router.post(
@@ -38,6 +38,7 @@ router.put(
     update // ฟังก์ชันสำหรับอัปเดตข้อมูล
   );
   
+router.patch("/jobaplication/:id",transfer)
 router.delete("/jobaplication/:id", remove); // ลบข้อมูล
 
 module.exports = router;

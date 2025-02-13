@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { PlusCircle, Edit2, Trash2, X } from "lucide-react";
 
-const Salary = () => {
+const Salary = ({user}) => {
   const [salaryData, setSalaryData] = useState([]);
   const [error, setError] = useState(null);
   const [employeeId, setEmployeeId] = useState("");
@@ -293,17 +293,19 @@ const Salary = () => {
                 )}
               </div>
 
-              <button
-                onClick={() => {
-                  setIsEditing(false);
-                  setFormData(initialFormData);
-                  setIsModalOpen(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                <PlusCircle size={20} />
-                เพิ่มข้อมูล
-              </button>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData(initialFormData);
+                    setIsModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  <PlusCircle size={20} />
+                  เพิ่มข้อมูล
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -388,9 +390,11 @@ const Salary = () => {
                         <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">
                           รายได้สุทธิ
                         </th>
+                        {user?.role === 'admin'&&(
                         <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">
                           จัดการ
                         </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="bg-white">
@@ -489,6 +493,7 @@ const Salary = () => {
                                 {formatCurrency(item.salary_total)}
                               </div>
                             </td>
+                            {user?.role === 'admin' &&(
                             <td className="p-4 text-center whitespace-nowrap">
                               <div className="flex justify-center space-x-2">
                                 <button
@@ -505,6 +510,7 @@ const Salary = () => {
                                 </button>
                               </div>
                             </td>
+                            )}
                           </tr>
                         ))
                       ) : (

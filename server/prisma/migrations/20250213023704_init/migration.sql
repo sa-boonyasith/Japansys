@@ -6,12 +6,14 @@ CREATE TABLE `user` (
     `lastname` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
-    `role` ENUM('employee', 'manager', 'admin', 'recruit') NOT NULL DEFAULT 'recruit',
+    `role` ENUM('employee', 'user', 'admin', 'recruit') NOT NULL DEFAULT 'recruit',
+    `employee_id` INTEGER NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `user_username_key`(`username`),
     UNIQUE INDEX `user_email_key`(`email`),
+    UNIQUE INDEX `user_employee_id_key`(`employee_id`),
     PRIMARY KEY (`user_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -22,8 +24,8 @@ CREATE TABLE `Employee` (
     `lastname` VARCHAR(100) NOT NULL,
     `job_position` VARCHAR(150) NOT NULL,
     `salary` DOUBLE NOT NULL,
-    `documents` JSON NOT NULL,
-    `personal_info` JSON NOT NULL,
+    `documents` JSON NULL,
+    `personal_info` JSON NULL,
     `phone_number` VARCHAR(20) NOT NULL,
     `email` VARCHAR(150) NOT NULL,
     `liveby` VARCHAR(191) NOT NULL,
@@ -34,10 +36,10 @@ CREATE TABLE `Employee` (
     `religion` VARCHAR(50) NOT NULL,
     `marital_status` VARCHAR(50) NOT NULL,
     `military_status` VARCHAR(100) NOT NULL,
-    `role` ENUM('employee', 'manager', 'admin', 'recruit') NOT NULL DEFAULT 'employee',
+    `role` ENUM('employee', 'user', 'admin', 'recruit') NOT NULL DEFAULT 'employee',
     `photo` VARCHAR(191) NOT NULL,
-    `banking` VARCHAR(191) NOT NULL,
-    `banking_id` INTEGER NOT NULL,
+    `banking` VARCHAR(191) NULL,
+    `banking_id` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
@@ -65,8 +67,10 @@ CREATE TABLE `JobApplication` (
     `religion` VARCHAR(50) NULL,
     `marital_status` VARCHAR(50) NULL,
     `military_status` VARCHAR(100) NULL,
-    `status` ENUM('new', 'wait', 'pass', 'reject') NOT NULL DEFAULT 'new',
+    `status` ENUM('new', 'wait', 'pass', 'reject') NULL DEFAULT 'new',
     `photo` TEXT NULL,
+    `banking` VARCHAR(191) NULL,
+    `banking_id` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
@@ -273,7 +277,6 @@ CREATE TABLE `customer` (
 -- CreateTable
 CREATE TABLE `invoice` (
     `invoice_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `invoice_number` VARCHAR(191) NOT NULL,
     `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `customer_id` INTEGER NOT NULL,
     `subtotal` DOUBLE NOT NULL,
@@ -284,7 +287,6 @@ CREATE TABLE `invoice` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `invoice_invoice_number_key`(`invoice_number`),
     PRIMARY KEY (`invoice_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -306,12 +308,16 @@ CREATE TABLE `invoice_item` (
     `invoice_id` INTEGER NOT NULL,
     `product_id` INTEGER NOT NULL,
     `quantity` INTEGER NOT NULL,
+    `discount` DOUBLE NOT NULL DEFAULT 0,
     `total` DOUBLE NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
     PRIMARY KEY (`item_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `user` ADD CONSTRAINT `user_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `attend` ADD CONSTRAINT `attend_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

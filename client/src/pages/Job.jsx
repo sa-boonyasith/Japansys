@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AddJob from "./AddJob";
-import { Plus, Trash2, PencilIcon, Camera } from "lucide-react";
+import { Plus, Trash2, PencilIcon, Camera,RefreshCw } from "lucide-react";
 
 const Job = () => {
   const [applications, setApplications] = useState([]);
@@ -11,21 +11,44 @@ const Job = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedApplication, setEditedApplication] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
 
   useEffect(() => {
     fetchApplications();
   }, []);
 
   const fetchApplications = async () => {
-    await axios
-      .get("http://localhost:8080/api/jobaplication")
-      .then((response) => {
-        setApplications(response.data.listjobaplication);
-      })
-      .catch((error) => {
-        console.error("Error fetching applications:", error);
-      });
+    setIsRefreshing(true);
+    try {
+      const response = await axios.get("http://localhost:8080/api/jobaplication");
+      setApplications(response.data.listjobaplication);
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
+
+  const handleSubmit = async (formData) => {
+    try {
+      // เพิ่มข้อมูลใหม่
+      await axios.post("http://localhost:8080/api/jobaplication", formData);
+      
+      // ดึงข้อมูลใหม่ทันที
+      await fetchApplications();
+      
+      // ปิด modal
+      setAddModalOpen(false);
+      
+      // แจ้งเตือนสำเร็จ
+      alert("เพิ่มข้อมูลสำเร็จ");
+    } catch (error) {
+      console.error("Error adding job:", error);
+      alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+    }
+  };
+  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -258,13 +281,24 @@ const Job = () => {
             ระบบจัดการผู้สมัครงาน
           </h1>
           <button
-            onClick={() => setAddModalOpen(true)}
-            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
-          >
-            <Plus size={20} />
-            <span>เพิ่มผู้สมัคร</span>
-          </button>
-        </div>
+              onClick={fetchApplications}
+              className={`flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition ${
+                isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
+              }`}
+              disabled={isRefreshing}
+            >
+              <RefreshCw size={20} className={`${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>รีเฟรช</span>
+            </button>
+            <button
+              onClick={() => setAddModalOpen(true)}
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
+            >
+              <Plus size={20} />
+              <span>เพิ่มผู้สมัคร</span>
+            </button>
+          </div>
+       
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {["new", "wait", "pass"].map((status) => (
@@ -401,7 +435,7 @@ const Job = () => {
                                 name="firstname"
                                 value={editedApplication.firstname}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -413,7 +447,7 @@ const Job = () => {
                                 name="lastname"
                                 value={editedApplication.lastname}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -425,7 +459,7 @@ const Job = () => {
                                 name="email"
                                 value={editedApplication.email}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -438,21 +472,21 @@ const Job = () => {
                                 maxLength={12}
                                 value={editedApplication.phone_number}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
-                                อาศัยอยู่กับ
+                                อาศัย
                               </label>
                               <select
                                 name="liveby"
                                 value={editedApplication.liveby}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               >
-                                <option value="อาศัยกับครอบครัว">
-                                  อาศัยกับครอบครัว
+                                <option value="อาศัยอยู่กับครอบครัว">
+                                  อาศัยอยู่กับครอบครัว
                                 </option>
                                 <option value="บ้านตัวเอง">บ้านตัวเอง</option>
                                 <option value="บ้านเช่า">บ้านเช่า</option>
@@ -468,7 +502,7 @@ const Job = () => {
                                 name="personal_info.address"
                                 value={editedApplication.personal_info.address}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -480,7 +514,7 @@ const Job = () => {
                                 name="personal_info.city"
                                 value={editedApplication.personal_info.city}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -493,7 +527,7 @@ const Job = () => {
                                 name="personal_info.zip_code"
                                 value={editedApplication.personal_info.zip_code}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                           </div>
@@ -507,19 +541,19 @@ const Job = () => {
                                 name="job_position"
                                 value={editedApplication.job_position}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 เงินเดือนที่คาดหวัง
-                              </label>
+                              </label> 
                               <input
                                 type="number"
                                 name="expected_salary"
                                 value={editedApplication.expected_salary}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -531,7 +565,7 @@ const Job = () => {
                                 name="age"
                                 value={editedApplication.age}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -543,7 +577,7 @@ const Job = () => {
                                 name="ethnicity"
                                 value={editedApplication.ethnicity}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -555,7 +589,7 @@ const Job = () => {
                                 name="nationality"
                                 value={editedApplication.nationality}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -567,7 +601,7 @@ const Job = () => {
                                 name="religion"
                                 value={editedApplication.religion}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -578,7 +612,7 @@ const Job = () => {
                                 name="marital_status"
                                 value={editedApplication.marital_status}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               >
                                 <option value="โสด">โสด</option>
                                 <option value="สมรส">สมรส</option>
@@ -593,7 +627,7 @@ const Job = () => {
                                 name="military_status"
                                 value={editedApplication.military_status}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                               >
                                 <option value="ได้รับการยกเว้น">
                                   ได้รับการยกเว้น
@@ -694,6 +728,18 @@ const Job = () => {
                                 </span>{" "}
                                 {selectedApplication.personal_info.zip_code}
                               </p>
+                              <p>
+                                <span className="font-medium">
+                                  ชื่อธนาคาร:
+                                </span>{" "}
+                                {selectedApplication.banking}
+                              </p>
+                              <p>
+                                <span className="font-medium">
+                                  หมายเลขธนาคาร:
+                                </span>{" "}
+                                {selectedApplication.banking_id}
+                              </p>
                             </div>
                           </div>
                           <div>
@@ -761,11 +807,7 @@ const Job = () => {
                 </div>
               </div>
               <div className="p-6">
-                <AddJob
-                  onSuccess={() => {
-                    setAddModalOpen(false);
-                    fetchApplications();
-                  }}
+                <AddJob onSubmit ={handleSubmit}
                 />
               </div>
             </div>

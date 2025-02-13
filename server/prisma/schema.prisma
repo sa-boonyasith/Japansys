@@ -14,13 +14,15 @@ datasource db {
 }
 
 model user {
-  user_id   Int    @id @default(autoincrement())
-  username  String @unique
-  firstname String
-  lastname  String
-  email     String @unique
-  password  String
-  role      Role   @default(recruit)
+  user_id     Int       @id @default(autoincrement())
+  username    String    @unique
+  firstname   String
+  lastname    String
+  email       String    @unique
+  password    String
+  role        Role      @default(recruit)
+  employee_id Int?      @unique // Add this field
+  employee    Employee? @relation(fields: [employee_id], references: [id]) // Add this relation
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -32,8 +34,9 @@ model Employee {
   lastname      String @db.VarChar(100)
   job_position  String @db.VarChar(150)
   salary        Float
-  documents     Json
-  personal_info Json
+  documents     Json?
+  personal_info Json?
+  user          user? // Add this field for the reverse relation
 
   phone_number String   @db.VarChar(20)
   email        String   @unique @db.VarChar(150)
@@ -48,8 +51,8 @@ model Employee {
   military_status String @db.VarChar(100)
   role            Role   @default(employee)
   photo           String
-  banking         String
-  banking_id      Int
+  banking         String?
+  banking_id      String?
 
   // Relationships
   LeaveRequests LeaveRequest[]
@@ -75,18 +78,20 @@ model JobApplication {
   documents        Json?
   personal_info    Json?
 
-  phone_number    String?      @db.VarChar(20)
-  email           String       @unique @db.VarChar(150)
+  phone_number    String?       @db.VarChar(20)
+  email           String        @unique @db.VarChar(150)
   liveby          String?
   birth_date      String?
   age             Int?
-  ethnicity       String?      @db.VarChar(50)
-  nationality     String?      @db.VarChar(50)
-  religion        String?      @db.VarChar(50)
-  marital_status  String?      @db.VarChar(50)
-  military_status String?      @db.VarChar(100)
-  status          StatusJobapp @default(new)
-  photo           String?      @db.Text
+  ethnicity       String?       @db.VarChar(50)
+  nationality     String?       @db.VarChar(50)
+  religion        String?       @db.VarChar(50)
+  marital_status  String?       @db.VarChar(50)
+  military_status String?       @db.VarChar(100)
+  status          StatusJobapp? @default(new)
+  photo           String?       @db.Text
+  banking         String?
+  banking_id      String?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -277,17 +282,17 @@ model customer {
 }
 
 model invoice {
-  invoice_id     Int      @id @default(autoincrement())
-  date           DateTime @default(now()) // วันที่ออกใบแจ้งหนี้
-  customer_id    Int
-  customer       customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade) // ดึงข้อมูลจาก customer
-  subtotal       Float // ยอดรวมก่อนภาษี
-  vat_rate       Float // อัตราภาษี เช่น 7.0
-  vat            Float // ภาษีมูลค่าเพิ่ม
-  discount       Float    @default(0) // ส่วนลด
-  total          Float // ยอดรวมทั้งหมด
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  invoice_id  Int      @id @default(autoincrement())
+  date        DateTime @default(now()) // วันที่ออกใบแจ้งหนี้
+  customer_id Int
+  customer    customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade) // ดึงข้อมูลจาก customer
+  subtotal    Float // ยอดรวมก่อนภาษี
+  vat_rate    Float // อัตราภาษี เช่น 7.0
+  vat         Float // ภาษีมูลค่าเพิ่ม
+  discount    Float    @default(0) // ส่วนลด
+  total       Float // ยอดรวมทั้งหมด
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
   items invoice_item[] // รายการสินค้าในใบแจ้งหนี้
 }
@@ -309,14 +314,12 @@ model invoice_item {
   product_id Int // เชื่อมโยงกับสินค้า
   product    product @relation(fields: [product_id], references: [product_id])
   quantity   Int // จำนวนสินค้า
-  discount   Float  @default(0) // ส่วนลดสำหรับแต่ละสินค้า
+  discount   Float   @default(0) // ส่วนลดสำหรับแต่ละสินค้า
   total      Float // รวมราคา (product.price * quantity - discount)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
-
-
 
 enum Attend {
   check_in

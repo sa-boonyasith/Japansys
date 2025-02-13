@@ -66,7 +66,7 @@ const DashboardLayout = ({
   }, [activeMenu]);
 
   const handleButtonClick = (button) => {
-    if (user?.role === "user") {
+    if (user?.role === "employee") {
       const restrictedButtons = [
         "ทดลองงาน",
         "leave-status",
@@ -115,7 +115,7 @@ const DashboardLayout = ({
 
   // Function to check if button should be disabled
   const isButtonDisabled = (buttonName) => {
-    if (user?.role === "user") {
+    if (user?.role === "employee") {
       const restrictedButtons = [
         "ทดลองงาน",
         "leave-status",

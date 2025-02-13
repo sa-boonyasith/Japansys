@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, UserPlus, Mail, User, Lock } from "lucide-react";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,8 @@ const Register = () => {
     confirmPassword: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const navigate = useNavigate();
@@ -20,24 +23,19 @@ const Register = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Check if form is valid (all fields filled, passwords match, and email is valid)
   useEffect(() => {
-    const { username, firstname, lastname, email, password, confirmPassword } =
-      formData;
-
-    // General email validation using regular expression
-    const emailIsValid =
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    const { username, firstname, lastname, email, password, confirmPassword } = formData;
+    const emailIsValid = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
 
     setIsFormValid(
       username &&
-        firstname &&
-        lastname &&
-        email &&
-        password &&
-        confirmPassword &&
-        password === confirmPassword &&
-        emailIsValid
+      firstname &&
+      lastname &&
+      email &&
+      password &&
+      confirmPassword &&
+      password === confirmPassword &&
+      emailIsValid
     );
 
     if (email && !emailIsValid) {
@@ -68,8 +66,6 @@ const Register = () => {
 
       const data = await response.json();
       console.log("Registration successful:", data);
-
-      // Redirect to home page
       navigate("/");
     } catch (error) {
       setErrorMessage("An error occurred while registering.");
@@ -78,126 +74,163 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#E4DCCF]">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold text-center mb-4">Register</h2>
-        <form onSubmit={handleRegister}>
-          <div className="mb-4">
-            <label
-              htmlFor="username"
-              className="block text-gray-700 font-medium mb-2"
-            >
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
-              required
-            />
+    <div className="min-h-screen flex items-center justify-center bg-background p-9">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <div className="flex flex-col items-center mb-6">
+          <div className="bg-blue-50 p-3 rounded-full mb-4">
+            <UserPlus className="w-8 h-8 text-blue-500" />
           </div>
-          <div className="mb-4">
-            <label
-              htmlFor="firstname"
-              className="block text-gray-700 font-medium mb-2"
-            >
-              Firstname
-            </label>
-            <input
-              type="text"
-              id="firstname"
-              name="firstname"
-              value={formData.firstname}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
-              required
-            />
+          <h2 className="text-2xl font-bold text-gray-800">Create Account</h2>
+          <p className="text-gray-500 text-sm mt-1">Please fill in the details below</p>
+        </div>
+        
+        <form onSubmit={handleRegister} className="space-y-5">
+          <div className="space-y-4">
+            <div className="relative">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Username
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Enter your username"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  name="firstname"
+                  value={formData.firstname}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="First name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="lastname"
+                  value={formData.lastname}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Last name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="relative">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Create password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Confirm password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="mb-4">
-            <label
-              htmlFor="lastname"
-              className="block text-gray-700 font-medium mb-2"
-            >
-              Lastname
-            </label>
-            <input
-              type="text"
-              id="lastname"
-              name="lastname"
-              value={formData.lastname}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-gray-700 font-medium mb-2"
-            >
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-gray-700 font-medium mb-2"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="confirmPassword"
-              className="block text-gray-700 font-medium mb-2"
-            >
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
-              required
-            />
-          </div>
+
           {errorMessage && (
-            <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
+            <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-lg">
+              {errorMessage}
+            </div>
           )}
+
           <button
             type="submit"
             disabled={!isFormValid}
-            className={`w-full py-2 px-4 rounded-lg focus:outline-none ${
+            className={`w-full py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
               isFormValid
-                ? "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
-                : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 transform hover:scale-[1.02]"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
           >
-            Register
+            Create Account
           </button>
+
+          <p className="text-center text-sm text-gray-500">
+            Already have an account?{" "}
+            <button 
+              onClick={() => navigate("/")}
+              className="text-blue-500 hover:text-blue-600 font-medium"
+            >
+              Sign in
+            </button>
+          </p>
         </form>
       </div>
     </div>

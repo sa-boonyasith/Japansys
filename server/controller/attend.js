@@ -3,24 +3,46 @@ const cron = require("node-cron");
 
 cron.schedule("0 0 * * *", async () => {
   try {
-    // Reset fields for attendance records that are not null
-    await prisma.attend.updateMany({
-      where: {
-        check_in_time: {
-          not: null,
-        },
-      },
-      data: {
-        check_in_time: null,
-        check_out_time: null,
-        working_hours: null,
-        status: "not_checked_in",
-      },
-    });
+    console.log("Starting daily attendance record cleanup...");
+    console.log("Cron job is running...");
+    
+    // Fetch all attend records
+    const attend = await prisma.attend.findMany();
 
-    console.log("Attendance records reset successfully at midnight");
-  } catch (error) {
-    console.error("Error resetting attendance records:", error);
+    if (attend.length === 0) {
+      console.log("No attendance records to move.");
+      return;
+    }
+
+    // Map the records for attendhistory
+    const attendhistory = attend.map((attend) => ({
+      attend_id: attend.attend_id,
+      employee_id: attend.employee_id,
+      firstname: attend.firstname,
+      lastname: attend.lastname,
+      check_in_time: attend.check_in_time,
+      check_out_time: attend.check_out_time,
+      working_hours: attend.working_hours,
+      status: attend.status,
+    }));
+
+    // Use a transaction to move the data to history and delete from attend table
+    await prisma.$transaction([
+      prisma.attendhistory.createMany({
+        data: attendhistory,
+      }),
+      prisma.attend.deleteMany({
+        where: {
+          attend_id: {
+            in: attend.map((a) => a.attend_id),
+          },
+        },
+      }),
+    ]);
+
+    console.log("Attendance records moved to history and deleted successfully");
+  } catch (err) {
+    console.error("Error in daily attendance record cleanup:", err);
   }
 });
 

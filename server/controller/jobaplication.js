@@ -1,4 +1,6 @@
 const prisma = require("../config/prisma");
+const { v4: uuidv4 } = require("uuid");
+const bcrypt = require("bcrypt");
 
 exports.list = async (req, res) => {
   try {
@@ -65,6 +67,8 @@ exports.create = async (req, res) => {
       religion,
       marital_status,
       military_status,
+      banking,
+      banking_id,
     } = req.body;
 
     // แปลง JSON string ให้เป็น object (ถ้ามี)
@@ -107,6 +111,8 @@ exports.create = async (req, res) => {
         marital_status,
         military_status,
         photo, // บันทึก URL รูปภาพ
+        banking,
+        banking_id,
       },
     });
 
@@ -143,6 +149,8 @@ exports.update = async (req, res) => {
       religion,
       marital_status,
       military_status,
+      banking,
+      banking_id,
       status,
     } = req.body;
 
@@ -200,6 +208,8 @@ exports.update = async (req, res) => {
         religion,
         marital_status,
         military_status,
+        banking,
+        banking_id,
         status,
         photo: updatedJobData.photo || existingApplication.photo,
       },
@@ -215,6 +225,111 @@ exports.update = async (req, res) => {
     res.status(500).json({ message: "Server error, please try again later" });
   }
 };
+exports.transfer = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ดึงข้อมูล jobApplication ตาม ID
+    const jobApplication = await prisma.jobApplication.findUnique({
+      where: { job_id: Number(id) },
+    });
+
+    if (!jobApplication) {
+      return res
+        .status(404)
+        .json({ message: "Job application not found with the provided ID" });
+    }
+
+    // ตรวจสอบว่ามี employee ที่ใช้อีเมลนี้อยู่แล้วหรือไม่
+    const existingEmployee = await prisma.employee.findUnique({
+      where: { email: jobApplication.email },
+    });
+
+    if (existingEmployee) {
+      return res.status(400).json({
+        message: "This email is already registered as an employee",
+      });
+    }
+
+    // สร้าง Employee ใหม่
+    const newEmployee = await prisma.employee.create({
+      data: {
+        firstname: jobApplication.firstname,
+        lastname: jobApplication.lastname,
+        job_position: jobApplication.job_position,
+        salary: jobApplication.expected_salary,
+        phone_number: jobApplication.phone_number,
+        email: jobApplication.email,
+        personal_info: jobApplication.personal_info || {},
+        documents: jobApplication.documents || [],
+        liveby: jobApplication.liveby || "N/A",
+        birth_date: jobApplication.birth_date ? new Date(jobApplication.birth_date) : null,
+        age: jobApplication.age || 0,
+        ethnicity: jobApplication.ethnicity || "N/A",
+        nationality: jobApplication.nationality || "N/A",
+        religion: jobApplication.religion || "N/A",
+        marital_status: jobApplication.marital_status || "N/A",
+        military_status: jobApplication.military_status || "N/A",
+        photo: jobApplication.photo || "",
+        role: "employee",
+        banking: jobApplication.banking,
+        banking_id: jobApplication.banking_id,
+      },
+    });
+
+    // สร้าง Username ตามฟอร์แมต 2 ตัวอักษรจากนามสกุล.firstname@jpsys.th.com
+    const lastnameInitials = jobApplication.lastname.substring(0, 2).toLowerCase();
+    const username = `${lastnameInitials}.${jobApplication.firstname.toLowerCase()}@jpsys.th.com`;
+
+    // Generate random password & hash it
+    const randomPassword = uuidv4().substring(0, 8);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    // ตรวจสอบว่ามี user ที่ใช้อีเมลนี้อยู่แล้วหรือไม่
+    const existingUser = await prisma.user.findUnique({
+      where: { email: username },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "This username/email is already in use",
+      });
+    }
+
+    // สร้าง User ใหม่
+    const newUser = await prisma.user.create({
+      data: {
+        username: username,
+        password: hashedPassword,
+        email: username,
+        role: "employee",
+        firstname: jobApplication.firstname,
+        lastname: jobApplication.lastname,
+        employee_id: newEmployee.id,
+      },
+    });
+
+    // ลบ jobApplication หลังจากที่ย้ายไปตาราง employee และสร้าง user เสร็จแล้ว
+    await prisma.jobApplication.delete({
+      where: { job_id: Number(id) },
+    });
+
+    res.status(200).json({
+      message: "Job application approved, employee and user created successfully",
+      employee: newEmployee,
+      user: {
+        username,
+        password: randomPassword, // ส่งกลับรหัสผ่านที่สร้างให้ HR หรือผู้ใช้เปลี่ยนภายหลัง
+        employee_id: newEmployee.id,
+      },
+    });
+  } catch (err) {
+    console.error("Error moving job application to employee:", err.message);
+    res.status(500).json({ message: "Server error, please try again later" });
+  }
+};
+
+
 
 
 exports.remove = async (req, res) => {

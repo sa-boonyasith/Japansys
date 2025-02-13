@@ -24,54 +24,46 @@ const Trial = () => {
 
   const handleApprove = async (id) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/jobaplication/${id}`
-      );
+      // ดึงข้อมูล jobApplication (เพื่อตรวจสอบ)
+      const response = await fetch(`http://localhost:8080/api/jobaplication/${id}`);
       const jobApplication = await response.json();
-
-      const newEmployee = {
-        firstname: jobApplication.firstname,
-        lastname: jobApplication.lastname,
-        job_position: jobApplication.job_position,
-        salary: jobApplication.expected_salary,
-        phone_number: jobApplication.phone_number,
-        email: jobApplication.email,
-        personal_info: jobApplication.personal_info,
-        documents: jobApplication.documents,
-        liveby: jobApplication.liveby,
-        birth_date: jobApplication.birth_date,
-        age: jobApplication.age,
-        ethnicity: jobApplication.ethnicity,
-        nationality: jobApplication.nationality,
-        religion: jobApplication.religion,
-        marital_status: jobApplication.marital_status,
-        military_status: jobApplication.military_status,
-        photo: jobApplication.photo,
-        role: "employee",
-      };
-
-      await fetch("http://localhost:8080/api/employee", {
-        method: "POST",
+  
+      console.log("Job Application Data:", jobApplication); // ตรวจสอบข้อมูลใน console
+  
+      // ส่ง PATCH request ไปยัง jobApplication เพื่ออนุมัติและย้ายไป employee
+      const patchResponse = await fetch(`http://localhost:8080/api/jobaplication/${id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newEmployee),
       });
-
-      await fetch(`http://localhost:8080/api/jobaplication/${id}`, {
-        method: "DELETE",
-      });
-
+  
+      if (!patchResponse.ok) {
+        throw new Error("Failed to approve job application");
+      }
+  
+      // รับข้อมูล username และ password ที่สร้างจาก API
+      const result = await patchResponse.json();
+      const { username, password,employee_id } = result.user;
+  
+      // อัปเดตรายการ job applications ใน state
       setApplications((prevApplications) =>
         prevApplications.filter((app) => app.job_id !== id)
       );
-      
-      alert("เพิ่มพนักงานและลบผู้สมัครงานสำเร็จ!");
+  
+      // แสดง username และ password ผ่าน alert
+      alert(`✅ เพิ่มพนักงานสำเร็จ!
+    
+        👤 Username: ${username}
+        🔑 Password: ${password}
+        🆔 Employee ID: ${employee_id}`);
+  
     } catch (error) {
       console.error("Error in handleApprove:", error);
-      alert("เกิดข้อผิดพลาดในการเพิ่มพนักงานหรือลบผู้สมัครงาน");
+      alert("❌ เกิดข้อผิดพลาดในการเพิ่มพนักงาน");
     }
   };
+  
 
   const handleReject = async (id) => {
     try {
@@ -101,8 +93,16 @@ const Trial = () => {
       <div className="bg-red-50 border-l-4 border-red-500 p-4 m-4">
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            <svg
+              className="h-5 w-5 text-red-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
           <div className="ml-3">
@@ -116,9 +116,11 @@ const Trial = () => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ">
       <div className="px-6 py-4 border-b border-gray-200 mb-5">
-        <h2 className="text-2xl font-semibold text-gray-800">รายชื่อผู้ทดลองงาน</h2>
+        <h2 className="text-2xl font-semibold text-gray-800">
+          รายชื่อผู้ทดลองงาน
+        </h2>
       </div>
-      
+
       <div className="bg-white  rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -154,8 +156,18 @@ const Trial = () => {
                         className="p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-full transition-colors"
                         title="อนุมัติ"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       </button>
                       <button
@@ -163,8 +175,18 @@ const Trial = () => {
                         className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-full transition-colors"
                         title="ปฏิเสธ"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </button>
                     </div>

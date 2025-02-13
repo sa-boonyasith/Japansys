@@ -66,4 +66,50 @@ exports.update = async (req, res) => {
     res.status(500).json({ error: "An error occurred while updating the role" });
   }
 };
+
+exports.changepass = async (req, res) => {
+  try {
+    const { email, oldPassword, newPassword } = req.body;
+
+    // ตรวจสอบว่าข้อมูลถูกต้อง
+    if (!email || !oldPassword || !newPassword) {
+      return res.status(400).json({ error: 'Email, old password, and new password are required' });
+    }
+
+    // ค้นหาผู้ใช้จาก email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // ตรวจสอบรหัสผ่านเก่า
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: 'Old password is incorrect' });
+    }
+
+    // ป้องกันการใช้รหัสผ่านเดิม
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({ error: 'New password cannot be the same as the old password' });
+    }
+
+    // แฮชรหัสผ่านใหม่
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // อัปเดตรหัสผ่าน
+    await prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+    });
+
+    res.status(200).json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'An error occurred while changing the password' });
+  }
+};
   

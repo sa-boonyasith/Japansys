@@ -58,6 +58,9 @@ const Sidebar = ({ onToggleJobButtons }) => {
       } else if (menu === "leave-status") {
         onToggleJobButtons("leave-status");
         navigate("/dashboard/leave-status");
+      } else if (menu === "employee"){
+        onToggleJobButtons("employee")
+        navigate("/dashboard/employee")
       } else if (menu === "addcus") {
         onToggleJobButtons("addcus");
         navigate("/dashboard/addcustomer");
@@ -172,6 +175,15 @@ const Sidebar = ({ onToggleJobButtons }) => {
                     >
                       ระบบเงินเดือน
                     </li>
+                    {user?.role === 'admin' &&(
+                    <li
+                      className={getMenuItemClass(isRecruit)}
+                      onClick={() => handleSubMenuClick("employee")}
+                      role="button"
+                    >
+                      พนักงาน
+                    </li>
+                    )}
                   </>
                 )}
               </ul>

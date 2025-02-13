@@ -29,6 +29,7 @@ import LeaveStatus from "./pages/LeaveStatus";
 import AddCustomer from "./pages/AddCustomer";
 import Quotation from "./pages/Quotation";
 import Invoice from "./pages/Invoice";
+import Employeelist from "./pages/Employeelist";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -160,7 +161,7 @@ const App = () => {
             <Route
               path="job"
               element={
-                <PrivateRoute allowedRoles={["admin", "user", "recruit"]}>
+                <PrivateRoute allowedRoles={["admin", "employee", "recruit"]}>
                   <Job />
                 </PrivateRoute>
               }
@@ -168,7 +169,7 @@ const App = () => {
             <Route
               path="attend"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Attend />
                 </PrivateRoute>
               }
@@ -176,7 +177,7 @@ const App = () => {
             <Route
               path="todo-list"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Todo />
                 </PrivateRoute>
               }
@@ -184,7 +185,7 @@ const App = () => {
             <Route
               path="leave-system"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <LeaveSystem />
                 </PrivateRoute>
               }
@@ -192,7 +193,7 @@ const App = () => {
             <Route
               path="meeting"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Meeting />
                 </PrivateRoute>
               }
@@ -200,7 +201,7 @@ const App = () => {
             <Route
               path="car-booking"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Carbooking />
                 </PrivateRoute>
               }
@@ -208,7 +209,7 @@ const App = () => {
             <Route
               path="expense-system"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <ExpenseSystem />
                 </PrivateRoute>
               }
@@ -216,7 +217,7 @@ const App = () => {
             <Route
               path="salary"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Salary />
                 </PrivateRoute>
               }
@@ -224,7 +225,7 @@ const App = () => {
             <Route
               path="trial"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Trial />
                 </PrivateRoute>
               }
@@ -232,7 +233,7 @@ const App = () => {
             <Route
               path="editcar"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <EditCarbooking />
                 </PrivateRoute>
               }
@@ -240,7 +241,7 @@ const App = () => {
             <Route
               path="editmeeting"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <EditMeeting />
                 </PrivateRoute>
               }
@@ -248,7 +249,7 @@ const App = () => {
             <Route
               path="editexpense"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <EditExpense />
                 </PrivateRoute>
               }
@@ -256,7 +257,7 @@ const App = () => {
             <Route
               path="checkout"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Checkout />
                 </PrivateRoute>
               }
@@ -264,7 +265,7 @@ const App = () => {
             <Route
               path="progress"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Progress />
                 </PrivateRoute>
               }
@@ -272,15 +273,23 @@ const App = () => {
             <Route
               path="leave-status"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <LeaveStatus />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="employee"
+              element={
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
+                  <Employeelist />
                 </PrivateRoute>
               }
             />
             <Route
               path="addcustomer"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <AddCustomer />
                 </PrivateRoute>
               }
@@ -288,7 +297,7 @@ const App = () => {
             <Route
               path="quotation"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Quotation />
                 </PrivateRoute>
               }
@@ -296,7 +305,7 @@ const App = () => {
             <Route
               path="invoice"
               element={
-                <PrivateRoute allowedRoles={["admin", "user"]}>
+                <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Invoice />
                 </PrivateRoute>
               }

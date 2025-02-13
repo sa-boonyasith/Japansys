@@ -176,7 +176,7 @@ exports.create = async (req, res) => {
         payroll_enddate: new Date(payroll_enddate),
         payment_date: null, // ตั้งค่า payment_date เป็น null
         banking,
-        banking_id,
+        banking_id: Number(banking_id),
         salary,
         absent_late,
         overtime,

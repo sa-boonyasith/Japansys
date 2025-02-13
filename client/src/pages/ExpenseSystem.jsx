@@ -254,14 +254,22 @@ const ExpenseSystem = () => {
               onChange={handleFilterChange}
               className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
-            <input
-              type="text"
-              placeholder="Expense Type"
+            <select
               name="type"
-              value={filters.type}
-              onChange={handleFilterChange}
               className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
+              value={filters.type_expense}
+              onChange={handleFilterChange}
+            >
+              <option value="">เลือกค่าใช้จ่าย</option>
+              <option value="ค่าใช้จ่ายประจำ">ค่าใช้จ่ายประจำ</option>
+              <option value="ค่าใช้จ่ายผันแปร">ค่าใช้จ่ายผันแปร</option>
+              <option value="ค่าใช้จ่ายทางการเงิน">ค่าใช้จ่ายทางการเงิน</option>
+              <option value="ค่าใช้จ่ายลงทุน">ค่าใช้จ่ายลงทุน</option>
+              <option value="ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก">
+                ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก
+              </option>
+              <option value="ค่าใช้จ่ายฉุกเฉิน">ค่าใช้จ่ายฉุกเฉิน</option>
+            </select>
             <select
               name="status"
               className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -281,7 +289,7 @@ const ExpenseSystem = () => {
               onClick={() => setShowAddModal(true)}
             >
               <Plus size={20} />
-              Add New Expense
+              เบิกค่าใช้จ่าย
             </button>
           </div>
         </div>
@@ -354,23 +362,6 @@ const ExpenseSystem = () => {
                           {expense.status}
                         </span>
                       </td>
-                      {/* <td className="px-3  whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => {
-                            setEditExpense(expense);
-                            setShowEditModal(true);
-                          }}
-                          className="text-blue-600 p-2 hover:text-blue-800 transition"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteExpense(expense.expen_id)}
-                          className="text-red-600 hover:text-red-800 transition"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td> */}
                     </tr>
                   ))
                 ) : (
