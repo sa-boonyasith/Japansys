@@ -228,7 +228,7 @@ const DashboardLayout = ({
               >
                 รายชื่อการลา
               </button>
-              <button
+              {/* <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "leave-status" ? "bg-white" : "bg-gray-300"
                 } ${
@@ -240,7 +240,7 @@ const DashboardLayout = ({
                 disabled={isButtonDisabled("leave-status")}
               >
                 สถานะการลา
-              </button>
+              </button> */}
             </div>
           )}
           {activeMenu === "meeting" && (
@@ -253,7 +253,7 @@ const DashboardLayout = ({
               >
                 รายชื่อการนัดประชุม
               </button>
-              <button
+              {/* <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "editmeeting" ? "bg-white" : "bg-gray-300"
                 } ${
@@ -265,7 +265,7 @@ const DashboardLayout = ({
                 disabled={isButtonDisabled("editmeeting")}
               >
                 สถานะการยืนยันคำขอ
-              </button>
+              </button> */}
             </div>
           )}
           {activeMenu === "car-booking" && (
@@ -278,7 +278,7 @@ const DashboardLayout = ({
               >
                 รายชื่อการยืมรถ
               </button>
-              <button
+              {/* <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "editcar" ? "bg-white" : "bg-gray-300"
                 } ${
@@ -290,7 +290,7 @@ const DashboardLayout = ({
                 disabled={isButtonDisabled("editcar")}
               >
                 สถานะการยืนยันคำขอ
-              </button>
+              </button> */}
             </div>
           )}
           {activeMenu === "expense-system" && (
@@ -303,7 +303,7 @@ const DashboardLayout = ({
               >
                 การขอเบิกเงิน
               </button>
-              <button
+              {/* <button
                 className={`p-2 ml-2 rounded-t-lg ${
                   activeButton === "editexpense" ? "bg-white" : "bg-gray-300"
                 } ${
@@ -315,7 +315,7 @@ const DashboardLayout = ({
                 disabled={isButtonDisabled("editexpense")}
               >
                 สถานะการขอเบิกเงิน
-              </button>
+              </button> */}
             </div>
           )}
         </div>

@@ -279,7 +279,7 @@ exports.transfer = async (req, res) => {
 
     // สร้าง Username ตามฟอร์แมต 2 ตัวอักษรจากนามสกุล.firstname@jpsys.th.com
     const lastnameInitials = jobApplication.lastname.substring(0, 2).toLowerCase();
-    const username = `${lastnameInitials}.${jobApplication.firstname.toLowerCase()}@jpsys.th.com`;
+    const username = `${lastnameInitials}.${jobApplication.firstname.toLowerCase()}@japansystem.co.th`;
 
     // Generate random password & hash it
     const randomPassword = uuidv4().substring(0, 8);

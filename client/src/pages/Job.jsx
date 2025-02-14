@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AddJob from "./AddJob";
-import { Plus, Trash2, PencilIcon, Camera,RefreshCw } from "lucide-react";
+import { Plus, Trash2, PencilIcon, Camera, RefreshCw } from "lucide-react";
 
 const Job = () => {
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedApplication, setEditedApplication] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // แปลง JSON เป็น Object
+    }
+  }, []);
 
   useEffect(() => {
     fetchApplications();
@@ -21,7 +27,9 @@ const Job = () => {
   const fetchApplications = async () => {
     setIsRefreshing(true);
     try {
-      const response = await axios.get("http://localhost:8080/api/jobaplication");
+      const response = await axios.get(
+        "http://localhost:8080/api/jobaplication"
+      );
       setApplications(response.data.listjobaplication);
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -31,24 +39,24 @@ const Job = () => {
   };
 
   const handleSubmit = async (formData) => {
+    setIsRefreshing(true);
     try {
       // เพิ่มข้อมูลใหม่
       await axios.post("http://localhost:8080/api/jobaplication", formData);
-      
+
       // ดึงข้อมูลใหม่ทันที
       await fetchApplications();
-      
-      // ปิด modal
-      setAddModalOpen(false);
-      
+
       // แจ้งเตือนสำเร็จ
       alert("เพิ่มข้อมูลสำเร็จ");
+      setAddModalOpen(false);
     } catch (error) {
       console.error("Error adding job:", error);
       alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+    } finally {
+      setIsRefreshing(false);
     }
   };
-  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -146,67 +154,69 @@ const Job = () => {
   const handleFileChange = async (e, jobId) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
     const formData = new FormData();
-    formData.append('photo', file);
-    
+    formData.append("photo", file);
+
     // ต้องแนบข้อมูลเดิมทั้งหมดไปด้วย
-    formData.append('firstname', editedApplication.firstname);
-    formData.append('lastname', editedApplication.lastname);
-    formData.append('job_position', editedApplication.job_position);
-    formData.append('expected_salary', editedApplication.expected_salary);
-    formData.append('phone_number', editedApplication.phone_number);
-    formData.append('email', editedApplication.email);
-    formData.append('liveby', editedApplication.liveby);
-    formData.append('birth_date', editedApplication.birth_date);
-    formData.append('age', editedApplication.age);
-    formData.append('ethnicity', editedApplication.ethnicity);
-    formData.append('nationality', editedApplication.nationality);
-    formData.append('religion', editedApplication.religion);
-    formData.append('marital_status', editedApplication.marital_status);
-    formData.append('military_status', editedApplication.military_status);
-    formData.append('status', editedApplication.status);
-    
+    formData.append("firstname", editedApplication.firstname);
+    formData.append("lastname", editedApplication.lastname);
+    formData.append("job_position", editedApplication.job_position);
+    formData.append("expected_salary", editedApplication.expected_salary);
+    formData.append("phone_number", editedApplication.phone_number);
+    formData.append("email", editedApplication.email);
+    formData.append("liveby", editedApplication.liveby);
+    formData.append("birth_date", editedApplication.birth_date);
+    formData.append("age", editedApplication.age);
+    formData.append("ethnicity", editedApplication.ethnicity);
+    formData.append("nationality", editedApplication.nationality);
+    formData.append("religion", editedApplication.religion);
+    formData.append("marital_status", editedApplication.marital_status);
+    formData.append("military_status", editedApplication.military_status);
+    formData.append("status", editedApplication.status);
+
     // แปลง personal_info เป็น string ก่อนส่ง
     if (editedApplication.personal_info) {
-      formData.append('personal_info', JSON.stringify(editedApplication.personal_info));
+      formData.append(
+        "personal_info",
+        JSON.stringify(editedApplication.personal_info)
+      );
     }
-  
+
     try {
       const response = await axios.put(
         `http://localhost:8080/api/jobaplication/${jobId}`,
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-  
+
       if (response.status === 200) {
         // อัพเดท state
         const updatedPhoto = response.data.application.photo;
-        setSelectedApplication(prev => ({
+        setSelectedApplication((prev) => ({
           ...prev,
-          photo: updatedPhoto
+          photo: updatedPhoto,
         }));
-        
-        setEditedApplication(prev => ({
+
+        setEditedApplication((prev) => ({
           ...prev,
-          photo: updatedPhoto
+          photo: updatedPhoto,
         }));
-  
+
         // รีเฟรชข้อมูล
         fetchApplications();
-        
-        alert('อัพโหลดรูปภาพสำเร็จ');
+
+        alert("อัพโหลดรูปภาพสำเร็จ");
       }
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
+      console.error("Error uploading photo:", error);
+      alert("เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ");
     }
   };
-
 
   const handleUpdateApplication = async () => {
     try {
@@ -281,24 +291,28 @@ const Job = () => {
             ระบบจัดการผู้สมัครงาน
           </h1>
           <button
-              onClick={fetchApplications}
-              className={`flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition ${
-                isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
-              }`}
-              disabled={isRefreshing}
-            >
-              <RefreshCw size={20} className={`${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>รีเฟรช</span>
-            </button>
-            <button
-              onClick={() => setAddModalOpen(true)}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
-            >
-              <Plus size={20} />
-              <span>เพิ่มผู้สมัคร</span>
-            </button>
-          </div>
-       
+            onClick={fetchApplications}
+            className={`flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition ${
+              isRefreshing ? "opacity-75 cursor-not-allowed" : ""
+            }`}
+            disabled={isRefreshing}
+          >
+            <RefreshCw
+              size={20}
+              className={`${isRefreshing ? "animate-spin" : ""}`}
+            />
+            <span>รีเฟรช</span>
+          </button>
+          {user?.role === 'admin' &&(
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
+          >
+            <Plus size={20} />
+            <span>เพิ่มผู้สมัคร</span>
+          </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {["new", "wait", "pass"].map((status) => (
@@ -342,6 +356,7 @@ const Job = () => {
                             </p>
                           </div>
                         </div>
+                        {user?.role ==='admin' &&(
                         <div className="flex items-center gap-2">
                           <select
                             value={app.status}
@@ -357,6 +372,7 @@ const Job = () => {
                             <option value="pass">ผ่านสัมภาษณ์</option>
                           </select>
                         </div>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -547,7 +563,7 @@ const Job = () => {
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 เงินเดือนที่คาดหวัง
-                              </label> 
+                              </label>
                               <input
                                 type="number"
                                 name="expected_salary"
@@ -650,14 +666,16 @@ const Job = () => {
                           >
                             บันทึกการแก้ไข
                           </button>
-                          <button
-                            onClick={() =>
-                              handleDelete(editedApplication.job_id)
-                            }
-                            className="flex-1 bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600 transition"
-                          >
-                            ลบข้อมูล
-                          </button>
+                          {user?.role === "admin" && (
+                            <button
+                              onClick={() =>
+                                handleDelete(editedApplication.job_id)
+                              }
+                              className="flex-1 bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600 transition"
+                            >
+                              ลบข้อมูล
+                            </button>
+                          )}
                         </div>
                       </div>
                     ) : (
@@ -729,9 +747,7 @@ const Job = () => {
                                 {selectedApplication.personal_info.zip_code}
                               </p>
                               <p>
-                                <span className="font-medium">
-                                  ชื่อธนาคาร:
-                                </span>{" "}
+                                <span className="font-medium">ชื่อธนาคาร:</span>{" "}
                                 {selectedApplication.banking}
                               </p>
                               <p>
@@ -807,8 +823,7 @@ const Job = () => {
                 </div>
               </div>
               <div className="p-6">
-                <AddJob onSubmit ={handleSubmit}
-                />
+                <AddJob onSubmit={handleSubmit} />
               </div>
             </div>
           </div>

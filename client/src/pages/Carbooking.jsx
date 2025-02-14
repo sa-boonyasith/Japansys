@@ -40,6 +40,14 @@ const CarBooking = () => {
   const [error, setError] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // แปลง JSON เป็น Object
+    }
+  }, []);
 
   useEffect(() => {
     const fetchCarBooking = async () => {
@@ -284,19 +292,18 @@ const CarBooking = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-        </div>
+        <div className="mb-8"></div>
 
         {/* Filter Section */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="relative">
-              <Search className="absolute left-2 bottom-[6px]  text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 bottom-[6px] text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 name="search"
                 placeholder="Search by name or place..."
-                className="pl-10 w-full border h-8  rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 w-full  rounded-lg border h-8 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 value={filters.search}
                 onChange={handleFilterChange}
               />
@@ -383,21 +390,23 @@ const CarBooking = () => {
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Name
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Date & Time
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Location
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Vehicle
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-8 py-3">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Status
                   </th>
-                  {/* <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    Actions
-                  </th> */}
+                  {user?.role === "admin" && (
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -419,7 +428,7 @@ const CarBooking = () => {
                         {car.timestart} - {car.timeend}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 text-gray-400 mr-2" />
                         <span className="text-sm text-gray-900">
@@ -427,13 +436,13 @@ const CarBooking = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <div className="flex items-center">
                         <Car className="w-4 h-4 text-gray-400 mr-2" />
                         <span className="text-sm text-gray-900">{car.car}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                           car.status
@@ -442,25 +451,27 @@ const CarBooking = () => {
                         {car.status}
                       </span>
                     </td>
-                    {/* <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            setEditRentCar(car);
-                            setShowEditModal(true);
-                          }}
-                          className="p-1 text-gray-500 hover:text-blue-600 transition-colors duration-200"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => initiateDelete(car.rentcar_id)}
-                          className="p-1 text-gray-500 hover:text-red-600 transition-colors duration-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td> */}
+                    {user?.role === "admin" && (
+                      <td className="">
+                        <div className="gap-2 px-6">
+                          <button
+                            onClick={() => {
+                              setEditRentCar(car);
+                              setShowEditModal(true);
+                            }}
+                            className="p-1 text-blue-500 hover:text-blue-800 transition-colors duration-200"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => initiateDelete(car.rentcar_id)}
+                            className="p-1 text-red-500 hover:text-red-800 transition-colors duration-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -603,7 +614,7 @@ const CarBooking = () => {
                     name="employee_id"
                     value={editRentCar.employee_id}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -617,12 +628,12 @@ const CarBooking = () => {
                       name="startdate"
                       value={formatInputDate(editRentCar.startdate)}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm  font-medium text-gray-700 mb-1">
                       End Date
                     </label>
                     <input
@@ -630,7 +641,7 @@ const CarBooking = () => {
                       name="enddate"
                       value={formatInputDate(editRentCar.enddate)}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -645,7 +656,7 @@ const CarBooking = () => {
                       name="timestart"
                       value={editRentCar.timestart}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -658,7 +669,7 @@ const CarBooking = () => {
                       name="timeend"
                       value={editRentCar.timeend}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border-gray-200"
+                      className="w-full rounded-lg border border-gray-200"
                       required
                     />
                   </div>
@@ -672,7 +683,7 @@ const CarBooking = () => {
                     name="place"
                     value={editRentCar.place}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -685,7 +696,7 @@ const CarBooking = () => {
                     name="car"
                     value={editRentCar.car}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   />
                 </div>
@@ -697,7 +708,7 @@ const CarBooking = () => {
                     name="status"
                     value={editRentCar.status}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border-gray-200"
+                    className="w-full rounded-lg border border-gray-200"
                     required
                   >
                     <option value="pending">Pending</option>

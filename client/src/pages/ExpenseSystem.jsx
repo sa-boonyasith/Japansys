@@ -18,6 +18,14 @@ const ExpenseSystem = () => {
   const [addError, setAddError] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // แปลง JSON เป็น Object
+    }
+  }, []);
 
   // Fetch expenses from the API using fetch
   useEffect(() => {
@@ -254,22 +262,14 @@ const ExpenseSystem = () => {
               onChange={handleFilterChange}
               className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
-            <select
+            <input
+              type="text"
+              placeholder="Expense Type"
               name="type"
-              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              value={filters.type_expense}
+              value={filters.type}
               onChange={handleFilterChange}
-            >
-              <option value="">เลือกค่าใช้จ่าย</option>
-              <option value="ค่าใช้จ่ายประจำ">ค่าใช้จ่ายประจำ</option>
-              <option value="ค่าใช้จ่ายผันแปร">ค่าใช้จ่ายผันแปร</option>
-              <option value="ค่าใช้จ่ายทางการเงิน">ค่าใช้จ่ายทางการเงิน</option>
-              <option value="ค่าใช้จ่ายลงทุน">ค่าใช้จ่ายลงทุน</option>
-              <option value="ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก">
-                ค่าใช้จ่ายที่ไม่เกี่ยวข้องกับการดำเนินงานหลัก
-              </option>
-              <option value="ค่าใช้จ่ายฉุกเฉิน">ค่าใช้จ่ายฉุกเฉิน</option>
-            </select>
+              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
             <select
               name="status"
               className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -289,7 +289,7 @@ const ExpenseSystem = () => {
               onClick={() => setShowAddModal(true)}
             >
               <Plus size={20} />
-              เบิกค่าใช้จ่าย
+              Add New Expense
             </button>
           </div>
         </div>
@@ -319,6 +319,7 @@ const ExpenseSystem = () => {
                     "Amount",
                     "Description",
                     "Status",
+                    ...(user?.role === "admin" ? ["Actions"] : []),
                   ].map((header) => (
                     <th
                       key={header}
@@ -329,6 +330,7 @@ const ExpenseSystem = () => {
                   ))}
                 </tr>
               </thead>
+
               <tbody>
                 {filterExpenses.length > 0 ? (
                   filterExpenses.map((expense) => (
@@ -362,6 +364,27 @@ const ExpenseSystem = () => {
                           {expense.status}
                         </span>
                       </td>
+                      {user?.role === "admin" && (
+                        <td className="px-3  whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => {
+                              setEditExpense(expense);
+                              setShowEditModal(true);
+                            }}
+                            className="text-blue-600 p-2 hover:text-blue-800 transition"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDeleteExpense(expense.expen_id)
+                            }
+                            className="text-red-600 hover:text-red-800 transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 ) : (

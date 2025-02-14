@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { PlusCircle, Edit2, Trash2, X } from "lucide-react";
 
-const Salary = ({user}) => {
+const Salary = () => {
   const [salaryData, setSalaryData] = useState([]);
   const [error, setError] = useState(null);
   const [employeeId, setEmployeeId] = useState("");
@@ -35,6 +35,14 @@ const Salary = ({user}) => {
     payroll_enddate: "",
     payment_date: "",
   };
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // แปลง JSON เป็น Object
+    }
+  }, []);
 
   const [formData, setFormData] = useState(initialFormData);
 
@@ -293,7 +301,7 @@ const Salary = ({user}) => {
                 )}
               </div>
 
-              {user?.role === 'admin' && (
+              {user?.role === "admin" && (
                 <button
                   onClick={() => {
                     setIsEditing(false);
@@ -390,10 +398,10 @@ const Salary = ({user}) => {
                         <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">
                           รายได้สุทธิ
                         </th>
-                        {user?.role === 'admin'&&(
-                        <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">
-                          จัดการ
-                        </th>
+                        {user?.role === "admin" && (
+                          <th className="p-4 text-center font-medium text-gray-500 whitespace-nowrap">
+                            จัดการ
+                          </th>
                         )}
                       </tr>
                     </thead>
@@ -493,23 +501,23 @@ const Salary = ({user}) => {
                                 {formatCurrency(item.salary_total)}
                               </div>
                             </td>
-                            {user?.role === 'admin' &&(
-                            <td className="p-4 text-center whitespace-nowrap">
-                              <div className="flex justify-center space-x-2">
-                                <button
-                                  onClick={() => openEditModal(item)}
-                                  className="p-1 text-blue-500 hover:text-blue-700"
-                                >
-                                  <Edit2 size={20} />
-                                </button>
-                                <button
-                                  onClick={() => openDeleteModal(item)}
-                                  className="p-1 text-red-500 hover:text-red-700"
-                                >
-                                  <Trash2 size={20} />
-                                </button>
-                              </div>
-                            </td>
+                            {user?.role === "admin" && (
+                              <td className="p-4 text-center whitespace-nowrap">
+                                <div className="flex justify-center space-x-2">
+                                  <button
+                                    onClick={() => openEditModal(item)}
+                                    className="p-1 text-blue-500 hover:text-blue-700"
+                                  >
+                                    <Edit2 size={20} />
+                                  </button>
+                                  <button
+                                    onClick={() => openDeleteModal(item)}
+                                    className="p-1 text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 size={20} />
+                                  </button>
+                                </div>
+                              </td>
                             )}
                           </tr>
                         ))

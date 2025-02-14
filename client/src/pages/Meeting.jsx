@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Calendar, Search, Plus, Clock, ChevronDown, X } from "lucide-react";
+import {
+  Calendar,
+  Search,
+  Plus,
+  Clock,
+  ChevronDown,
+  X,
+  Edit,
+  Trash2,
+} from "lucide-react";
 
-const Meeting = () => {
+const Editmeeting = () => {
   const [meetings, setMeetings] = useState([]);
   const [filteredMeetings, setFilteredMeetings] = useState([]);
   const [filters, setFilters] = useState({
@@ -21,10 +30,19 @@ const Meeting = () => {
     timeend: "",
   });
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editMeeting, setEditMeeting] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
 
-  // Existing useEffect and handlers remain the same
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // แปลง JSON เป็น Object
+    }
+  }, []);
+
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
@@ -50,7 +68,7 @@ const Meeting = () => {
     fetchMeetings();
   }, []);
 
-  // Keep all the existing handler functions
+  // Keep your existing handler functions
   const handleFilterChange = (e) => {
     const newFilters = { ...filters, [e.target.name]: e.target.value };
     setFilters(newFilters);
@@ -60,10 +78,16 @@ const Meeting = () => {
   const applyFilters = (currentFilters) => {
     const filtered = meetings.filter((meeting) => {
       const searchFilter = currentFilters.search
-        ? meeting.firstname.toLowerCase().includes(currentFilters.search.toLowerCase()) ||
-          meeting.lastname.toLowerCase().includes(currentFilters.search.toLowerCase())
+        ? meeting.firstname
+            .toLowerCase()
+            .includes(currentFilters.search.toLowerCase()) ||
+          meeting.lastname
+            .toLowerCase()
+            .includes(currentFilters.search.toLowerCase())
         : true;
-      const statusFilter = currentFilters.status ? meeting.status === currentFilters.status : true;
+      const statusFilter = currentFilters.status
+        ? meeting.status === currentFilters.status
+        : true;
       const startDateFilter = currentFilters.startDate
         ? new Date(meeting.startdate) >= new Date(currentFilters.startDate)
         : true;
@@ -87,39 +111,45 @@ const Meeting = () => {
       );
     });
 
-    const sorted = filtered.sort((a, b) => {
-      const today = new Date();
-      const diffA = Math.abs(new Date(a.startdate) - today);
-      const diffB = Math.abs(new Date(b.startdate) - today);
-      return diffA - diffB;
-    });
-
-    setFilteredMeetings(sorted);
+    setFilteredMeetings(filtered);
   };
 
   const resetFilters = () => {
-    const initialFilters = {
+    setFilters({
       search: "",
       status: "",
       startDate: "",
       endDate: "",
       startTime: "",
       endTime: "",
-    };
-    setFilters(initialFilters);
+    });
     setFilteredMeetings(meetings);
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).replace(/\//g, "-");
+    return new Date(dateString)
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
+  };
+
+  const formatInputDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const handleModalChange = (e) => {
     setNewMeeting({ ...newMeeting, [e.target.name]: e.target.value });
+  };
+
+  const handleEditModalChange = (e) => {
+    setEditMeeting({ ...editMeeting, [e.target.name]: e.target.value });
   };
 
   const handleAddMeeting = async () => {
@@ -140,10 +170,16 @@ const Meeting = () => {
         employee_id: parseInt(newMeeting.employee_id, 10),
       };
 
-      const response = await axios.post("http://localhost:8080/api/meeting", payload);
+      const response = await axios.post(
+        "http://localhost:8080/api/meeting",
+        payload
+      );
       if (response.data && response.data.newmeetingroom) {
         setMeetings([...meetings, response.data.newmeetingroom]);
-        setFilteredMeetings([...filteredMeetings, response.data.newmeetingroom]);
+        setFilteredMeetings([
+          ...filteredMeetings,
+          response.data.newmeetingroom,
+        ]);
         setShowAddModal(false);
         setNewMeeting({
           employee_id: "",
@@ -153,7 +189,7 @@ const Meeting = () => {
           timeend: "",
         });
       } else {
-        alert("Unexpected response from the server.");
+        alert(response.data?.message || "Unexpected response from the server.");
       }
     } catch (error) {
       console.error("Failed to add meeting:", error);
@@ -161,39 +197,96 @@ const Meeting = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'allowed':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handleEditMeeting = async () => {
+    if (!editMeeting) {
+      alert("Please select a meeting to edit.");
+      return;
+    }
+
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/api/meeting/${editMeeting.meeting_id}`,
+        editMeeting
+      );
+
+      if (response.status === 200 && response.data?.update) {
+        const updatedMeetings = meetings.map((meeting) =>
+          meeting.meeting_id === editMeeting.meeting_id
+            ? { ...meeting, ...response.data.update }
+            : meeting
+        );
+        setMeetings(updatedMeetings);
+        setFilteredMeetings(updatedMeetings);
+        setShowEditModal(false);
+        setEditMeeting(null);
+      } else {
+        alert("Unexpected response from the server. Please check your data.");
+      }
+    } catch (error) {
+      console.error("Failed to edit meeting:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        "An error occurred while editing the meeting.";
+      alert(errorMessage);
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-    </div>
-  );
+  const handleDeleteMeeting = async (meetingId) => {
+    if (window.confirm("Are you sure you want to delete this meeting?")) {
+      try {
+        const response = await axios.delete(
+          `http://localhost:8080/api/meeting/${meetingId}`
+        );
+        if (response.data && response.data.deleted) {
+          const updatedMeetings = meetings.filter(
+            (meeting) => meeting.meeting_id !== meetingId
+          );
+          setMeetings(updatedMeetings);
+          setFilteredMeetings(updatedMeetings);
+        } else {
+          alert("Unexpected response from the server.");
+        }
+      } catch (error) {
+        console.error("Failed to delete meeting:", error);
+        alert("Error deleting meeting. Please try again.");
+      }
+    }
+  };
 
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-red-50 text-red-800 p-4 rounded-lg shadow flex items-center gap-2">
-        <X className="w-5 h-5" />
-        {error}
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "allowed":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
       </div>
-    </div>
-  );
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-red-50 text-red-800 p-4 rounded-lg shadow flex items-center gap-2">
+          <X className="w-5 h-5" />
+          {error}
+        </div>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        
 
         {/* Filters */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
@@ -293,31 +386,75 @@ const Meeting = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Employee</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date Range</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Time</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                    Employee
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                    Date Range
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                    Time
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                    Status
+                  </th>
+                  {user?.role === "admin" && (
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredMeetings.map((meeting) => (
-                  <tr key={meeting.meeting_id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={meeting.meeting_id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">
                         {meeting.firstname} {meeting.lastname}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-500">
-                      {formatDate(meeting.startdate)} - {formatDate(meeting.enddate)}
+                      {formatDate(meeting.startdate)} -{" "}
+                      {formatDate(meeting.enddate)}
                     </td>
                     <td className="px-6 py-4 text-gray-500">
                       {meeting.timestart} - {meeting.timeend}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}>
-                        {meeting.status || 'Pending'}
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          meeting.status
+                        )}`}
+                      >
+                        {meeting.status || "Pending"}
                       </span>
                     </td>
+                    {user?.role === "admin" && (
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditMeeting(meeting);
+                              setShowEditModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDeleteMeeting(meeting.meeting_id)
+                            }
+                            className="text-red-600 hover:text-red-700 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -337,7 +474,9 @@ const Meeting = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-xl font-bold text-gray-900 mb-6">New Meeting Room Request</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              New Meeting Room Request
+            </h2>
 
             <form className="space-y-4">
               <div>
@@ -428,8 +567,129 @@ const Meeting = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Meeting Modal */}
+      {showEditModal && editMeeting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Edit Meeting
+            </h2>
+
+            <form className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Employee ID
+                </label>
+                <input
+                  type="text"
+                  name="employee_id"
+                  placeholder="Enter employee ID"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={editMeeting.employee_id}
+                  onChange={handleEditModalChange}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    name="startdate"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={formatInputDate(editMeeting.startdate)}
+                    onChange={handleEditModalChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    name="enddate"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={formatInputDate(editMeeting.enddate)}
+                    onChange={handleEditModalChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    name="timestart"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={editMeeting.timestart}
+                    onChange={handleEditModalChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    name="timeend"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={editMeeting.timeend}
+                    onChange={handleEditModalChange}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  name="status"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={editMeeting.status}
+                  onChange={handleEditModalChange}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Allowed">Allowed</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEditMeeting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Meeting;
+export default Editmeeting;

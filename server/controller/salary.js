@@ -390,7 +390,7 @@ exports.update = async (req, res) => {
         lastname,
         position: job_position,
         banking,
-        banking_id,
+        banking_id:Number(banking_id),
         salary,
         absent_late,
         overtime,

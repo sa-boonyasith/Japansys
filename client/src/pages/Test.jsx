@@ -1,761 +1,769 @@
-import React, { useEffect, useState } from "react";
-import { PlusCircle, Edit2, Trash2, X, Search, Calendar, UserCircle, Download } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Camera, Search, Plus, Pencil, Trash2, X } from "lucide-react";
 
-const Salary = ({ user }) => {
+const Employeelist = () => {
   const [salaryData, setSalaryData] = useState([]);
-  const [error, setError] = useState(null);
-  const [employeeId, setEmployeeId] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [filteredItems, setFilteredItems] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const itemsPerPage = 5;
-
-  const initialFormData = {
-    employee_id: "",
+  const [error, setError] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
-    position: "",
+    job_position: "",
+    salary: "",
+    email: "",
+    phone_number: "",
+    birth_date: "",
+    age: "",
+    ethnicity: "",
+    nationality: "",
+    religion: "",
+    marital_status: "",
+    military_status: "",
+    liveby: "",
     banking: "",
     banking_id: "",
-    salary: 0,
-    overtime: 0,
-    bonus: 0,
-    absent_late: 0,
-    expense: 0,
-    tax: 0,
-    providentfund: 0,
-    socialsecurity: 0,
-    status: "Pending",
-    payroll_startdate: "",
-    payroll_enddate: "",
-    payment_date: "",
-  };
+    photo: "",
+    personal_info: {
+      address: "",
+      city: "",
+      zip_code: "",
+    },
+  });
 
-  const [formData, setFormData] = useState(initialFormData);
-
-  const months = [
-    { value: "01", label: "มกราคม" },
-    { value: "02", label: "กุมภาพันธ์" },
-    { value: "03", label: "มีนาคม" },
-    { value: "04", label: "เมษายน" },
-    { value: "05", label: "พฤษภาคม" },
-    { value: "06", label: "มิถุนายน" },
-    { value: "07", label: "กรกฎาคม" },
-    { value: "08", label: "สิงหาคม" },
-    { value: "09", label: "กันยายน" },
-    { value: "10", label: "ตุลาคม" },
-    { value: "11", label: "พฤศจิกายน" },
-    { value: "12", label: "ธันวาคม" },
-  ];
-
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
-
-  // Fetch Data
-  const fetchSalaryData = async () => {
+  const fetchEmployee = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/salary");
+      const response = await fetch("http://localhost:8080/api/employee");
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-      setSalaryData(data.listSalary);
-      setFilteredItems(data.listSalary);
+      setSalaryData(data.listemployee || []);
+      setFilteredItems(data.listemployee || []);
     } catch (err) {
-      setError("Failed to fetch salary data.");
-      console.error(err);
+      setError("Failed to fetch employee data.");
     }
   };
 
   useEffect(() => {
-    fetchSalaryData();
+    fetchEmployee();
   }, []);
 
-  // CRUD Operations
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("http://localhost:8080/api/salary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) throw new Error("Failed to add salary record");
-      await fetchSalaryData();
-      setIsModalOpen(false);
-      setFormData(initialFormData);
-    } catch (err) {
-      setError("Failed to add salary record.");
-      console.error(err);
-    }
-  };
-
-  const handleEdit = async (e) => {
-    e.preventDefault();
-    if (!selectedItem?.salary_id) {
-      setError("Error: Cannot find salary ID");
-      return;
-    }
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/salary/${selectedItem.salary_id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to update salary record");
-      await fetchSalaryData();
-      setIsModalOpen(false);
-      setSelectedItem(null);
-      setFormData(initialFormData);
-      setIsEditing(false);
-    } catch (err) {
-      setError("Failed to update salary record.");
-      console.error(err);
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/salary/${selectedItem.salary_id}`,
-        { method: "DELETE" }
-      );
-      if (!response.ok) throw new Error("Failed to delete salary record");
-      await fetchSalaryData();
-      setIsDeleteModalOpen(false);
-      setSelectedItem(null);
-    } catch (err) {
-      setError("Failed to delete salary record.");
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
-    let filtered = [...salaryData];
-    if (employeeId) {
-      filtered = filtered.filter((item) =>
-        item.employee_id.toString().includes(employeeId.trim())
-      );
-    }
-    if (selectedMonth) {
-      filtered = filtered.filter((item) => {
-        const payrollMonth = new Date(item.payroll_startdate).getMonth() + 1;
-        return payrollMonth.toString().padStart(2, "0") === selectedMonth;
-      });
-    }
-    if (selectedYear) {
-      filtered = filtered.filter((item) => {
-        const payrollYear = new Date(item.payroll_startdate).getFullYear();
-        return payrollYear === selectedYear;
-      });
-    }
+    const filtered = salaryData.filter(
+      (employee) =>
+        employee.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.job_position?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     setFilteredItems(filtered);
-    setCurrentPage(1);
-  }, [employeeId, selectedMonth, selectedYear, salaryData]);
+  }, [searchTerm, salaryData]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("th-TH", {
-      style: "currency",
-      currency: "THB",
-    }).format(amount);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "salary" || name === "age"
+          ? parseFloat(value) || value
+          : value,
+    }));
   };
 
-  const getStatusBadge = (status) => {
-    const styles = status === "Paid" 
-      ? "bg-green-100 text-green-800 border-green-200"
-      : "bg-yellow-100 text-yellow-800 border-yellow-200";
-    return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles} border`}>
-        {status === "Paid" ? "จ่ายแล้ว" : "รออนุมัติ"}
-      </span>
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const formDataToSend = new FormData();
+
+      // Append all form data
+      Object.keys(formData).forEach((key) => {
+        if (key !== "photo" && key !== "personal_info") {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      // Append photo if exists
+      if (photoFile) {
+        formDataToSend.append("photo", photoFile);
+      }
+
+      // Add personal info
+      formDataToSend.append(
+        "personal_info",
+        JSON.stringify(formData.personal_info)
+      );
+
+      const url = editingId
+        ? `http://localhost:8080/api/employee/${editingId}`
+        : "http://localhost:8080/api/employee";
+
+      const response = await fetch(url, {
+        method: editingId ? "PUT" : "POST",
+        body: formDataToSend,
+      });
+
+      if (!response.ok)
+        throw new Error(`Failed to ${editingId ? "update" : "add"} employee`);
+
+      fetchEmployee();
+      setShowForm(false);
+      setShowDetailModal(false);
+      setEditingId(null);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setFormData({
+        firstname: "",
+        lastname: "",
+        job_position: "",
+        salary: "",
+        email: "",
+        phone_number: "",
+        birth_date: "",
+        age: "",
+        ethnicity: "",
+        nationality: "",
+        religion: "",
+        marital_status: "",
+        military_status: "",
+        liveby: "",
+        banking: "",
+        banking_id: "",
+        photo: "",
+        personal_info: {
+          address: "",
+          city: "",
+          zip_code: "",
+        },
+      });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleShowDetail = (employee) => {
+    setSelectedEmployee(employee);
+    setShowDetailModal(true);
+  };
+
+  const handleEdit = (employee) => {
+    setFormData({
+      ...employee,
+      birth_date: employee.birth_date.split("T")[0],
+    });
+    setEditingId(employee.id);
+    setPhotoPreview(
+      employee.photo ? `http://localhost:8080${employee.photo}` : null
     );
+    setShowForm(true);
+    setShowDetailModal(false);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this employee?")) {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/employee/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if (!response.ok) throw new Error("Failed to delete employee");
+        fetchEmployee();
+        setShowDetailModal(false);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
   };
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-sm mb-6 p-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Salary Management</h1>
-                <p className="text-gray-500">จัดการข้อมูลเงินเดือนพนักงาน</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50">
-                <Download className="w-4 h-4" />
-                Export
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditing(false);
-                  setFormData(initialFormData);
-                  setIsModalOpen(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
-                <PlusCircle className="w-4 h-4" />
-                เพิ่มข้อมูล
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters Section */}
-        <div className="bg-white rounded-xl shadow-sm mb-6 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="number"
-                placeholder="ค้นหารหัสพนักงาน..."
-                value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        <div className="bg-white rounded-2xl shadow-xl p-6">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">
+              Employee Management
+            </h1>
+            <button
+              onClick={() => {
+                setShowForm(true);
+                setEditingId(null);
+                setPhotoFile(null);
+                setPhotoPreview(null);
+                setFormData({
+                  firstname: "",
+                  lastname: "",
+                  job_position: "",
+                  salary: "",
+                  email: "",
+                  phone_number: "",
+                  birth_date: "",
+                  age: "",
+                  ethnicity: "",
+                  nationality: "",
+                  religion: "",
+                  marital_status: "",
+                  military_status: "",
+                  liveby: "",
+                  banking: "",
+                  banking_id: "",
+                  photo: "",
+                  personal_info: {
+                    address: "",
+                    city: "",
+                    zip_code: "",
+                  },
+                });
+              }}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
             >
-              <option value="">เลือกเดือน</option>
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>{month.label}</option>
-              ))}
-            </select>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>{year + 543}</option>
-              ))}
-            </select>
+              <Plus size={20} />
+              Add Employee
+            </button>
           </div>
-        </div>
 
-        {/* Table Section */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">พนักงาน</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">สถานะ</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">เงินเดือน</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">รายได้เพิ่มเติม</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">รายการหัก</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">รายได้สุทธิ</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
-                  <tr key={item.salary_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-gray-100 p-2 rounded-full">
-                          <UserCircle className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">{`${item.firstname} ${item.lastname}`}</div>
-                          <div className="text-sm text-gray-500">ID: {item.employee_id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {getStatusBadge(item.status)}
-                    </td>
-                    <td className="px-6 py-4 text-center font-medium text-gray-900">
-                      {formatCurrency(item.salary)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-sm text-center">
-                        <div className="text-green-600">+ OT: {formatCurrency(item.overtime)}</div>
-                        <div className="text-green-600">+ โบนัส: {formatCurrency(item.bonus)}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-sm text-center">
-                        <div className="text-red-600">- ภาษี: {formatCurrency(item.tax)}</div>
-                        <div className="text-red-600">- กองทุน: {formatCurrency(item.providentfund)}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="text-lg font-bold text-blue-600">
-                        {formatCurrency(item.salary_total)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setFormData(item);
-                            setIsEditing(true);
-                            setIsModalOpen(true);
-                          }}
-                          className="p-2 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-blue-50"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setIsDeleteModalOpen(true);
-                          }}
-                          className="p-2 text-gray-500 hover:text-red-600 rounded-lg hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="relative mb-8">
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200 shadow-sm hover:shadow-md"
+            />
+            <Search
+              className="absolute left-4 top-3.5 text-gray-400"
+              size={20}
+            />
           </div>
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-6 py-4 border-t">
-            <div className="text-sm text-gray-500">
-              แสดง {(currentPage - 1) * itemsPerPage + 1} ถึง{" "}
-              {Math.min(currentPage * itemsPerPage, filteredItems.length)} จาก{" "}
-              {filteredItems.length} รายการ
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1 text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed
-                         border border-gray-200 hover:bg-gray-50"
-              >
-                ก่อนหน้า
-              </button>
-              {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentPage(idx + 1)}
-                  className={`px-3 py-1 text-sm rounded-lg ${
-                    currentPage === idx + 1
-                      ? "bg-blue-600 text-white"
-                      : "border border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-              <button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === Math.ceil(filteredItems.length / itemsPerPage)}
-                className="px-3 py-1 text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed
-                         border border-gray-200 hover:bg-gray-50"
-              >
-                ถัดไป
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* Add/Edit Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center p-6 border-b">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {isEditing ? "แก้ไขข้อมูลเงินเดือน" : "เพิ่มข้อมูลเงินเดือน"}
-                  </h3>
-                  <p className="text-sm text-gray-500">กรอกข้อมูลให้ครบถ้วน</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setFormData(initialFormData);
-                    setIsEditing(false);
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <form onSubmit={isEditing ? handleEdit : handleAdd} className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      รหัสพนักงาน
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.employee_id}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          employee_id: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ชื่อ
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.firstname}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          firstname: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      นามสกุล
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.lastname}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          lastname: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ตำแหน่ง
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.position}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          position: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ธนาคาร
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.banking}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          banking: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 boder border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      เลขบัญชี
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.banking_id}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          banking_id: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      เงินเดือน
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.salary}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          salary: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ค่าล่วงเวลา
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.overtime}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          overtime: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      โบนัส
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.bonus}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          bonus: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ขาด/สาย
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.absent_late}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          absent_late: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ค่าใช้จ่าย
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.expense}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          expense: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ภาษี
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.tax}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          tax: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      กองทุนสำรอง
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.providentfund}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          providentfund: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ประกันสังคม
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.socialsecurity}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          socialsecurity: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      งวดการจ่าย
-                    </label>
-                    <input
-                      type="month"
-                      defaultValue={
-                        formData.payroll_startdate
-                          ? `${new Date(formData.payroll_startdate).getFullYear()}-${(
-                              new Date(formData.payroll_startdate).getMonth() + 1
-                            )
-                              .toString()
-                              .padStart(2, "0")}`
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const selectedMonth = e.target.value;
-                        const [year, month] = selectedMonth.split("-").map(Number);
-                        const startDate = `${selectedMonth}-01`;
-                        const endDate = new Date(year, month, 0);
-
-                        setFormData({
-                          ...formData,
-                          payroll_startdate: startDate,
-                          payroll_enddate: `${year}-${String(month).padStart(2, "0")}-${endDate.getDate()}`,
-                        });
-                      }}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  {isEditing && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        สถานะ
-                      </label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            status: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="Pending">รออนุมัติ</option>
-                        <option value="Paid">จ่ายแล้ว</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        setFormData(initialFormData);
-                        setIsEditing(false);
-                      }}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                    >
-                      ยกเลิก
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                    >
-                      {isEditing ? "บันทึกการแก้ไข" : "เพิ่มข้อมูล"}
-                    </button>
-                  </div>
-                </form>
-              </div>
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
+              {error}
             </div>
           )}
 
-          {/* Delete Confirmation Modal */}
-          {isDeleteModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg w-full max-w-md">
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">
-                    ยืนยันการลบข้อมูล
-                  </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredItems.map((employee) => (
+              <div
+                key={employee.id}
+                className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+                onClick={() => handleShowDetail(employee)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <img
+                      src={
+                        employee.photo
+                          ? `http://localhost:8080${employee.photo}`
+                          : "/api/placeholder/64/64"
+                      }
+                      alt={`${employee.firstname} ${employee.lastname}`}
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 text-lg">
+                      {employee.firstname} {employee.lastname}
+                    </h3>
+                    <p className="text-gray-600">{employee.job_position}</p>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-gray-600">
-                    คุณต้องการลบข้อมูลเงินเดือนของ {selectedItem?.firstname}{" "}
-                    {selectedItem?.lastname} ใช่หรือไม่?
+                    <span className="font-medium">Email:</span> {employee.email}
                   </p>
-                  <div className="mt-6 flex justify-end space-x-3">
-                    <button
-                      onClick={() => setIsDeleteModalOpen(false)}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                    >
-                      ยกเลิก
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                    >
-                      ยืนยันการลบ
-                    </button>
-                  </div>
+                  <p className="text-gray-600 mt-1">
+                    <span className="font-medium">Salary:</span> ฿
+                    {employee.salary?.toLocaleString()}
+                  </p>
                 </div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={
+                      selectedEmployee.photo
+                        ? `http://localhost:8080${selectedEmployee.photo}`
+                        : "/api/placeholder/96/96"
+                    }
+                    alt={`${selectedEmployee.firstname} ${selectedEmployee.lastname}`}
+                    className="w-20 h-20 rounded-xl object-cover shadow-md"
+                  />
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      {selectedEmployee.firstname} {selectedEmployee.lastname}
+                    </h2>
+                    <p className="text-gray-600 text-lg">
+                      {selectedEmployee.job_position}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(selectedEmployee)}
+                    className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors shadow-md"
+                  >
+                    <Pencil size={18} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(selectedEmployee.id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-md"
+                  >
+                    <Trash2 size={18} />
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors shadow-md"
+                  >
+                    <X size={18} />
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Personal Information
+                    </h3>
+                    <div className="space-y-3">
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Email:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.email}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Phone:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.phone_number}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Birth Date:</span>
+                        <span className="font-medium">
+                          {new Date(
+                            selectedEmployee.birth_date
+                          ).toLocaleDateString()}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Age:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.age}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Address:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.liveby}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Employment Information
+                    </h3>
+                    <div className="space-y-3">
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Position:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.job_position}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Salary:</span>
+                        <span className="font-medium">
+                          ฿{selectedEmployee.salary?.toLocaleString()}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Background Information
+                    </h3>
+                    <div className="space-y-3">
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Nationality:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.nationality}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Ethnicity:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.ethnicity}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Religion:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.religion}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Marital Status:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.marital_status}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Military Status:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.military_status}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Banking Information
+                    </h3>
+                    <div className="space-y-3">
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Bank:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.banking || "N/A"}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-gray-600">Account Number:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.banking_id || "N/A"}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  System Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <p className="text-gray-600">
+                    Created:{" "}
+                    {new Date(selectedEmployee.created_at).toLocaleString()}
+                  </p>
+                  <p className="text-gray-600">
+                    Last Updated:{" "}
+                    {new Date(selectedEmployee.updated_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {editingId ? "Edit Employee" : "Add New Employee"}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingId(null);
+                    setPhotoPreview(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6">
+              <div className="mb-6 flex justify-center">
+                <div className="relative">
+                  <img
+                    src={photoPreview || "/api/placeholder/128/128"}
+                    alt="Employee photo"
+                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+                  />
+                  <label className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full cursor-pointer shadow-lg transition-colors">
+                    <Camera size={20} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Firstname
+                    </label>
+                    <input
+                      type="text"
+                      name="firstname"
+                      value={formData.firstname}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Job Position
+                    </label>
+                    <input
+                      type="text"
+                      name="job_position"
+                      value={formData.job_position}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Birth Date
+                    </label>
+                    <input
+                      type="date"
+                      name="birth_date"
+                      value={formData.birth_date}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      name="age"
+                      value={formData.age}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ethnicity
+                    </label>
+                    <input
+                      type="text"
+                      name="ethnicity"
+                      value={formData.ethnicity}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Religion
+                    </label>
+                    <input
+                      type="text"
+                      name="religion"
+                      value={formData.religion}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lastname
+                    </label>
+                    <input
+                      type="text"
+                      name="lastname"
+                      value={formData.lastname}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone_number"
+                      value={formData.phone_number}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Salary
+                    </label>
+                    <input
+                      type="number"
+                      name="salary"
+                      value={formData.salary}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nationality
+                    </label>
+                    <input
+                      type="text"
+                      name="nationality"
+                      value={formData.nationality}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      name="liveby"
+                      value={formData.liveby}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bank Name
+                    </label>
+                    <input
+                      type="text"
+                      name="banking"
+                      value={formData.banking}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bank Account Number
+                    </label>
+                    <input
+                      type="text"
+                      name="banking_id"
+                      value={formData.banking_id}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingId(null);
+                    setPhotoPreview(null);
+                  }}
+                  className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  {editingId ? "Update" : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Salary;
+export default Employeelist;
