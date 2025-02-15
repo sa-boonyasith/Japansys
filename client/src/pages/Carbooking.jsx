@@ -31,7 +31,7 @@ const CarBooking = () => {
     timeend: "",
     place: "",
     car: "",
-    status: "pending",
+    status: "Pending",
   });
   const [editRentCar, setEditRentCar] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -188,7 +188,7 @@ const CarBooking = () => {
           timeend: "",
           place: "",
           car: "",
-          status: "pending",
+          status: "Pending",
         });
       } else {
         alert("Unexpected response from the server.");
@@ -358,9 +358,9 @@ const CarBooking = () => {
               onChange={handleFilterChange}
             >
               <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="allowed">Allowed</option>
-              <option value="rejected">Rejected</option>
+              <option value="Pending">Pending</option>
+              <option value="Allowed">Allowed</option>
+              <option value="Rejected">Rejected</option>
             </select>
 
             <div className="flex gap-2">
@@ -711,9 +711,9 @@ const CarBooking = () => {
                     className="w-full rounded-lg border border-gray-200"
                     required
                   >
-                    <option value="pending">Pending</option>
-                    <option value="allowed">Allowed</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Allowed">Allowed</option>
+                    <option value="Rejected">Rejected</option>
                   </select>
                 </div>
               </div>

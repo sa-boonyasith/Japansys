@@ -154,7 +154,7 @@ model Rentcar {
   timeend   String
   place     String
   car       String
-  status    Status   @default(pending)
+  status    Status   @default(Pending)
 }
 
 model Project {
@@ -354,7 +354,7 @@ enum StatusJobapp {
 }
 
 enum Status {
-  pending
-  allowed
-  rejected
+  Pending
+  Allowed
+  Rejected
 }

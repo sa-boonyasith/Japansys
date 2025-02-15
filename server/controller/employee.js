@@ -44,6 +44,8 @@ exports.create = async (req, res) => {
     // Convert birth_date to a Date object
     const formattedBirthDate = birth_date ? new Date(birth_date) : null;
 
+    const formattedBankingId = banking_id ? String(banking_id) : null;
+
     // Create new employee
     const newEmployee = await prisma.employee.create({
       data: {
@@ -64,7 +66,7 @@ exports.create = async (req, res) => {
         marital_status,
         military_status,
         banking,
-        banking_id,
+        banking_id: formattedBankingId,
         photo,
       },
     });
@@ -140,16 +142,40 @@ exports.update = async (req, res) => {
       console.error("Error updating employee:", err.message);
     }
   };
-exports.remove = async (req, res) => {
-  try {
-    const {id} = req.params
-    const deleted = await prisma.employee.delete({
-        where : {
-            id: Number(id)
-        }
-    })
-    res.json({message: "Deleted succesfully",deleted});
-} catch (err) {
-  console.error("Error deleting employee",err.message)
-}
-};
+  exports.remove = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const employeeId = Number(id);
+  
+      const employee = await prisma.employee.findUnique({
+        where: { id: employeeId },
+      });
+  
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+  
+      // 🔹 1. ลบ Todo ที่เกี่ยวข้องก่อน
+      await prisma.todo.deleteMany({
+        where: { employee_id: employeeId },
+      });
+  
+      // 🔹 2. ลบ Project ที่เกี่ยวข้อง
+      await prisma.project.deleteMany({
+        where: { employee_id: employeeId },
+      });
+  
+      // 🔹 3. ลบ Employee
+      const deletedEmployee = await prisma.employee.delete({
+        where: { id: employeeId },
+      });
+  
+      res.status(200).json({ message: "Deleted successfully", deletedEmployee });
+    } catch (err) {
+      console.error("Error deleting employee", err.message);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };
+  
+  
+  
