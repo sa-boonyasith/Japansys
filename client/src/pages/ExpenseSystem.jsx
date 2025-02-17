@@ -105,12 +105,12 @@ const ExpenseSystem = () => {
         setAddError("Please fill out all required fields.");
         return;
       }
-
+  
       const expenseData = {
         ...newExpense,
         date: new Date(newExpense.date).toISOString(),
       };
-
+  
       // POST new expense
       const response = await fetch("http://localhost:8080/api/expense", {
         method: "POST",
@@ -119,17 +119,21 @@ const ExpenseSystem = () => {
         },
         body: JSON.stringify(expenseData),
       });
-
+  
       if (!response.ok) {
-        throw new Error("Failed to add expense");
+        if (response.status === 404) {
+          throw new Error("ไม่มีไอดีในระบบ");
+        } else {
+          throw new Error("Failed to add expense");
+        }
       }
-
+  
       // Fetch updated expenses
       const updatedResponse = await fetch("http://localhost:8080/api/expense");
       const data = await updatedResponse.json();
       setExpenses(data.listExpense);
       setFilterExpenses(data.listExpense);
-
+  
       // Reset form and close modal
       setShowAddModal(false);
       setNewExpense({
@@ -142,9 +146,15 @@ const ExpenseSystem = () => {
       setAddError("");
     } catch (err) {
       console.error("Error adding expense:", err);
-      setAddError("Failed to add expense. Please try again.");
+      
+      if (err.message === "ไม่มีไอดีในระบบ") {
+        setAddError("ไม่มีไอดีในระบบ");
+      } else {
+        setAddError("Failed to add expense. Please try again.");
+      }
     }
   };
+  
 
   const handleEditExpense = async () => {
     if (!editExpense) return;

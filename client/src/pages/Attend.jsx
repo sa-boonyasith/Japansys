@@ -77,7 +77,11 @@ const Attend = () => {
       }));
     } catch (err) {
       console.error('เช็คอินไม่สำเร็จ', err); 
-      alert('เช็คอินไม่สำเร็จ: ' + (err.response?.data?.message || err.message));
+      if (err.response?.status === 400) {
+        alert('เช็คอินไม่สำเร็จ: พนักงานได้เช็คอินแล้ว');
+      } else {
+        alert('เช็คอินไม่สำเร็จ: ' + (err.response?.data?.message || err.message));
+      }
     }
   };
 

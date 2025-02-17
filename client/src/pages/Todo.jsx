@@ -7,16 +7,20 @@ const Todo = () => {
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
+  const employeeList = ['all', ...new Set(todos.map(todo => todo.employee_id))].sort((a, b) => a - b);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [employeeId, setEmployeeId] = useState(1);
   const [selectedProject, setSelectedProject] = useState('all'); // เพิ่ม state สำหรับการกรอง
   const [newTask, setNewTask] = useState({
     project_name: "",
     name: "",
     desc: "",
+    employee_id:"",
   });
   const [editingTask, setEditingTask] = useState(null);
+
+  
 
   const fetchTodos = async () => {
     try {
@@ -39,53 +43,94 @@ const Todo = () => {
   const projectList = ['all', ...new Set(todos.map(todo => todo.project_name))];
 
   // กรองข้อมูลตาม Project ที่เลือก
-  const filteredTodos = selectedProject === 'all' 
-    ? todos 
-    : todos.filter(todo => todo.project_name === selectedProject);
+  const filteredTodos = todos
+  .filter(todo => selectedProject === 'all' || todo.project_name === selectedProject)
+  .filter(todo => selectedEmployeeId === 'all' || todo.employee_id === parseInt(selectedEmployeeId));
 
-  const updateTaskStatus = async (todo_id, newStatus) => {
-    try {
-      const taskToUpdate = todos.find((todo) => todo.todo_id === todo_id);
-      if (!taskToUpdate) {
-        alert("Task not found");
-        return;
-      }
-
-      const payload = {
-        project_name: taskToUpdate.project_name,
-        employee_id: employeeId,
-        todo: [
-          {
-            todo_id: taskToUpdate.todo_id,
-            status: newStatus,
-            name: taskToUpdate.name,
-            desc: taskToUpdate.desc,
+    const updateTaskStatus = async (todo_id, newStatus) => {
+      try {
+        const taskToUpdate = todos.find((todo) => todo.todo_id === todo_id);
+        if (!taskToUpdate) {
+          alert("Task not found");
+          return;
+        }
+    
+        const payload = {
+          project_name: taskToUpdate.project_name,
+          employee_id: taskToUpdate.employee_id, // ใช้ employee_id จาก task ที่กำลังอัพเดท
+          todo: [
+            {
+              todo_id: taskToUpdate.todo_id,
+              status: newStatus,
+              name: taskToUpdate.name,
+              desc: taskToUpdate.desc,
+            },
+          ],
+        };
+    
+        await fetch(`http://localhost:8080/api/todo`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ],
-      };
+          body: JSON.stringify(payload)
+        });
+    
+        setTodos((prevTodos) =>
+          prevTodos.map((todo) =>
+            todo.todo_id === todo_id ? { ...todo, status: newStatus } : todo
+          )
+        );
+      } catch (err) {
+        console.error("Error updating task status:", err);
+        alert("Failed to update task status");
+      }
+    };
 
-      await fetch(`http://localhost:8080/api/todo`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-
-      setTodos((prevTodos) =>
-        prevTodos.map((todo) =>
-          todo.todo_id === todo_id ? { ...todo, status: newStatus } : todo
-        )
-      );
-    } catch (err) {
-      console.error("Error updating task status:", err);
-      alert("Failed to update task status");
-    }
-  };
+    // เพิ่ม function สำหรับตรวจสอบ employee
+    const checkEmployeeExists = async (employeeId) => {
+      try {
+        const response = await fetch(`http://localhost:8080/api/employee`);
+        if (!response.ok) {
+          throw new Error('ไม่สามารถตรวจสอบข้อมูลพนักงานได้');
+        }
+        const data = await response.json();
+        
+        // ตรวจสอบว่ามี employee ที่มี id ตรงกับที่ระบุหรือไม่
+        const employeeExists = data.listemployee.some(
+          employee => employee.id === employeeId
+        );
+    
+        if (!employeeExists) {
+          throw new Error('ไม่พบรหัสพนักงานนี้ในระบบ');
+        }
+    
+        return true;
+      } catch (err) {
+        console.error("Error checking employee:", err);
+        throw err; // ส่ง error ไปให้ handleAddTask จัดการ
+      }
+    };
 
   const handleAddTask = async () => {
     try {
-      await fetch("http://localhost:8080/api/todo", {
+      // ตรวจสอบว่ากรอกข้อมูลครบหรือไม่
+      if (!newTask.project_name || !newTask.name || !newTask.employee_id) {
+        alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+        return;
+      }
+
+      // แปลง employee_id เป็น number
+      const employeeId = parseInt(newTask.employee_id);
+      if (isNaN(employeeId)) {
+        alert("Employee ID ต้องเป็นตัวเลขเท่านั้น");
+        return;
+      }
+
+      await checkEmployeeExists(employeeId);
+
+      // ถ้าผ่านการตรวจสอบทั้งหมด จึงทำการสร้าง task
+      const response = await fetch("http://localhost:8080/api/todo", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,22 +141,30 @@ const Todo = () => {
           todo: [
             {
               name: newTask.name,
-              desc: newTask.desc,
+              desc: newTask.desc || '',
             },
           ],
         })
       });
-  
+
+      if (!response.ok) {
+        throw new Error("Failed to create task");
+      }
+
       await fetchTodos();
       setIsModalOpen(false);
       setNewTask({
         project_name: "",
         name: "",
         desc: "",
+        employee_id: "",
       });
+
+      // แสดงข้อความสำเร็จ
+      alert("สร้าง Task สำเร็จ");
     } catch (err) {
       console.error("Error adding task:", err);
-      alert("Failed to create task: " + err.message);
+      alert("เกิดข้อผิดพลาดในการสร้าง Task: " + err.message);
     }
   };
 
@@ -119,7 +172,7 @@ const Todo = () => {
     try {
       const payload = {
         project_name: editingTask.project_name,
-        employee_id: employeeId,
+        employee_id: parseInt(editingTask.employee_id),
         todo: [
           {
             todo_id: editingTask.todo_id,
@@ -201,6 +254,23 @@ const Todo = () => {
                 </option>
               ))}
             </select>
+
+            <select
+            value={selectedEmployeeId}
+            onChange={(e)=> setSelectedEmployeeId(e.target.value)}
+            className="px-4 py-2 border rounded-lg focus:ring-2 focusLring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value={"all"}>พนักงานทั้งหมด</option>
+              {employeeList.filter(id=>id!== 'all')
+              .map((employeeId) =>(
+                <option key={employeeId} value={employeeId}>
+                  พนักงาน ID:{employeeId}
+                </option>
+              ))}
+            </select>
+            <div className="text-sm text-gray-600">
+              Task ทั้งหมด : {filteredTodos.length}
+            </div>
           </div>
           <button
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center gap-2 shadow-lg"

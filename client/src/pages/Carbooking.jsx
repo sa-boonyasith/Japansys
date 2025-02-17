@@ -195,7 +195,11 @@ const CarBooking = () => {
       }
     } catch (error) {
       console.error("Failed to add car booking:", error);
-      alert("Error adding car booking. Please try again.");
+      if (error.response?.status === 404) {
+        alert("ไม่มีไอดีในระบบ");
+      } else {
+        alert("Error adding car booking. Please try again.");
+      }
     }
   };
 
@@ -481,12 +485,35 @@ const CarBooking = () => {
 
         {/* Add Booking Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-md max-w-md w-full p-6">
-              <h2 className="text-xl font-bold mb-4">Add New Booking</h2>
-              <div className="space-y-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 scale-100 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Add New Booking
+                </h2>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Employee ID
                   </label>
                   <input
@@ -494,13 +521,14 @@ const CarBooking = () => {
                     name="employee_id"
                     value={newRentCar.employee_id}
                     onChange={handleModalChange}
-                    className="w-full rounded-lg border border-gray-200"
+                    className="w-full h-9 rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Start Date
                     </label>
                     <input
@@ -508,12 +536,12 @@ const CarBooking = () => {
                       name="startdate"
                       value={newRentCar.startdate}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full h-9 rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       End Date
                     </label>
                     <input
@@ -521,14 +549,15 @@ const CarBooking = () => {
                       name="enddate"
                       value={newRentCar.enddate}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full rounded-lg h-9 border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Start Time
                     </label>
                     <input
@@ -536,12 +565,12 @@ const CarBooking = () => {
                       name="timestart"
                       value={newRentCar.timestart}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full rounded-lg h-9 border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       End Time
                     </label>
                     <input
@@ -549,13 +578,14 @@ const CarBooking = () => {
                       name="timeend"
                       value={newRentCar.timeend}
                       onChange={handleModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full rounded-lg h-9 border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Location
                   </label>
                   <input
@@ -563,12 +593,13 @@ const CarBooking = () => {
                     name="place"
                     value={newRentCar.place}
                     onChange={handleModalChange}
-                    className="w-full rounded-lg border border-gray-200"
+                    className="w-full rounded-lg border h-9 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Vehicle
                   </label>
                   <input
@@ -576,21 +607,22 @@ const CarBooking = () => {
                     name="car"
                     value={newRentCar.car}
                     onChange={handleModalChange}
-                    className="w-full rounded-lg border border-gray-200"
+                    className="w-full rounded-lg border h-9 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required
                   />
                 </div>
               </div>
-              <div className="mt-6 flex justify-end gap-3">
+
+              <div className="mt-8 flex justify-end gap-3">
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition duration-200"
+                  className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddRentCar}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-md hover:shadow-lg"
                 >
                   Add Booking
                 </button>
@@ -601,12 +633,38 @@ const CarBooking = () => {
 
         {/* Edit Booking Modal */}
         {showEditModal && editRentCar && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-              <h2 className="text-xl font-bold mb-4">Edit Booking</h2>
-              <div className="space-y-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 scale-100 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Edit Booking
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditRentCar(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Employee ID
                   </label>
                   <input
@@ -614,13 +672,14 @@ const CarBooking = () => {
                     name="employee_id"
                     value={editRentCar.employee_id}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border border-gray-200"
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Start Date
                     </label>
                     <input
@@ -628,12 +687,12 @@ const CarBooking = () => {
                       name="startdate"
                       value={formatInputDate(editRentCar.startdate)}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm  font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       End Date
                     </label>
                     <input
@@ -641,14 +700,15 @@ const CarBooking = () => {
                       name="enddate"
                       value={formatInputDate(editRentCar.enddate)}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Start Time
                     </label>
                     <input
@@ -656,12 +716,12 @@ const CarBooking = () => {
                       name="timestart"
                       value={editRentCar.timestart}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       End Time
                     </label>
                     <input
@@ -669,13 +729,14 @@ const CarBooking = () => {
                       name="timeend"
                       value={editRentCar.timeend}
                       onChange={handleEditModalChange}
-                      className="w-full rounded-lg border border-gray-200"
+                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                       required
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Location
                   </label>
                   <input
@@ -683,12 +744,13 @@ const CarBooking = () => {
                     name="place"
                     value={editRentCar.place}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border border-gray-200"
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Vehicle
                   </label>
                   <input
@@ -696,19 +758,20 @@ const CarBooking = () => {
                     name="car"
                     value={editRentCar.car}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border border-gray-200"
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Status
                   </label>
                   <select
                     name="status"
                     value={editRentCar.status}
                     onChange={handleEditModalChange}
-                    className="w-full rounded-lg border border-gray-200"
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required
                   >
                     <option value="Pending">Pending</option>
@@ -717,19 +780,20 @@ const CarBooking = () => {
                   </select>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end gap-3">
+
+              <div className="mt-8 flex justify-end gap-3">
                 <button
                   onClick={() => {
                     setShowEditModal(false);
                     setEditRentCar(null);
                   }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition duration-200"
+                  className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleEditRentCar}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-md hover:shadow-lg"
                 >
                   Save Changes
                 </button>

@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Loader2, Search, X, Mail, Phone, MapPin, Building, Calendar, DollarSign, User, Pencil, Trash2 } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  Building,
+  Calendar,
+  DollarSign,
+  User,
+  Pencil,
+  Trash2,
+  Briefcase,
+} from "lucide-react";
 
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
@@ -47,7 +61,9 @@ const EmployeeList = () => {
   const handleEdit = (employee) => {
     setEditForm({
       ...employee,
-      birth_date: employee.birth_date ? new Date(employee.birth_date).toISOString().split('T')[0] : '',
+      birth_date: employee.birth_date
+        ? new Date(employee.birth_date).toISOString().split("T")[0]
+        : "",
     });
     setIsEditing(true);
   };
@@ -55,16 +71,19 @@ const EmployeeList = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8080/api/employee/${editForm.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editForm),
-      });
+      const response = await fetch(
+        `http://localhost:8080/api/employee/${editForm.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(editForm),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to update employee');
+        throw new Error("Failed to update employee");
       }
 
       setSuccessMessage("Employee updated successfully");
@@ -83,11 +102,11 @@ const EmployeeList = () => {
   const handleDelete = async (id) => {
     try {
       const response = await fetch(`http://localhost:8080/api/employee/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete employee');
+        throw new Error("Failed to delete employee");
       }
 
       setSuccessMessage("Employee deleted successfully");
@@ -177,7 +196,11 @@ const EmployeeList = () => {
                 <div className="flex items-start gap-4">
                   <div className="relative">
                     <img
-                      src={emp.photo ? `http://localhost:8080${emp.photo}` : "/api/placeholder/80/80"}
+                      src={
+                        emp.photo
+                          ? `http://localhost:8080${emp.photo}`
+                          : "/api/placeholder/80/80"
+                      }
                       alt={`${emp.firstname} ${emp.lastname}`}
                       className="w-20 h-20 rounded-lg object-cover"
                     />
@@ -263,9 +286,13 @@ const EmployeeList = () => {
 
                 {showDeleteConfirm ? (
                   <div className="p-6 bg-red-50 rounded-lg">
-                    <h4 className="text-lg font-semibold text-red-800 mb-4">Confirm Deletion</h4>
+                    <h4 className="text-lg font-semibold text-red-800 mb-4">
+                      Confirm Deletion
+                    </h4>
                     <p className="text-red-600 mb-6">
-                      Are you sure you want to delete {selectedEmployee.firstname} {selectedEmployee.lastname}? This action cannot be undone.
+                      Are you sure you want to delete{" "}
+                      {selectedEmployee.firstname} {selectedEmployee.lastname}?
+                      This action cannot be undone.
                     </p>
                     <div className="flex gap-4">
                       <button
@@ -293,7 +320,10 @@ const EmployeeList = () => {
                           type="text"
                           value={editForm.firstname || ""}
                           onChange={(e) =>
-                            setEditForm({ ...editForm, firstname: e.target.value })
+                            setEditForm({
+                              ...editForm,
+                              firstname: e.target.value,
+                            })
                           }
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
@@ -306,7 +336,39 @@ const EmployeeList = () => {
                           type="text"
                           value={editForm.lastname || ""}
                           onChange={(e) =>
-                            setEditForm({ ...editForm, lastname: e.target.value })
+                            setEditForm({
+                              ...editForm,
+                              lastname: e.target.value,
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Age
+                        </label>
+                        <input
+                          type="number"
+                          value={editForm.age || ""}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, age: e.target.value })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Position
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.job_position || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              job_position: e.target.value,
+                            })
                           }
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
@@ -332,20 +394,30 @@ const EmployeeList = () => {
                           type="tel"
                           value={editForm.phone_number || ""}
                           onChange={(e) =>
-                            setEditForm({ ...editForm, phone_number: e.target.value })
+                            setEditForm({
+                              ...editForm,
+                              phone_number: e.target.value,
+                            })
                           }
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Job Position
+                          birth_date
                         </label>
                         <input
-                          type="text"
-                          value={editForm.job_position || ""}
+                          type="date"
+                          value={
+                            editForm.birth_date
+                              ? editForm.birth_date.substring(0, 10)
+                              : ""
+                          }
                           onChange={(e) =>
-                            setEditForm({ ...editForm, job_position: e.target.value })
+                            setEditForm({
+                              ...editForm,
+                              birth_date: e.target.value,
+                            })
                           }
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
@@ -358,20 +430,100 @@ const EmployeeList = () => {
                           type="number"
                           value={editForm.salary || ""}
                           onChange={(e) =>
-                            setEditForm({ ...editForm, salary: parseFloat(e.target.value) })
+                            setEditForm({
+                              ...editForm,
+                              salary: parseFloat(e.target.value),
+                            })
                           }
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Birth Date
+                          liveby
                         </label>
                         <input
-                          type="date"
-                          value={editForm.birth_date || ""}
+                          type="text"
+                          value={editForm.liveby || ""}
                           onChange={(e) =>
-                            setEditForm({ ...editForm, birth_date: e.target.value })
+                            setEditForm({
+                              ...editForm,
+                              liveby: e.target.value,
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Address
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.personal_info?.address || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              personal_info: {
+                                ...editForm.personal_info,
+                                address: e.target.value,
+                              },
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          City
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.personal_info?.city || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              personal_info: {
+                                ...editForm.personal_info,
+                                city: e.target.value,
+                              },
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Zip Code
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.personal_info?.zip_code || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              personal_info: {
+                                ...editForm.personal_info,
+                                zip_code: e.target.value,
+                              },
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Ethnicity
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.ethnicity || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              ethnicity: e.target.value,
+                            })
                           }
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
@@ -384,7 +536,58 @@ const EmployeeList = () => {
                           type="text"
                           value={editForm.nationality || ""}
                           onChange={(e) =>
-                            setEditForm({ ...editForm, nationality: e.target.value })
+                            setEditForm({
+                              ...editForm,
+                              nationality: e.target.value,
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Religion
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.religion || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              religion: e.target.value,
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Military Status
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.military_status || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              military_status: e.target.value,
+                            })
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Marital Status
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.marital_status || ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              marital_status: e.target.value,
+                            })
                           }
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
@@ -414,43 +617,67 @@ const EmployeeList = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       <div>
-                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h4>
+                        <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                          Personal Information
+                        </h4>
                         <div className="space-y-4">
                           <div className="flex items-center gap-3">
                             <User className="w-5 h-5 text-blue-600" />
                             <div>
                               <p className="text-sm text-gray-500">Full Name</p>
-                              <p className="font-medium">{selectedEmployee.firstname} {selectedEmployee.lastname}</p>
+                              <p className="font-medium">
+                                {selectedEmployee.firstname}{" "}
+                                {selectedEmployee.lastname}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <Building className="w-5 h-5 text-blue-600" />
+                            <User className="w-5 h-5 text-blue-600" />
+                            <div>
+                              <p className="text-sm text-gray-500">Age</p>
+                              <p className="font-medium">
+                                {selectedEmployee.age}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Briefcase className="w-5 h-5 text-blue-600" />
                             <div>
                               <p className="text-sm text-gray-500">Position</p>
-                              <p className="font-medium">{selectedEmployee.job_position}</p>
+                              <p className="font-medium">
+                                {selectedEmployee.job_position}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <Mail className="w-5 h-5 text-blue-600" />
                             <div>
                               <p className="text-sm text-gray-500">Email</p>
-                              <p className="font-medium">{selectedEmployee.email}</p>
+                              <p className="font-medium">
+                                {selectedEmployee.email}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <Phone className="w-5 h-5 text-blue-600" />
                             <div>
                               <p className="text-sm text-gray-500">Phone</p>
-                              <p className="font-medium">{selectedEmployee.phone_number || 'N/A'}</p>
+                              <p className="font-medium">
+                                {selectedEmployee.phone_number || "N/A"}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <Calendar className="w-5 h-5 text-blue-600" />
                             <div>
-                              <p className="text-sm text-gray-500">Birth Date</p>
+                              <p className="text-sm text-gray-500">
+                                Birth Date
+                              </p>
                               <p className="font-medium">
                                 {selectedEmployee.birth_date
-                                  ? new Date(selectedEmployee.birth_date).toLocaleDateString("en-GB")
+                                  ? new Date(
+                                      selectedEmployee.birth_date
+                                    ).toLocaleDateString("en-GB")
                                   : "N/A"}
                               </p>
                             </div>
@@ -459,7 +686,9 @@ const EmployeeList = () => {
                             <DollarSign className="w-5 h-5 text-blue-600" />
                             <div>
                               <p className="text-sm text-gray-500">Salary</p>
-                              <p className="font-medium">${selectedEmployee.salary?.toLocaleString()}</p>
+                              <p className="font-medium">
+                                ${selectedEmployee.salary?.toLocaleString()}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -468,62 +697,105 @@ const EmployeeList = () => {
 
                     <div className="space-y-6">
                       <div>
-                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Additional Information</h4>
+                        <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                          Additional Information
+                        </h4>
                         <div className="space-y-4">
                           <div className="flex items-center gap-3">
                             <MapPin className="w-5 h-5 text-blue-600" />
                             <div>
                               <p className="text-sm text-gray-500">Address</p>
                               <p className="font-medium">
-                                {selectedEmployee.personal_info?.address || 'N/A'}
+                                {selectedEmployee.personal_info?.address ||
+                                  "N/A"}
                               </p>
                               <p className="text-sm text-gray-500">
-                                {selectedEmployee.personal_info?.city} {selectedEmployee.personal_info?.zip_code}
+                                {selectedEmployee.personal_info?.city}{" "}
+                                {selectedEmployee.personal_info?.zip_code}
                               </p>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <p className="text-sm text-gray-500">Ethnicity</p>
-                              <p className="font-medium">{selectedEmployee.ethnicity || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">Liveby</p>
+                              <p className="font-medium">
+                                {selectedEmployee.liveby}
+                              </p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Nationality</p>
-                              <p className="font-medium">{selectedEmployee.nationality || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">Ethnicity</p>
+                              <p className="font-medium">
+                                {selectedEmployee.ethnicity || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">
+                                Nationality
+                              </p>
+                              <p className="font-medium">
+                                {selectedEmployee.nationality || "N/A"}
+                              </p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-500">Religion</p>
-                              <p className="font-medium">{selectedEmployee.religion || 'N/A'}</p>
+                              <p className="font-medium">
+                                {selectedEmployee.religion || "N/A"}
+                              </p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Marital Status</p>
-                              <p className="font-medium">{selectedEmployee.marital_status || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">
+                                Military status
+                              </p>
+                              <p className="font-medium">
+                                {selectedEmployee.military_status || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">
+                                Marital Status
+                              </p>
+                              <p className="font-medium">
+                                {selectedEmployee.marital_status || "N/A"}
+                              </p>
                             </div>
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Associated User Accounts</h4>
+                        <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                          Associated User Accounts
+                        </h4>
                         <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="bg-gray-100">
-                                <th className="px-4 py-3 text-left font-medium text-gray-600">Username</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600">
+                                  Username
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600">
+                                  Role
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
-                              {getMatchingUsers(selectedEmployee.id).map((user) => (
-                                <tr key={user.user_id} className="border-t border-gray-200">
-                                  <td className="px-4 py-3">{user.username}</td>
-                                  <td className="px-4 py-3">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      {user.role}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
+                              {getMatchingUsers(selectedEmployee.id).map(
+                                (user) => (
+                                  <tr
+                                    key={user.user_id}
+                                    className="border-t border-gray-200"
+                                  >
+                                    <td className="px-4 py-3">
+                                      {user.username}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {user.role}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                )
+                              )}
                             </tbody>
                           </table>
                         </div>

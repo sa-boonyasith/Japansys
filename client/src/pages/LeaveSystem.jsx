@@ -152,7 +152,11 @@ const LeaveStatus = () => {
       }
     } catch (error) {
       console.error("Failed to add new leave request:", error);
-      alert("Failed to add new leave request. Please try again.");
+      if (error.response?.status === 404) {
+        alert("ไม่มีไอดีในระบบ.");
+      } else {
+        alert("Failed to add new leave request. Please try again.");
+      }
     }
   };
 
