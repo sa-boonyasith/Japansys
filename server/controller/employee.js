@@ -2,10 +2,10 @@ const prisma = require("../config/prisma");
 
 exports.list = async (req, res) => {
   try {
-    const listemployee = await prisma.employee.findMany()
-    res.json({listemployee})
+    const listemployee = await prisma.employee.findMany();
+    res.json({ listemployee });
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
 };
 exports.create = async (req, res) => {
@@ -83,38 +83,38 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const {id} = req.params
+    const { id } = req.params;
     const {
+      firstname,
+      lastname,
+      job_position,
+      salary,
+      documents,
+      personal_info,
+      phone_number,
+      email,
+      liveby,
+      birth_date,
+      age,
+      ethnicity,
+      nationality,
+      religion,
+      marital_status,
+      military_status,
+      banking,
+      banking_id,
+      photo,
+      role,
+    } = req.body;
+
+    const formattedBirthDate = birth_date ? new Date(birth_date) : null;
+
+    const update = await prisma.employee.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
         firstname,
-        lastname,
-        job_position,
-        salary,
-        documents,
-        personal_info,
-        phone_number,
-        email,
-        liveby,
-        birth_date,
-        age,
-        ethnicity,
-        nationality,
-        religion,
-        marital_status,
-        military_status,
-        banking,
-        banking_id,
-        photo,
-        role,
-      } = req.body;
-
-      const formattedBirthDate = birth_date ? new Date(birth_date) : null;
-
-      const  update = await prisma.employee.update({
-        where : {
-            id : Number(id)
-        },
-        data:{
-            firstname,
         lastname,
         job_position,
         salary,
@@ -134,43 +134,88 @@ exports.update = async (req, res) => {
         banking_id,
         photo,
         role,
-        }
-      })
+      },
+    });
 
-      res.json({ message: "Information Updated successfully", update });
-    } catch (err) {
-      console.error("Error updating employee:", err.message);
+    res.json({ message: "Information Updated successfully", update });
+  } catch (err) {
+    console.error("Error updating employee:", err.message);
+  }
+};
+exports.remove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const employeeId = Number(id);
+
+    // Check if employee exists
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
     }
-  };
-  exports.remove = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const employeeId = Number(id);
-  
-      // ตรวจสอบว่ามีพนักงานอยู่จริงหรือไม่
-      const employee = await prisma.employee.findUnique({
-        where: { id: employeeId },
-      });
-  
-      if (!employee) {
-        return res.status(404).json({ message: "Employee not found" });
-      }
-  
-      // ใช้ transaction เพื่อลบข้อมูลที่เกี่ยวข้องทั้งหมดก่อนลบ Employee
-      await prisma.$transaction([
-        prisma.todo.deleteMany({ where: { employee_id: employeeId } }),
-        prisma.project.deleteMany({ where: { employee_id: employeeId } }),
-        prisma.salary.deleteMany({ where: { employee_id: employeeId } }),
-        prisma.attendance.deleteMany({ where: { employee_id: employeeId } }),
-        prisma.expense.deleteMany({ where: { employee_id: employeeId } }),
-        prisma.user.deleteMany({ where: { employee_id: employeeId } }), // ถ้ามีบัญชีผู้ใช้ที่เชื่อมโยง
-        prisma.employee.delete({ where: { id: employeeId } }),
-      ]);
-  
-      res.status(200).json({ message: "Deleted successfully" });
-    } catch (err) {
-      console.error("Error deleting employee:", err.message);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  };
-  
+
+    // Get all projects for this employee
+    const projects = await prisma.project.findMany({
+      where: { employee_id: employeeId },
+      select: { project_id: true }
+    });
+
+    const projectIds = projects.map(p => p.project_id);
+
+    // Delete everything in the correct order
+    await prisma.$transaction([
+      // First delete todos that reference projects
+      prisma.todo.deleteMany({
+        where: {
+          OR: [
+            { project_id: { in: projectIds } },
+            { employee_id: employeeId }
+          ]
+        }
+      }),
+      
+      // Then delete projects
+      prisma.project.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+
+      // Then delete other related records
+      prisma.user.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+      prisma.salary.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+      prisma.attend.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+      prisma.attendhistory.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+      prisma.expense.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+      prisma.leaveRequest.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+      prisma.Meetingroom.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+      prisma.Rentcar.deleteMany({
+        where: { employee_id: employeeId }
+      }),
+
+      // Finally delete the employee
+      prisma.employee.delete({
+        where: { id: employeeId }
+      }),
+    ]);
+
+    res.status(200).json({ message: "Employee and related records deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting employee:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
