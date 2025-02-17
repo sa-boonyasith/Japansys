@@ -306,7 +306,7 @@ const CarBooking = () => {
               <input
                 type="text"
                 name="search"
-                placeholder="Search by name or place..."
+                placeholder="Search name"
                 className="pl-10 w-full  rounded-lg border h-8 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 value={filters.search}
                 onChange={handleFilterChange}

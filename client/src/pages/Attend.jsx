@@ -26,14 +26,17 @@ const Attend = () => {
       try {
         setLoading(true);
         const response = await axios.get('http://localhost:8080/api/attend');
-        setAttend(response.data);
         
-        // Calculate stats
+        // เรียงลำดับจากล่าสุดไปเก่าสุด
+        const sortedData = response.data.sort((a, b) => new Date(b.check_in_time) - new Date(a.check_in_time));
+        setAttend(sortedData);
+  
+        // คำนวณจำนวนเช็คอินวันนี้
         const today = new Date().toLocaleDateString();
-        const todayCheckins = response.data.filter(record => 
+        const todayCheckins = sortedData.filter(record => 
           new Date(record.check_in_time).toLocaleDateString() === today
         ).length;
-        
+  
         setStats({
           totalToday: todayCheckins,
           totalEmployees: response.data.length
@@ -45,32 +48,35 @@ const Attend = () => {
         setLoading(false);
       }
     };
-
+  
     fetchAttendance();
-    
-    // Refresh data every minute
     const interval = setInterval(fetchAttendance, 60000);
     return () => clearInterval(interval);
   }, []);
-
+  
   const handleAdd = async () => {
     try {
-      const employeeId = prompt('กรุณาใส่รหัสพนักงาน:');
+      const loggedInUser = JSON.parse(localStorage.getItem("user"));
+      const employeeId = loggedInUser?.employee_id;
+  
       if (!employeeId) {
-        alert('กรุณาใส่รหัสพนักงาน');
+        alert("ไม่พบข้อมูลพนักงาน กรุณาล็อกอินใหม่");
         return;
       }
-
-      const response = await axios.post('http://localhost:8080/api/attend', {
-        employee_id: parseInt(employeeId),
+  
+      const response = await axios.post("http://localhost:8080/api/attend", {
+        employee_id: employeeId,
       });
-
+  
       alert('เช็คอินสำเร็จ!');
-      
-      // Update attendance list with new record
-      setAttend((prevAttend) => [response.data.newAttend, ...prevAttend]);
-      
-      // Update stats
+  
+      // อัปเดตรายการเช็คอินและเรียงลำดับ
+      setAttend((prevAttend) => [
+        response.data.newAttend, 
+        ...prevAttend.sort((a, b) => new Date(b.check_in_time) - new Date(a.check_in_time))
+      ]);
+  
+      // อัปเดตสถิติ
       setStats(prev => ({
         ...prev,
         totalToday: prev.totalToday + 1
@@ -84,6 +90,7 @@ const Attend = () => {
       }
     }
   };
+  
 
   if (loading) {
     return (

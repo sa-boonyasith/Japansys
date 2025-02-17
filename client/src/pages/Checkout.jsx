@@ -12,33 +12,40 @@ const Checkout = () => {
     remainingCheckouts: 0
   });
 
-  const fetchAttendance = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("http://localhost:8080/api/attend");
-      setAttend(response.data);
-      
-      // Calculate stats
-      const today = new Date().toLocaleDateString();
-      const todayRecords = response.data.filter(record => 
-        new Date(record.check_in_time).toLocaleDateString() === today
-      );
-      
-      const checkedOut = todayRecords.filter(record => record.check_out_time).length;
-      const totalHours = todayRecords.reduce((sum, record) => sum + (record.working_hours || 0), 0);
-      
-      setStats({
-        totalCheckedOut: checkedOut,
-        averageHours: checkedOut ? (totalHours / checkedOut) : 0,
-        remainingCheckouts: todayRecords.length - checkedOut
-      });
-    } catch (err) {
-      setError("ไม่สามารถดึงข้อมูลการเช็คเอาท์ได้");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchAttendance = async () => {
+  try {
+    setLoading(true);
+    const response = await axios.get("http://localhost:8080/api/attend");
+
+    // เรียงข้อมูลจากล่าสุดไปเก่าสุด โดยเปรียบเทียบเวลา check_out_time
+    const sortedData = response.data.sort((a, b) => 
+      new Date(b.check_out_time) - new Date(a.check_out_time)
+    );
+
+    setAttend(sortedData);
+
+    // คำนวณสถิติ
+    const today = new Date().toLocaleDateString();
+    const todayRecords = sortedData.filter(record => 
+      new Date(record.check_in_time).toLocaleDateString() === today
+    );
+
+    const checkedOut = todayRecords.filter(record => record.check_out_time).length;
+    const totalHours = todayRecords.reduce((sum, record) => sum + (record.working_hours || 0), 0);
+
+    setStats({
+      totalCheckedOut: checkedOut,
+      averageHours: checkedOut ? (totalHours / checkedOut) : 0,
+      remainingCheckouts: todayRecords.length - checkedOut
+    });
+  } catch (err) {
+    setError("ไม่สามารถดึงข้อมูลการเช็คเอาท์ได้");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchAttendance();
@@ -48,16 +55,28 @@ const Checkout = () => {
 
   const handleCheckout = async () => {
     try {
-      const employeeId = prompt("กรุณาใส่รหัสพนักงาน:");
-      if (!employeeId) {
-        alert("กรุณาใส่รหัสพนักงาน");
+      // ดึงข้อมูลจาก localStorage
+      const userData = localStorage.getItem("user");
+  
+      // ตรวจสอบว่ามีข้อมูลหรือไม่
+      if (!userData) {
+        alert("ไม่พบข้อมูลพนักงานในระบบ");
         return;
       }
-
+  
+      // แปลง JSON string เป็น JavaScript Object
+      const user = JSON.parse(userData);
+  
+      // ตรวจสอบว่ามี employee_id หรือไม่
+      if (!user.employee_id) {
+        alert("ไม่พบรหัสพนักงาน");
+        return;
+      }
+  
       const response = await axios.put("http://localhost:8080/api/attend", {
-        employee_id: parseInt(employeeId),
+        employee_id: user.employee_id, // ใช้ค่า employee_id จาก localStorage
       });
-
+  
       alert("เช็คเอาท์สำเร็จ!");
       fetchAttendance();
     } catch (err) {
@@ -65,6 +84,8 @@ const Checkout = () => {
       alert(err.response?.data?.error || "เช็คเอาท์ไม่สำเร็จ");
     }
   };
+  
+  
 
   const formatHoursAndMinutes = (hours) => {
     if (!hours) return "0:00";

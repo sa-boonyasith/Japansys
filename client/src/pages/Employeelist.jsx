@@ -319,7 +319,7 @@ const EmployeeList = () => {
                         <input
                           type="text"
                           value={editForm.firstname || ""}
-                          onChange={(e) =>
+                          onChange={(e) => 
                             setEditForm({
                               ...editForm,
                               firstname: e.target.value,

@@ -147,6 +147,7 @@ exports.update = async (req, res) => {
       const { id } = req.params;
       const employeeId = Number(id);
   
+      // ตรวจสอบว่ามีพนักงานอยู่จริงหรือไม่
       const employee = await prisma.employee.findUnique({
         where: { id: employeeId },
       });
@@ -155,27 +156,21 @@ exports.update = async (req, res) => {
         return res.status(404).json({ message: "Employee not found" });
       }
   
-      // 🔹 1. ลบ Todo ที่เกี่ยวข้องก่อน
-      await prisma.todo.deleteMany({
-        where: { employee_id: employeeId },
-      });
+      // ใช้ transaction เพื่อลบข้อมูลที่เกี่ยวข้องทั้งหมดก่อนลบ Employee
+      await prisma.$transaction([
+        prisma.todo.deleteMany({ where: { employee_id: employeeId } }),
+        prisma.project.deleteMany({ where: { employee_id: employeeId } }),
+        prisma.salary.deleteMany({ where: { employee_id: employeeId } }),
+        prisma.attendance.deleteMany({ where: { employee_id: employeeId } }),
+        prisma.expense.deleteMany({ where: { employee_id: employeeId } }),
+        prisma.user.deleteMany({ where: { employee_id: employeeId } }), // ถ้ามีบัญชีผู้ใช้ที่เชื่อมโยง
+        prisma.employee.delete({ where: { id: employeeId } }),
+      ]);
   
-      // 🔹 2. ลบ Project ที่เกี่ยวข้อง
-      await prisma.project.deleteMany({
-        where: { employee_id: employeeId },
-      });
-  
-      // 🔹 3. ลบ Employee
-      const deletedEmployee = await prisma.employee.delete({
-        where: { id: employeeId },
-      });
-  
-      res.status(200).json({ message: "Deleted successfully", deletedEmployee });
+      res.status(200).json({ message: "Deleted successfully" });
     } catch (err) {
-      console.error("Error deleting employee", err.message);
+      console.error("Error deleting employee:", err.message);
       res.status(500).json({ error: "Internal server error" });
     }
   };
-  
-  
   

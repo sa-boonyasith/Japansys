@@ -36,7 +36,7 @@ model Employee {
   salary        Float
   documents     Json?
   personal_info Json?
-  user          user? // Add this field for the reverse relation
+  user          user? 
 
   phone_number String   @db.VarChar(20)
   email        String   @unique @db.VarChar(150)

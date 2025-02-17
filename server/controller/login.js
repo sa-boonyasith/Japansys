@@ -52,7 +52,9 @@ exports.create = async (req, res) => {
         firstname: user.firstname,
         lastname: user.lastname,
         role: user.role,
-        username: user.username,  // Include username if necessary
+        username: user.username,
+        employee_id: user.employee_id,
+
       },
     });
   } catch (error) {
