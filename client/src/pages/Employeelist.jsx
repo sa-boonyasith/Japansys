@@ -13,6 +13,7 @@ import {
   Pencil,
   Trash2,
   Briefcase,
+  Camera,
 } from "lucide-react";
 
 const EmployeeList = () => {
@@ -21,6 +22,8 @@ const EmployeeList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -58,6 +61,80 @@ const EmployeeList = () => {
     }
   };
 
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+
+      // Upload image immediately when selected
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/employee/${selectedEmployee.id}/photo`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to upload image");
+        }
+
+        const data = await response.json();
+
+        // Update the employee's photo URL in the state
+        setSelectedEmployee((prev) => ({
+          ...prev,
+          photo: data.photo, // Assuming the API returns the new photo path
+        }));
+
+        setSuccessMessage("Profile photo updated successfully");
+
+        setTimeout(() => {
+          setSuccessMessage("");
+        }, 3000);
+      } catch (err) {
+        setError("Failed to upload profile photo. Please try again.");
+      }
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedImage) return;
+
+    const formData = new FormData();
+    formData.append("photo", selectedImage);
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/employee/${selectedEmployee.id}/photo`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      setSuccessMessage("Profile photo updated successfully");
+      fetchData();
+      setSelectedImage(null);
+      setImagePreview(null);
+
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+    } catch (err) {
+      setError("Failed to upload profile photo. Please try again.");
+    }
+  };
+
   const handleEdit = (employee) => {
     setEditForm({
       ...employee,
@@ -78,7 +155,10 @@ const EmployeeList = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(editForm),
+          body: JSON.stringify({
+            ...editForm,
+            photo: selectedEmployee.photo, // Include the updated photo URL
+          }),
         }
       );
 
@@ -87,9 +167,11 @@ const EmployeeList = () => {
       }
 
       setSuccessMessage("Employee updated successfully");
-      fetchData();
+      await fetchData(); // Refresh the data
       setIsEditing(false);
       setIsModalOpen(false);
+      setSelectedImage(null);
+      setImagePreview(null);
 
       setTimeout(() => {
         setSuccessMessage("");
@@ -165,9 +247,6 @@ const EmployeeList = () => {
               Manage and view employee information
             </p>
           </div>
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-            Add Employee
-          </button>
         </div>
 
         <div className="mb-8 relative">
@@ -311,6 +390,34 @@ const EmployeeList = () => {
                   </div>
                 ) : isEditing ? (
                   <form onSubmit={handleUpdate} className="space-y-6">
+                    <div className="flex justify-center mb-6">
+                      <div className="relative">
+                        <img
+                          src={
+                            imagePreview ||
+                            (selectedEmployee.photo
+                              ? `http://localhost:8080${selectedEmployee.photo}`
+                              : "/api/placeholder/150/150")
+                          }
+                          alt="Profile"
+                          className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                        />
+                        <label
+                          htmlFor="photo-upload"
+                          className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
+                        >
+                          <Camera className="w-5 h-5" />
+                          <input
+                            id="photo-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -319,7 +426,7 @@ const EmployeeList = () => {
                         <input
                           type="text"
                           value={editForm.firstname || ""}
-                          onChange={(e) => 
+                          onChange={(e) =>
                             setEditForm({
                               ...editForm,
                               firstname: e.target.value,
@@ -615,6 +722,19 @@ const EmployeeList = () => {
                   </form>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="md:col-span-2 flex justify-center mb-6">
+                      <div className="relative">
+                        <img
+                          src={
+                            selectedEmployee.photo
+                              ? `http://localhost:8080${selectedEmployee.photo}`
+                              : "/api/placeholder/150/150"
+                          }
+                          alt="Profile"
+                          className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                        />
+                      </div>
+                    </div>
                     <div className="space-y-6">
                       <div>
                         <h4 className="text-lg font-semibold text-gray-800 mb-4">

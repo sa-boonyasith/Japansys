@@ -29,8 +29,9 @@ exports.create = async (req, res) => {
       military_status,
       banking,
       banking_id,
-      photo,
     } = req.body;
+
+    const photo = req.files?.photo ? `/uploads/${req.files.photo[0].filename}` : null;
 
     // Check if email already exists in the Employee table
     const checkemail = await prisma.employee.findUnique({
@@ -103,16 +104,25 @@ exports.update = async (req, res) => {
       military_status,
       banking,
       banking_id,
-      photo,
       role,
     } = req.body;
 
-    const formattedBirthDate = birth_date ? new Date(birth_date) : null;
+    let updatedEmployeeData = {};
+
+    if (req.files?.photo) {
+      updatedEmployeeData.photo = `/uploads/${req.files.photo[0].filename}`;
+    }
+
+    const existingEmployee = await prisma.employee.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!existingEmployee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
 
     const update = await prisma.employee.update({
-      where: {
-        id: Number(id),
-      },
+      where: { id: Number(id) },
       data: {
         firstname,
         lastname,
@@ -123,7 +133,7 @@ exports.update = async (req, res) => {
         phone_number,
         email,
         liveby,
-        birth_date: formattedBirthDate,
+        birth_date: birth_date ? new Date(birth_date) : null,
         age,
         ethnicity,
         nationality,
@@ -132,16 +142,19 @@ exports.update = async (req, res) => {
         military_status,
         banking,
         banking_id,
-        photo,
         role,
+        photo: updatedEmployeeData.photo || existingEmployee.photo,
       },
     });
 
     res.json({ message: "Information Updated successfully", update });
   } catch (err) {
     console.error("Error updating employee:", err.message);
+    res.status(500).json({ message: "Server error, please try again later" });
   }
 };
+
+
 exports.remove = async (req, res) => {
   try {
     const { id } = req.params;
@@ -217,5 +230,27 @@ exports.remove = async (req, res) => {
   } catch (err) {
     console.error("Error deleting employee:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.uploadPhoto = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const photoPath = `/uploads/${req.file.filename}`;
+
+    const employee = await prisma.employee.update({
+      where: { id: Number(id) },
+      data: { photo: photoPath },
+    });
+
+    res.json({ message: "Photo uploaded successfully", photo: photoPath });
+  } catch (err) {
+    console.error("Error uploading photo:", err.message);
+    res.status(500).json({ message: "Server error, please try again later" });
   }
 };
