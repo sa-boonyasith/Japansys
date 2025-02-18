@@ -1,4 +1,6 @@
 const prisma = require("../config/prisma");
+const fs = require("fs");
+const path = require("path");
 
 exports.list = async (req, res) => {
   try {
@@ -243,7 +245,26 @@ exports.uploadPhoto = async (req, res) => {
 
     const photoPath = `/uploads/${req.file.filename}`;
 
-    const employee = await prisma.employee.update({
+    // 🔍 ค้นหา Employee เพื่อตรวจสอบว่ามีรูปเก่าหรือไม่
+    const employee = await prisma.employee.findUnique({
+      where: { id: Number(id) },
+      select: { photo: true },
+    });
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    // 🗑 ลบรูปเก่า (ถ้ามี)
+    if (employee.photo) {
+      const oldPhotoPath = path.join(__dirname, "..", employee.photo);
+      if (fs.existsSync(oldPhotoPath)) {
+        fs.unlinkSync(oldPhotoPath);
+      }
+    }
+
+    // 📌 อัปเดตข้อมูลในฐานข้อมูลด้วยรูปใหม่
+    await prisma.employee.update({
       where: { id: Number(id) },
       data: { photo: photoPath },
     });
