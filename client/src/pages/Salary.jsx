@@ -140,7 +140,7 @@ const Salary = () => {
       console.error(err);
     }
   };
-
+ 
   const handleDelete = async () => {
     try {
       const response = await fetch(
@@ -190,7 +190,7 @@ const Salary = () => {
     }
 
     if (selectedYear) {
-      filtered = filtered.filter((item) => {
+      filtered = filtered.filter((item) => { 
         const payrollYear = new Date(item.payroll_startdate).getFullYear();
         return payrollYear === selectedYear;
       });

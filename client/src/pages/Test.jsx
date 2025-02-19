@@ -1,543 +1,676 @@
-import React, { useState, useEffect } from "react";
-import { Loader2, Search, X, Mail, Phone, MapPin, Building, Calendar, DollarSign, User, Pencil, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { PlusCircle, Edit2, Trash2, X, Printer } from "lucide-react";
 
-const EmployeeList = () => {
-  const [employees, setEmployees] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+const Salary = () => {
+  const [salaryData, setSalaryData] = useState([]);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employeeId, setEmployeeId] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({});
-  const [successMessage, setSuccessMessage] = useState("");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const itemsPerPage = 4;
+
+  const initialFormData = {
+    employee_id: "",
+    firstname: "",
+    lastname: "",
+    position: "",
+    banking: "",
+    banking_id: "",
+    salary: 0,
+    overtime: 0,
+    bonus: 0,
+    absent_late: 0,
+    expense: 0,
+    tax: 0,
+    providentfund: 0,
+    socialsecurity: 0,
+    status: "Pending",
+    payroll_startdate: "",
+    payroll_enddate: "",
+    payment_date: "",
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetchData();
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [employeeRes, userRes] = await Promise.all([
-        fetch("http://localhost:8080/api/employee"),
-        fetch("http://localhost:8080/api/user"),
-      ]);
+  const months = [
+    { value: "01", label: "มกราคม" },
+    { value: "02", label: "กุมภาพันธ์" },
+    { value: "03", label: "มีนาคม" },
+    { value: "04", label: "เมษายน" },
+    { value: "05", label: "พฤษภาคม" },
+    { value: "06", label: "มิถุนายน" },
+    { value: "07", label: "กรกฎาคม" },
+    { value: "08", label: "สิงหาคม" },
+    { value: "09", label: "กันยายน" },
+    { value: "10", label: "ตุลาคม" },
+    { value: "11", label: "พฤศจิกายน" },
+    { value: "12", label: "ธันวาคม" },
+  ];
 
-      if (!employeeRes.ok || !userRes.ok) {
-        throw new Error("Server response was not ok");
-      }
-
-      const [employeeData, userData] = await Promise.all([
-        employeeRes.json(),
-        userRes.json(),
-      ]);
-
-      setEmployees(employeeData.listemployee);
-      setUsers(userData.listuser);
-    } catch (err) {
-      setError("Failed to fetch data. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (employee) => {
-    setEditForm({
-      ...employee,
-      birth_date: employee.birth_date ? new Date(employee.birth_date).toISOString().split('T')[0] : '',
-    });
-    setIsEditing(true);
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`http://localhost:8080/api/employee/${editForm.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update employee');
-      }
-
-      setSuccessMessage("Employee updated successfully");
-      fetchData();
-      setIsEditing(false);
-      setIsModalOpen(false);
-
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
-    } catch (err) {
-      setError("Failed to update employee. Please try again.");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/employee/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete employee');
-      }
-
-      setSuccessMessage("Employee deleted successfully");
-      fetchData();
-      setShowDeleteConfirm(false);
-      setIsModalOpen(false);
-
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
-    } catch (err) {
-      setError("Failed to delete employee. Please try again.");
-    }
-  };
-
-  const filteredEmployees = employees.filter(
-    (emp) =>
-      emp.id?.toString().includes(searchTerm) ||
-      emp.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.job_position?.toLowerCase().includes(searchTerm.toLowerCase())
+  const years = Array.from(
+    { length: 5 },
+    (_, i) => new Date().getFullYear() - i
   );
 
-  const handleEmployeeClick = (employee) => {
-    setSelectedEmployee(employee);
-    setIsModalOpen(true);
-    setIsEditing(false);
-    setShowDeleteConfirm(false);
+  const fetchSalaryData = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/salary");
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+      setSalaryData(data.listSalary);
+      setFilteredItems(data.listSalary);
+    } catch (err) {
+      setError("Failed to fetch salary data.");
+      console.error(err);
+    }
   };
 
-  const getMatchingUsers = (employeeId) => {
-    return users.filter((user) => user.employee_id === employeeId);
+  useEffect(() => {
+    fetchSalaryData();
+  }, []);
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:8080/api/salary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Failed to add salary record");
+
+      await fetchSalaryData();
+      setIsModalOpen(false);
+      setFormData(initialFormData);
+    } catch (err) {
+      setError("Failed to add salary record.");
+      console.error(err);
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading employee data...</p>
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    if (!selectedItem?.salary_id) {
+      setError("เกิดข้อผิดพลาด: ไม่พบ ID ของเงินเดือนที่ต้องแก้ไข");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/salary/${selectedItem.salary_id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update salary record");
+
+      await fetchSalaryData();
+      setIsModalOpen(false);
+      setSelectedItem(null);
+      setFormData(initialFormData);
+      setIsEditing(false);
+    } catch (err) {
+      setError("Failed to update salary record.");
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/salary/${selectedItem.salary_id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete salary record");
+
+      await fetchSalaryData();
+      setIsDeleteModalOpen(false);
+      setSelectedItem(null);
+    } catch (err) {
+      setError("Failed to delete salary record.");
+      console.error(err);
+    }
+  };
+
+  const handlePrint = () => {
+    const printContent = document.querySelector('#printSection');
+    const originalContents = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+      <style>
+        @media print {
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f8f9fa; }
+          .no-print { display: none; }
+          body { font-size: 12px; }
+          @page { size: landscape; }
+        }
+      </style>
+      <h1 style="text-align: center; margin-bottom: 20px;">รายงานเงินเดือน</h1>
+      ${printContent.innerHTML}
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContents;
+    // Reattach event listeners
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    let filtered = [...salaryData];
+
+    if (employeeId) {
+      filtered = filtered.filter((item) =>
+        item.employee_id.toString().includes(employeeId.trim())
+      );
+    }
+
+    if (selectedMonth) {
+      filtered = filtered.filter((item) => {
+        const payrollMonth = new Date(item.payroll_startdate).getMonth() + 1;
+        return payrollMonth.toString().padStart(2, "0") === selectedMonth;
+      });
+    }
+
+    if (selectedYear) {
+      filtered = filtered.filter((item) => {
+        const payrollYear = new Date(item.payroll_startdate).getFullYear();
+        return payrollYear === selectedYear;
+      });
+    }
+
+    setFilteredItems(filtered);
+    setCurrentPage(1);
+  }, [employeeId, selectedMonth, selectedYear, salaryData]);
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("th-TH", {
+      style: "currency",
+      currency: "THB",
+    }).format(amount);
+  };
+
+  const getStatusDisplay = (status) => {
+    if (status === "Paid") {
+      return (
+        <div className="flex items-center">
+          <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+          <span className="text-green-700">จ่ายแล้ว</span>
         </div>
-      </div>
-    );
-  }
+      );
+    } else if (status === "Pending") {
+      return (
+        <div className="flex items-center">
+          <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+          <span className="text-yellow-700">รออนุมัติ</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              Employee Management
-            </h2>
-            <p className="text-gray-600">
-              Manage and view employee information
-            </p>
-          </div>
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-            Add Employee
-          </button>
-        </div>
+    <div className="w-full">
+      <div className="bg-white rounded-lg">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 className="text-2xl font-bold">Salary Data</h2>
+            <div className="flex flex-col md:flex-row gap-4">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value="">เลือกเดือน</option>
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
 
-        <div className="mb-8 relative">
-          <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name, email, position or ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-4 pl-12 bg-white border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
-        </div>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year + 543}
+                  </option>
+                ))}
+              </select>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmployees.map((emp) => (
-            <div
-              key={emp.id}
-              onClick={() => handleEmployeeClick(emp)}
-              className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 overflow-hidden group"
-            >
-              <div className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="relative">
-                    <img
-                      src={emp.photo ? `http://localhost:8080${emp.photo}` : "/api/placeholder/80/80"}
-                      alt={`${emp.firstname} ${emp.lastname}`}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                    <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-md">
-                      ID: {emp.id}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">
-                      {emp.firstname} {emp.lastname}
-                    </h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-600">
-                        <Building className="w-4 h-4 mr-2" />
-                        <span>{emp.job_position}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Mail className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{emp.email}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <DollarSign className="w-4 h-4 mr-2" />
-                        <span>${emp.salary?.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="ใส่รหัสพนักงาน..."
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+                {employeeId && (
+                  <button
+                    onClick={() => setEmployeeId("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
+
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              >
+                <Printer size={20} />
+                พิมพ์
+              </button>
+
+              {user?.role === "admin" && (
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData(initialFormData);
+                    setIsModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  <PlusCircle size={20} />
+                  เพิ่มข้อมูล
+                </button>
+              )}
             </div>
-          ))}
+          </div>
         </div>
 
-        {isModalOpen && selectedEmployee && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-800">
-                      {isEditing ? "Edit Employee" : "Employee Details"}
-                    </h3>
-                    <p className="text-gray-600">
-                      {isEditing
-                        ? `Editing information for ${selectedEmployee.firstname}`
-                        : `Complete information about ${selectedEmployee.firstname}`}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {!isEditing && !showDeleteConfirm && (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(selectedEmployee);
-                          }}
-                          className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <Pencil className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteConfirm(true);
-                          }}
-                          className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </>
+        <div className="p-6">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+
+          <div id="printSection" className="overflow-x-auto">
+            <div className="min-w-max">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="p-2 text-left font-medium text-gray-500 sticky left-0 bg-gray-50">
+                      ข้อมูลพนักงาน
+                    </th>
+                    <th className="p-4 text-center font-medium text-gray-500">สถานะ</th>
+                    <th className="p-4 text-center font-medium text-gray-500">ตำแหน่ง</th>
+                    <th className="p-4 text-center font-medium text-gray-500">วันที่จ่าย</th>
+                    <th className="p-4 text-center font-medium text-gray-500">ข้อมูลธนาคาร</th>
+                    <th className="p-4 text-center font-medium text-gray-500">เงินเดือน</th>
+                    <th className="p-4 text-center font-medium text-gray-500">ค่าล่วงเวลา</th>
+                    <th className="p-4 text-center font-medium text-gray-500">โบนัส</th>
+                    <th className="p-4 text-center font-medium text-gray-500">ขาด/สาย</th>
+                    <th className="p-4 text-center font-medium text-gray-500">ค่าเบิกเงิน</th>
+                    <th className="p-4 text-center font-medium text-gray-500">ภาษี</th>
+                    <th className="p-4 text-center font-medium text-gray-500">กองทุน</th>
+                    <th className="p-4 text-center font-medium text-gray-500">ประกันสังคม</th>
+                    <th className="p-4 text-center font-medium text-gray-500">รายได้สุทธิ</th>
+                    {user?.role === "admin" && (
+                      <th className="p-4 text-center font-medium text-gray-500 no-print">
+                        จัดการ
+                      </th>
                     )}
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {currentItems.map((item, index) => (
+                    <tr
+                      key={index}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="p-4 sticky left-0 bg-white">
+                        <div className="font-medium">
+                          {item.firstname} {item.lastname}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          ID: {item.employee_id}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        {getStatusDisplay(item.status)}
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        {item.position}
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="text-sm whitespace-nowrap">
+                          <div>
+                            Start: {new Date(item.payroll_startdate).toLocaleDateString("th-TH")}
+                          </div>
+                          <div>
+                            End: {new Date(item.payroll_enddate).toLocaleDateString("th-TH")}
+                          </div>
+                          <div className="text-gray-500">
+                            Pay: {item.payment_date
+                              ? new Date(item.payment_date).toLocaleDateString("th-TH")
+                              : "--/--/----"}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="text-sm whitespace-nowrap">
+                          <div>{item.banking}</div>
+                          <div className="text-gray-500">{item.banking_id}</div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-green-500">
+                          +{formatCurrency(item.salary)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-green-500">
+                          +{formatCurrency(item.overtime)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-green-500">
+                          +{formatCurrency(item.bonus)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-red-500">
+                          -{formatCurrency(item.absent_late)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-red-500">
+                          -{formatCurrency(item.expense)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-red-500">
+                          -{formatCurrency(item.tax)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-red-500">
+                          -{formatCurrency(item.providentfund)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="font-medium text-red-500">
+                          -{formatCurrency(item.socialsecurity)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="text-lg font-bold text-green-500">
+                          {formatCurrency(item.salary_total)}
+                        </div>
+                      </td>
+                      {user?.role === "admin" && (
+                        <td className="p-4 text-center whitespace-nowrap no-print">
+                          <div className="flex justify-center space-x-2">
+                            <button
+                              onClick={() => openEditModal(item)}
+                              className="p-1 text-blue-500 hover:text-blue-700"
+                            >
+                              <Edit2 size={20} />
+                            </button>
+                            <button
+                              onClick={() => openDeleteModal(item)}
+                              className="p-1 text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex justify-center items-center space-x-2 mt-4 no-print">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-500 text-white hover:bg-blue-600"
+              }`}
+            >
+              ก่อนหน้า
+            </button>
+
+            <div className="flex space-x-1">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index + 1}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`px-3 py-1 rounded ${
+                    currentPage === index + 1
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 hover:bg-gray-300"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-500 text-white hover:bg-blue-600"
+              }`}
+            >
+              ถัดไป
+            </button>
+          </div>
+
+          {/* Add/Edit Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items
+-center justify-center p-4 z-50 no-print">
+              <div className="bg-white rounded-lg w-full max-w-3xl">
+                <div className="flex justify-between items-center p-6 border-b">
+                  <h3 className="text-xl font-semibold">
+                    {isEditing ? "แก้ไขข้อมูลเงินเดือน" : "เพิ่มข้อมูลเงินเดือน"}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setFormData(initialFormData);
+                      setIsEditing(false);
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <form onSubmit={isEditing ? handleEdit : handleAdd} className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        รหัสพนักงาน
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.employee_id}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            employee_id: Number(e.target.value),
+                          })
+                        }
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        โบนัส
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.bonus}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            bonus: Number(e.target.value),
+                          })
+                        }
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        เลือกเดือน
+                      </label>
+                      <input
+                        type="month"
+                        defaultValue={
+                          formData.payroll_startdate
+                            ? `${new Date(formData.payroll_startdate).getFullYear()}-${(
+                                new Date(formData.payroll_startdate).getMonth() + 1
+                              )
+                                .toString()
+                                .padStart(2, "0")}`
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const selectedMonth = e.target.value;
+                          const [year, month] = selectedMonth.split("-").map(Number);
+                          const startDate = `${selectedMonth}-01`;
+                          const endDate = new Date(year, month, 0);
+
+                          setFormData({
+                            ...formData,
+                            payroll_startdate: startDate,
+                            payroll_enddate: `${year}-${String(month).padStart(2, "0")}-${endDate.getDate()}`,
+                          });
+                        }}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+
+                    {isEditing && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          สถานะ
+                        </label>
+                        <select
+                          name="status"
+                          value={formData.status}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              status: e.target.value,
+                            })
+                          }
+                          className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="Pending">รออนุมัติ</option>
+                          <option value="Paid">จ่ายแล้ว</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex justify-end space-x-3">
                     <button
+                      type="button"
                       onClick={() => {
                         setIsModalOpen(false);
+                        setFormData(initialFormData);
                         setIsEditing(false);
-                        setShowDeleteConfirm(false);
                       }}
-                      className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                     >
-                      <X className="w-6 h-6" />
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    >
+                      {isEditing ? "บันทึกการแก้ไข" : "เพิ่มข้อมูล"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Modal */}
+          {isDeleteModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 no-print">
+              <div className="bg-white rounded-lg w-full max-w-md">
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold mb-4">ยืนยันการลบข้อมูล</h3>
+                  <p className="text-gray-600">
+                    คุณต้องการลบข้อมูลเงินเดือนของ {selectedItem?.firstname}{" "}
+                    {selectedItem?.lastname} ใช่หรือไม่?
+                  </p>
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <button
+                      onClick={() => setIsDeleteModalOpen(false)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                    >
+                      ยืนยันการลบ
                     </button>
                   </div>
                 </div>
-
-                {showDeleteConfirm ? (
-                  <div className="p-6 bg-red-50 rounded-lg">
-                    <h4 className="text-lg font-semibold text-red-800 mb-4">Confirm Deletion</h4>
-                    <p className="text-red-600 mb-6">
-                      Are you sure you want to delete {selectedEmployee.firstname} {selectedEmployee.lastname}? This action cannot be undone.
-                    </p>
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => handleDelete(selectedEmployee.id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        Confirm Delete
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : isEditing ? (
-                  <form onSubmit={handleUpdate} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          First Name
-                        </label>
-                        <input
-                          type="text"
-                          value={editForm.firstname || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, firstname: e.target.value })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Last Name
-                        </label>
-                        <input
-                          type="text"
-                          value={editForm.lastname || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, lastname: e.target.value })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          value={editForm.email || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, email: e.target.value })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone
-                        </label>
-                        <input
-                          type="tel"
-                          value={editForm.phone_number || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, phone_number: e.target.value })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Job Position
-                        </label>
-                        <input
-                          type="text"
-                          value={editForm.job_position || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, job_position: e.target.value })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Salary
-                        </label>
-                        <input
-                          type="number"
-                          value={editForm.salary || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, salary: parseFloat(e.target.value) })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Birth Date
-                        </label>
-                        <input
-                          type="date"
-                          value={editForm.birth_date || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, birth_date: e.target.value })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Nationality
-                        </label>
-                        <input
-                          type="text"
-                          value={editForm.nationality || ""}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, nationality: e.target.value })
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end gap-4 mt-6">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditForm({});
-                        }}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h4>
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <User className="w-5 h-5 text-blue-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Full Name</p>
-                              <p className="font-medium">{selectedEmployee.firstname} {selectedEmployee.lastname}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Building className="w-5 h-5 text-blue-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Position</p>
-                              <p className="font-medium">{selectedEmployee.job_position}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Mail className="w-5 h-5 text-blue-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Email</p>
-                              <p className="font-medium">{selectedEmployee.email}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Phone className="w-5 h-5 text-blue-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Phone</p>
-                              <p className="font-medium">{selectedEmployee.phone_number || 'N/A'}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-5 h-5 text-blue-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Birth Date</p>
-                              <p className="font-medium">
-                                {selectedEmployee.birth_date
-                                  ? new Date(selectedEmployee.birth_date).toLocaleDateString("en-GB")
-                                  : "N/A"}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <DollarSign className="w-5 h-5 text-blue-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Salary</p>
-                              <p className="font-medium">${selectedEmployee.salary?.toLocaleString()}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Additional Information</h4>
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <MapPin className="w-5 h-5 text-blue-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Address</p>
-                              <p className="font-medium">
-                                {selectedEmployee.personal_info?.address || 'N/A'}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {selectedEmployee.personal_info?.city} {selectedEmployee.personal_info?.zip_code}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm text-gray-500">Ethnicity</p>
-                              <p className="font-medium">{selectedEmployee.ethnicity || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500">Nationality</p>
-                              <p className="font-medium">{selectedEmployee.nationality || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500">Religion</p>
-                              <p className="font-medium">{selectedEmployee.religion || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500">Marital Status</p>
-                              <p className="font-medium">{selectedEmployee.marital_status || 'N/A'}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Associated User Accounts</h4>
-                        <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="bg-gray-100">
-                                <th className="px-4 py-3 text-left font-medium text-gray-600">Username</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {getMatchingUsers(selectedEmployee.id).map((user) => (
-                                <tr key={user.user_id} className="border-t border-gray-200">
-                                  <td className="px-4 py-3">{user.username}</td>
-                                  <td className="px-4 py-3">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      {user.role}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default EmployeeList;
+export default Salary;

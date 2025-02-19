@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Edit2, Trash2, X, Plus } from "lucide-react";
+import {
+  Edit2,
+  Trash2,
+  X,
+  Plus,
+  Search,
+  Building2,
+  Phone,
+  UserCircle,
+} from "lucide-react";
 
 const AddCustomer = () => {
   const [customers, setCustomers] = useState([]);
@@ -20,6 +29,8 @@ const AddCustomer = () => {
     cus_address: "",
     cus_phone: "",
     cus_tax_id: "",
+    cus_bankname:"",
+    cus_banknumber:"",
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -113,9 +124,7 @@ const AddCustomer = () => {
 
   // เพิ่มฟังก์ชันใหม่สำหรับจัดการรูปแบบเบอร์โทร
   const formatPhoneNumber = (value) => {
-    // ลบทุกอย่างที่ไม่ใช่ตัวเลข
     const number = value.replace(/[^\d]/g, "");
-    // จัดรูปแบบ xxx-xxx-xxxx
     if (number.length <= 3) return number;
     if (number.length <= 6) return `${number.slice(0, 3)}-${number.slice(3)}`;
     return `${number.slice(0, 3)}-${number.slice(3, 6)}-${number.slice(6, 10)}`;
@@ -256,7 +265,7 @@ const AddCustomer = () => {
 
       {/* Add Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 ">
           <div className="bg-white rounded-lg w-full max-w-md">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-xl font-semibold">เพิ่มลูกค้าใหม่</h3>
@@ -342,6 +351,32 @@ const AddCustomer = () => {
                     type="text"
                     name="cus_tax_id"
                     value={formData.cus_tax_id}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    เลขบัญชี
+                  </label>
+                  <input
+                    type="text"
+                    name="cus_banknumber"
+                    value={formData.cus_banknumber}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ชื่อธนาคาร
+                  </label>
+                  <input
+                    type="text"
+                    name="cus_bankname"
+                    value={formData.cus_bankname}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     required
@@ -457,6 +492,32 @@ const AddCustomer = () => {
                     type="text"
                     name="cus_tax_id"
                     value={formData.cus_tax_id}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    เลขบัญชี
+                  </label>
+                  <input
+                    type="text"
+                    name="cus_banknumber"
+                    value={formData.cus_banknumber}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ชื่อธนาคาร
+                  </label>
+                  <input
+                    type="text"
+                    name="cus_bankname"
+                    value={formData.cus_bankname}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     required
