@@ -22,7 +22,7 @@ model user {
   password    String
   role        Role      @default(recruit)
   employee_id Int?      @unique // Add this field
-  employee    Employee? @relation(fields: [employee_id], references: [id],onDelete: Cascade) // Add this relation
+  employee    Employee? @relation(fields: [employee_id], references: [id], onDelete: Cascade) // Add this relation
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -36,7 +36,7 @@ model Employee {
   salary        Float
   documents     Json?
   personal_info Json?
-  user          user? 
+  user          user?
 
   phone_number String   @db.VarChar(20)
   email        String   @unique @db.VarChar(150)
@@ -45,17 +45,17 @@ model Employee {
   age          Int
   ethnicity    String   @db.VarChar(50)
 
-  nationality     String @db.VarChar(50)
-  religion        String @db.VarChar(50)
-  marital_status  String @db.VarChar(50)
-  military_status String @db.VarChar(100)
-  role            Role   @default(employee)
+  nationality     String  @db.VarChar(50)
+  religion        String  @db.VarChar(50)
+  marital_status  String  @db.VarChar(50)
+  military_status String  @db.VarChar(100)
+  role            Role    @default(employee)
   photo           String
   banking         String?
   banking_id      String?
 
   // Relationships
-  LeaveRequests LeaveRequest[] 
+  LeaveRequests LeaveRequest[]
   Meetings      Meetingroom[]
   RentCars      Rentcar[]
   Todos         Todo[]
@@ -99,7 +99,7 @@ model JobApplication {
 
 model attend {
   attend_id   Int      @id @default(autoincrement())
-  employee    Employee @relation(fields: [employee_id], references: [id],onDelete: Cascade)
+  employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
   employee_id Int
   firstname   String   @db.VarChar(100)
   lastname    String   @db.VarChar(100)
@@ -112,7 +112,7 @@ model attend {
 
 model LeaveRequest {
   leave_id    Int      @id @default(autoincrement())
-  employee    Employee @relation(fields: [employee_id], references: [id],onDelete: Cascade)
+  employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
   employee_id Int
 
   firstname String   @db.VarChar(100)
@@ -129,7 +129,7 @@ model LeaveRequest {
 
 model Meetingroom {
   meeting_id  Int      @id @default(autoincrement())
-  employee    Employee @relation(fields: [employee_id], references: [id],onDelete: Cascade)
+  employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
   employee_id Int
 
   firstname String   @db.VarChar(100)
@@ -143,7 +143,7 @@ model Meetingroom {
 
 model Rentcar {
   rentcar_id  Int      @id @default(autoincrement())
-  employee    Employee @relation(fields: [employee_id], references: [id],onDelete: Cascade)
+  employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
   employee_id Int
 
   firstname String   @db.VarChar(100)
@@ -174,7 +174,7 @@ model Todo {
   name        String
   desc        String
   status      todojob  @default(mustdo)
-  project     Project  @relation("ProjectTodos", fields: [project_id], references: [project_id],onDelete: Cascade)
+  project     Project  @relation("ProjectTodos", fields: [project_id], references: [project_id], onDelete: Cascade)
   project_id  Int
   employee    Employee @relation(fields: [employee_id], references: [id])
   employee_id Int
@@ -184,7 +184,7 @@ model Todo {
 
 model Salary {
   salary_id   Int      @id @default(autoincrement())
-  employee    Employee @relation(fields: [employee_id], references: [id],onDelete: Cascade)
+  employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
   employee_id Int
   firstname   String
   lastname    String
@@ -237,11 +237,32 @@ model attendhistory {
   status         String
 
   // Relations if any
-  employee Employee @relation(fields: [employee_id], references: [id],onDelete: Cascade)
+  employee Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+}
+
+model customer {
+  customer_id      Int      @id @default(autoincrement())
+  cus_company_name String
+  contact_name     String
+  cus_position     String
+  cus_address      String
+  cus_phone        String
+  cus_tax_id       String
+  cus_bankname     String // ชื่อธนาคาร
+  cus_banknumber   String // เลขบัญชีธนาคาร
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  invoices   invoice[] // ความสัมพันธ์กับใบแจ้งหนี้
+  meetingcus meetingcus[]
+  quotation quotation[]
 }
 
 model quotation {
   quotation_id     Int      @id @default(autoincrement())
+  customer        customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  customer_id      Int
+
   cus_name         String
   tax_id           String
   address          String
@@ -265,25 +286,9 @@ model quotation {
   updated_at       DateTime @updatedAt
 }
 
-model customer {
-  customer_id      Int      @id @default(autoincrement())
-  cus_company_name String
-  contact_name     String
-  cus_position     String
-  cus_address      String
-  cus_phone        String
-  cus_tax_id       String
-  cus_bankname     String // ชื่อธนาคาร
-  cus_banknumber   String // เลขบัญชีธนาคาร
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-
-  invoices invoice[] // ความสัมพันธ์กับใบแจ้งหนี้
-}
-
 model invoice {
   invoice_id  Int      @id @default(autoincrement())
-  date        DateTime @default(now()) // วันที่ออกใบแจ้งหนี้
+  date        DateTime @default(now()) 
   customer_id Int
   customer    customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade) // ดึงข้อมูลจาก customer
   subtotal    Float // ยอดรวมก่อนภาษี
@@ -315,10 +320,24 @@ model invoice_item {
   product    product @relation(fields: [product_id], references: [product_id])
   quantity   Int // จำนวนสินค้า
   discount   Float   @default(0) // ส่วนลดสำหรับแต่ละสินค้า
-  total      Float // รวมราคา (product.price * quantity - discount)
+  total      Float 
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model meetingcus {
+  meeting_cus Int      @id @default(autoincrement())
+  customer    customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  customer_id Int
+
+  firstname String   @db.VarChar(100)
+  lastname  String   @db.VarChar(100)
+  startdate DateTime @db.Date
+  enddate   DateTime @db.Date
+  timestart String
+  timeend   String
+  status    String   @default("Pending")
 }
 
 enum Attend {

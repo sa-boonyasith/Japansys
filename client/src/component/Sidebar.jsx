@@ -68,6 +68,10 @@ const Sidebar = ({ onToggleJobButtons }) => {
         navigate("/dashboard/quotation");
       } else if (menu === "invoice") {
         navigate("/dashboard/invoice");
+      } else if (menu === "receipt") {
+        navigate("/dashboard/receipt");
+      } else if (menu === "meetingcustomer") {
+        navigate("/dashboard/meetingcustomer");
       } else {
         onToggleJobButtons(null);
       }
@@ -229,13 +233,19 @@ const Sidebar = ({ onToggleJobButtons }) => {
                     >
                       Invoice/ใบแจ้งหนี้
                     </li>
-                    <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                      <Link to="/register/feedback">
-                        Receipt/ใบเสร็จรับเงิน
-                      </Link>
+                    <li
+                      className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                      onClick={() => handleSubMenuClick("receipt")}
+                      role="button"
+                    >
+                      Receipt/ใบเสร็จ
                     </li>
-                    <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                      <Link to="/register/feedback">นัดประชุมกับลูกค้า</Link>
+                    <li
+                      className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                      onClick={() => handleSubMenuClick("meetingcustomer")}
+                      role="button"
+                    >
+                      นัดประชุมกับลูกค้า
                     </li>
                     <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
                       <Link to="/register/feedback">

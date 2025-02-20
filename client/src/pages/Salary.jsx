@@ -1,5 +1,134 @@
 import React, { useEffect, useState } from "react";
-import { PlusCircle, Edit2, Trash2, X } from "lucide-react";
+import { PlusCircle, Edit2, Trash2, X, Printer } from "lucide-react";
+
+const PrintablePayslip = ({ item }) => {
+  return (
+    <div className="p-8 bg-white">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold mb-2">ใบแจ้งเงินเดือน</h1>
+        <p className="text-gray-600">
+          งวดวันที่{" "}
+          {new Date(item.payroll_startdate).toLocaleDateString("th-TH")} ถึง{" "}
+          {new Date(item.payroll_enddate).toLocaleDateString("th-TH")}
+        </p>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">ข้อมูลพนักงาน</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p>
+              <strong>ชื่อ-นามสกุล:</strong> {item.firstname} {item.lastname}
+            </p>
+            <p>
+              <strong>รหัสพนักงาน:</strong> {item.employee_id}
+            </p>
+          </div>
+          <div>
+            <p>
+              <strong>ตำแหน่ง:</strong> {item.position}
+            </p>
+            <p>
+              <strong>สถานะ:</strong>{" "}
+              {item.status === "Paid" ? "จ่ายแล้ว" : "รออนุมัติ"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">รายละเอียดการจ่ายเงิน</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h3 className="font-bold mb-2 text-green-600">รายได้</h3>
+            <p>
+              เงินเดือน:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.salary)}
+            </p>
+            <p>
+              ค่าล่วงเวลา:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.overtime)}
+            </p>
+            <p>
+              โบนัส:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.bonus)}
+            </p>
+          </div>
+          <div>
+            <h3 className="font-bold mb-2 text-red-600">รายการหัก</h3>
+            <p>
+              ขาด/สาย:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.absent_late)}
+            </p>
+            <p>
+              ค่าเบิกเงิน:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.expense)}
+            </p>
+            <p>
+              ภาษี:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.tax)}
+            </p>
+            <p>
+              กองทุน:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.providentfund)}
+            </p>
+            <p>
+              ประกันสังคม:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.socialsecurity)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 border-t pt-4">
+        <div className="text-right">
+          <h3 className="text-xl font-bold">
+            รายได้สุทธิ:{" "}
+            {new Intl.NumberFormat("th-TH", {
+              style: "currency",
+              currency: "THB",
+            }).format(item.salary_total)}
+          </h3>
+        </div>
+      </div>
+
+      <div className="mt-8 text-sm text-gray-500">
+        <p>โอนเข้าบัญชี: {item.banking}</p>
+        <p>เลขที่บัญชี: {item.banking_id}</p>
+        <p>
+          วันที่จ่าย:{" "}
+          {item.payment_date
+            ? new Date(item.payment_date).toLocaleDateString("th-TH")
+            : "รอดำเนินการ"}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const Salary = () => {
   const [salaryData, setSalaryData] = useState([]);
@@ -43,6 +172,8 @@ const Salary = () => {
       setUser(JSON.parse(storedUser)); // แปลง JSON เป็น Object
     }
   }, []);
+
+
 
   const [formData, setFormData] = useState(initialFormData);
 
@@ -140,7 +271,7 @@ const Salary = () => {
       console.error(err);
     }
   };
- 
+
   const handleDelete = async () => {
     try {
       const response = await fetch(
@@ -190,7 +321,7 @@ const Salary = () => {
     }
 
     if (selectedYear) {
-      filtered = filtered.filter((item) => { 
+      filtered = filtered.filter((item) => {
         const payrollYear = new Date(item.payroll_startdate).getFullYear();
         return payrollYear === selectedYear;
       });
@@ -501,22 +632,43 @@ const Salary = () => {
                                 {formatCurrency(item.salary_total)}
                               </div>
                             </td>
-                            {user?.role === "admin" && (
+                            {user?.role === "admin" ? (
                               <td className="p-4 text-center whitespace-nowrap">
                                 <div className="flex justify-center space-x-2">
+                                  {/* <button
+                                    onClick={() => PrintablePayslip(item)}
+                                    className="p-1 text-gray-500 hover:text-gray-700"
+                                    title="พิมพ์ใบแจ้งเงินเดือน"
+                                  >
+                                    <Printer size={20} />
+                                  </button> */}
                                   <button
                                     onClick={() => openEditModal(item)}
                                     className="p-1 text-blue-500 hover:text-blue-700"
+                                    title="แก้ไขข้อมูล"
                                   >
                                     <Edit2 size={20} />
                                   </button>
                                   <button
                                     onClick={() => openDeleteModal(item)}
                                     className="p-1 text-red-500 hover:text-red-700"
+                                    title="ลบข้อมูล"
                                   >
                                     <Trash2 size={20} />
                                   </button>
                                 </div>
+                              </td>
+                            ) : (
+                              <td className="p-4 text-center whitespace-nowrap">
+                                {/* <div className="flex justify-center">
+                                  <button
+                                    onClick={() => handlePrint(item)}
+                                    className="p-1 text-gray-500 hover:text-gray-700"
+                                    title="พิมพ์ใบแจ้งเงินเดือน"
+                                  >
+                                    <Printer size={20} />
+                                  </button>
+                                </div> */}
                               </td>
                             )}
                           </tr>

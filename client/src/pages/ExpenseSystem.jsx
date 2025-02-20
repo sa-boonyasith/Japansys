@@ -105,12 +105,12 @@ const ExpenseSystem = () => {
         setAddError("Please fill out all required fields.");
         return;
       }
-  
+
       const expenseData = {
         ...newExpense,
         date: new Date(newExpense.date).toISOString(),
       };
-  
+
       // POST new expense
       const response = await fetch("http://localhost:8080/api/expense", {
         method: "POST",
@@ -119,7 +119,7 @@ const ExpenseSystem = () => {
         },
         body: JSON.stringify(expenseData),
       });
-  
+
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("ไม่มีไอดีในระบบ");
@@ -127,13 +127,13 @@ const ExpenseSystem = () => {
           throw new Error("Failed to add expense");
         }
       }
-  
+
       // Fetch updated expenses
       const updatedResponse = await fetch("http://localhost:8080/api/expense");
       const data = await updatedResponse.json();
       setExpenses(data.listExpense);
       setFilterExpenses(data.listExpense);
-  
+
       // Reset form and close modal
       setShowAddModal(false);
       setNewExpense({
@@ -146,7 +146,7 @@ const ExpenseSystem = () => {
       setAddError("");
     } catch (err) {
       console.error("Error adding expense:", err);
-      
+
       if (err.message === "ไม่มีไอดีในระบบ") {
         setAddError("ไม่มีไอดีในระบบ");
       } else {
@@ -154,7 +154,6 @@ const ExpenseSystem = () => {
       }
     }
   };
-  
 
   const handleEditExpense = async () => {
     if (!editExpense) return;
@@ -269,14 +268,6 @@ const ExpenseSystem = () => {
               type="date"
               name="date"
               value={filters.date}
-              onChange={handleFilterChange}
-              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-            <input
-              type="text"
-              placeholder="Expense Type"
-              name="type"
-              value={filters.type}
               onChange={handleFilterChange}
               className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />

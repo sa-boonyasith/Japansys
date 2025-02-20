@@ -265,7 +265,7 @@ const AddCustomer = () => {
 
       {/* Add Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 ">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center overflow-auto justify-center p-4 z-50 ">
           <div className="bg-white rounded-lg w-full max-w-md">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-xl font-semibold">เพิ่มลูกค้าใหม่</h3>
@@ -406,7 +406,7 @@ const AddCustomer = () => {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center overflow-auto p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-md">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-xl font-semibold">แก้ไขข้อมูลลูกค้า</h3>

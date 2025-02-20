@@ -14,6 +14,8 @@ import {
   Trash2,
   Briefcase,
   Camera,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const EmployeeList = () => {
@@ -30,6 +32,8 @@ const EmployeeList = () => {
   const [editForm, setEditForm] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const employeesPerPage = 6;
 
   useEffect(() => {
     fetchData();
@@ -224,6 +228,33 @@ const EmployeeList = () => {
     return users.filter((user) => user.employee_id === employeeId);
   };
 
+  // const filteredEmployees = employees.filter(
+  //   (emp) =>
+  //     emp.id?.toString().includes(searchTerm) ||
+  //     emp.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     emp.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     emp.job_position?.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+  const indexOfLastEmployee = currentPage * employeesPerPage;
+  const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
+  const currentEmployees = filteredEmployees.slice(
+    indexOfFirstEmployee,
+    indexOfLastEmployee
+  );
+
+  // Pagination controls
+  const nextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const prevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -255,17 +286,20 @@ const EmployeeList = () => {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Searh Employee ID"
+                placeholder="Search employees..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
                 className="w-full p-4 pl-12 bg-white border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmployees.map((emp) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {currentEmployees.map((emp) => (
             <div
               key={emp.id}
               onClick={() => handleEmployeeClick(emp)}
@@ -311,6 +345,29 @@ const EmployeeList = () => {
             </div>
           ))}
         </div>
+
+         {/* Pagination Controls */}
+         {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="text-sm font-medium text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
         {isModalOpen && selectedEmployee && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
