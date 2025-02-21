@@ -255,13 +255,13 @@ model customer {
 
   invoices   invoice[] // ความสัมพันธ์กับใบแจ้งหนี้
   meetingcus meetingcus[]
-  quotation quotation[]
+  quotation  quotation[]
 }
 
 model quotation {
-  quotation_id     Int      @id @default(autoincrement())
-  customer        customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
-  customer_id      Int
+  quotation_id Int      @id @default(autoincrement())
+  customer     customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  customer_id  Int
 
   cus_name         String
   tax_id           String
@@ -288,7 +288,7 @@ model quotation {
 
 model invoice {
   invoice_id  Int      @id @default(autoincrement())
-  date        DateTime @default(now()) 
+  date        DateTime @default(now())
   customer_id Int
   customer    customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade) // ดึงข้อมูลจาก customer
   subtotal    Float // ยอดรวมก่อนภาษี
@@ -320,25 +320,34 @@ model invoice_item {
   product    product @relation(fields: [product_id], references: [product_id])
   quantity   Int // จำนวนสินค้า
   discount   Float   @default(0) // ส่วนลดสำหรับแต่ละสินค้า
-  total      Float 
+  total      Float
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
 
 model meetingcus {
-  meeting_cus Int      @id @default(autoincrement())
-  customer    customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
-  customer_id Int
+  meeting_cus      Int      @id @default(autoincrement())
+  customer         customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  customer_id      Int
 
-  firstname String   @db.VarChar(100)
-  lastname  String   @db.VarChar(100)
-  startdate DateTime @db.Date
-  enddate   DateTime @db.Date
-  timestart String
-  timeend   String
-  status    String   @default("Pending")
+  cus_company_name String
+  contact_name     String
+  cus_postition    String
+  cus_address      String
+  cus_phone        String
+  cus_tax_id       String
+  cus_bankname     String
+  cus_banknumber   String
+
+  startdate String
+  enddate   String
+  timestart String // เก็บเป็น String (HH:mm:ss)
+  timeend   String // เก็บเป็น String (HH:mm:ss)
+
+  status String @default("Pending")
 }
+
 
 enum Attend {
   check_in

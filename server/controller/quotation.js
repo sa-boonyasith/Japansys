@@ -11,12 +11,76 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-    try {
-      const {
+  try {
+    const {
+      customer_id,
+      cus_name,
+      tax_id,
+      address,
+      date,
+      credit_term,
+      contract_name,
+      sale_name,
+      project_name,
+      no_item,
+      description,
+      quantity,
+      price,
+      discount,
+      amount,
+      subtotal,
+      special_discount,
+      after_discount,
+      vat,
+      total,
+    } = req.body;
+
+    // ตรวจสอบค่าที่จำเป็น
+    if (!customer_id || !cus_name || !date || !sale_name || !project_name) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // ตรวจสอบว่า customer_id มีอยู่ในฐานข้อมูล
+    const existingCustomer = await prisma.customer.findUnique({
+      where: { customer_id },
+    });
+    if (!existingCustomer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // ตรวจสอบค่าว่างหรือค่าติดลบในฟิลด์ตัวเลข
+    const numericFields = {
+      credit_term,
+      quantity,
+      price,
+      discount,
+      subtotal,
+      special_discount,
+      after_discount,
+      vat,
+      total,
+    };
+
+    for (const [key, value] of Object.entries(numericFields)) {
+      if (value < 0 || isNaN(value)) {
+        return res.status(400).json({ error: `Invalid value for ${key}` });
+      }
+    }
+
+    // แปลงวันที่ให้ถูกต้อง
+    const formattedDate = new Date(date);
+    if (isNaN(formattedDate.getTime())) {
+      return res.status(400).json({ error: "Invalid date format" });
+    }
+
+    // สร้าง Quotation ใหม่
+    const newQuotation = await prisma.quotation.create({
+      data: {
+        customer_id, // เชื่อมกับ customer
         cus_name,
         tax_id,
         address,
-        date,
+        date: formattedDate, // ใช้วันที่ที่แปลงแล้ว
         credit_term,
         contract_name,
         sale_name,
@@ -32,58 +96,18 @@ exports.create = async (req, res) => {
         after_discount,
         vat,
         total,
-      } = req.body;
-  
-      // ตรวจสอบข้อมูลที่จำเป็น
-      if (!cus_name || !date || !sale_name || !project_name) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-  
-      // ตรวจสอบค่าว่างหรือค่าติดลบในฟิลด์ตัวเลข
-      if (quantity < 0 || price < 0 || discount < 0 || subtotal < 0 || vat < 0 || total < 0) {
-        return res.status(400).json({ error: "Invalid numerical values" });
-      }
-  
-      // แปลงวันที่ให้อยู่ในรูปแบบที่ถูกต้อง
-      const formattedDate = new Date(date);
-      if (isNaN(formattedDate)) {
-        return res.status(400).json({ error: "Invalid date format" });
-      }
-  
-      // สร้างใบเสนอราคาใหม่
-      const newQuotation = await prisma.quotation.create({
-        data: {
-          cus_name,
-          tax_id,
-          address,
-          date: formattedDate,  // ใช้วันที่ที่แปลงแล้ว
-          credit_term,
-          contract_name,
-          sale_name,
-          project_name,
-          no_item,
-          description,
-          quantity,
-          price,
-          discount,
-          amount,
-          subtotal,
-          special_discount,
-          after_discount,
-          vat,
-          total,
-        },
-      });
+      },
+    });
 
-      res.status(201).json({
-        message: "Quotation created successfully",
-        data: newQuotation,
-      });
-  
-    } catch (err) {
-      console.error("Error creating Quotation:", err);
-      res.status(500).json({ error: "Failed to create Quotation" });
-    }
+    res.status(201).json({
+      message: "Quotation created successfully",
+      data: newQuotation,
+    });
+
+  } catch (err) {
+    console.error("Error creating Quotation:", err);
+    res.status(500).json({ error: "Failed to create Quotation" });
+  }
 };
 
 exports.update = async (req, res) => {
