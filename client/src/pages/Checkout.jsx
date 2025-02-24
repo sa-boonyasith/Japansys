@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Clock, LogOut, Calendar, Timer } from 'lucide-react';
+import { Clock, LogOut, Calendar, Timer, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Checkout = () => {
   const [attend, setAttend] = useState([]);
@@ -12,40 +12,41 @@ const Checkout = () => {
     remainingCheckouts: 0
   });
 
-const fetchAttendance = async () => {
-  try {
-    setLoading(true);
-    const response = await axios.get("http://localhost:8080/api/attend");
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 4;
 
-    // เรียงข้อมูลจากล่าสุดไปเก่าสุด โดยเปรียบเทียบเวลา check_out_time
-    const sortedData = response.data.sort((a, b) => 
-      new Date(b.check_out_time) - new Date(a.check_out_time)
-    );
+  const fetchAttendance = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:8080/api/attend");
 
-    setAttend(sortedData);
+      const sortedData = response.data.sort((a, b) => 
+        new Date(b.check_out_time) - new Date(a.check_out_time)
+      );
 
-    // คำนวณสถิติ
-    const today = new Date().toLocaleDateString();
-    const todayRecords = sortedData.filter(record => 
-      new Date(record.check_in_time).toLocaleDateString() === today
-    );
+      setAttend(sortedData);
 
-    const checkedOut = todayRecords.filter(record => record.check_out_time).length;
-    const totalHours = todayRecords.reduce((sum, record) => sum + (record.working_hours || 0), 0);
+      const today = new Date().toLocaleDateString();
+      const todayRecords = sortedData.filter(record => 
+        new Date(record.check_in_time).toLocaleDateString() === today
+      );
 
-    setStats({
-      totalCheckedOut: checkedOut,
-      averageHours: checkedOut ? (totalHours / checkedOut) : 0,
-      remainingCheckouts: todayRecords.length - checkedOut
-    });
-  } catch (err) {
-    setError("ไม่สามารถดึงข้อมูลการเช็คเอาท์ได้");
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+      const checkedOut = todayRecords.filter(record => record.check_out_time).length;
+      const totalHours = todayRecords.reduce((sum, record) => sum + (record.working_hours || 0), 0);
 
+      setStats({
+        totalCheckedOut: checkedOut,
+        averageHours: checkedOut ? (totalHours / checkedOut) : 0,
+        remainingCheckouts: todayRecords.length - checkedOut
+      });
+    } catch (err) {
+      setError("ไม่สามารถดึงข้อมูลการเช็คเอาท์ได้");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchAttendance();
@@ -55,28 +56,24 @@ const fetchAttendance = async () => {
 
   const handleCheckout = async () => {
     try {
-      // ดึงข้อมูลจาก localStorage
       const userData = localStorage.getItem("user");
-  
-      // ตรวจสอบว่ามีข้อมูลหรือไม่
+
       if (!userData) {
         alert("ไม่พบข้อมูลพนักงานในระบบ");
         return;
       }
-  
-      // แปลง JSON string เป็น JavaScript Object
+
       const user = JSON.parse(userData);
-  
-      // ตรวจสอบว่ามี employee_id หรือไม่
+
       if (!user.employee_id) {
         alert("ไม่พบรหัสพนักงาน");
         return;
       }
-  
+
       const response = await axios.put("http://localhost:8080/api/attend", {
-        employee_id: user.employee_id, // ใช้ค่า employee_id จาก localStorage
+        employee_id: user.employee_id,
       });
-  
+
       alert("เช็คเอาท์สำเร็จ!");
       fetchAttendance();
     } catch (err) {
@@ -84,8 +81,6 @@ const fetchAttendance = async () => {
       alert(err.response?.data?.error || "เช็คเอาท์ไม่สำเร็จ");
     }
   };
-  
-  
 
   const formatHoursAndMinutes = (hours) => {
     if (!hours) return "0:00";
@@ -93,6 +88,18 @@ const fetchAttendance = async () => {
     const h = Math.floor(totalMinutes / 60);
     const m = totalMinutes % 60;
     return `${h}:${m.toString().padStart(2, "0")}`;
+  };
+
+  // Pagination logic
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = attend.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(attend.length / recordsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
   };
 
   if (loading) {
@@ -197,7 +204,7 @@ const fetchAttendance = async () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {attend.map((record) => (
+                {currentRecords.map((record) => (
                   <tr key={record.attend_id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                       {record.employee_id}
@@ -223,6 +230,33 @@ const fetchAttendance = async () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {attend.length > recordsPerPage && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded-md bg-gray-100 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                ก่อนหน้า
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  หน้า {currentPage} จาก {totalPages}
+                </span>
+              </div>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded-md bg-gray-100 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                ถัดไป
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

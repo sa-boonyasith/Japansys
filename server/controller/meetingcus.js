@@ -22,15 +22,7 @@ exports.create = async (req, res) => {
       return res.status(400).json({ error: "Invalid startdate or enddate" });
     }
 
-    // ตรวจสอบว่า timestart และ timeend อยู่ในรูปแบบ HH:mm:ss
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
-    if (!timeRegex.test(timestart) || !timeRegex.test(timeend)) {
-      return res
-        .status(400)
-        .json({
-          error: "Invalid timestart or timeend format. Expected HH:mm:ss",
-        });
-    }
+ 
 
     // ค้นหา customer
     const customer = await prisma.customer.findUnique({
@@ -63,10 +55,10 @@ exports.create = async (req, res) => {
         cus_tax_id: customer.cus_tax_id,
         cus_bankname: customer.cus_bankname,
         cus_banknumber: customer.cus_banknumber,
-        startdate: validStartDate, // ✅ บันทึกเป็น String YYYY-MM-DD
-        enddate: validEndDate, // ✅ บันทึกเป็น String YYYY-MM-DD
-        timestart, // ✅ บันทึกเป็น String HH:mm:ss
-        timeend, // ✅ บันทึกเป็น String HH:mm:ss
+        startdate: validStartDate, 
+        enddate: validEndDate, 
+        timestart,
+        timeend,
       },
     });
 
@@ -86,9 +78,6 @@ exports.update = async (req, res) => {
     const { customer_id, startdate, enddate, timestart, timeend, status } =
       req.body;
 
-    if (!id) {
-      return res.status(400).json({ error: "Meeting ID is required" });
-    }
 
     if (!customer_id) {
       return res.status(400).json({ error: "Customer ID is required" });
@@ -100,16 +89,6 @@ exports.update = async (req, res) => {
 
     if (!validStartDate || !validEndDate) {
       return res.status(400).json({ error: "Invalid startdate or enddate" });
-    }
-
-    // ตรวจสอบว่า timestart และ timeend อยู่ในรูปแบบ HH:mm:ss
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
-    if (!timeRegex.test(timestart) || !timeRegex.test(timeend)) {
-      return res
-        .status(400)
-        .json({
-          error: "Invalid timestart or timeend format. Expected HH:mm:ss",
-        });
     }
 
     // ค้นหา customer

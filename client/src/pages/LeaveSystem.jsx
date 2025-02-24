@@ -64,6 +64,7 @@ const LeaveStatus = () => {
 
     fetchLeaves();
   }, []);
+  
 
   const handleFilterChange = (e) => {
     const newFilters = { ...filters, [e.target.name]: e.target.value };

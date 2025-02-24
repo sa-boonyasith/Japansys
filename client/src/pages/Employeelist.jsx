@@ -228,14 +228,6 @@ const EmployeeList = () => {
     return users.filter((user) => user.employee_id === employeeId);
   };
 
-  // const filteredEmployees = employees.filter(
-  //   (emp) =>
-  //     emp.id?.toString().includes(searchTerm) ||
-  //     emp.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     emp.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     emp.job_position?.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);

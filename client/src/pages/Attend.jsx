@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Clock, UserCheck, Calendar, Users } from 'lucide-react';
+import { Clock, UserCheck, Calendar, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Attend = () => {
   const [attend, setAttend] = useState([]);
@@ -12,8 +12,11 @@ const Attend = () => {
     totalEmployees: 0
   });
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 4;
+
   useEffect(() => {
-    // Timer for updating current time every second
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -27,11 +30,9 @@ const Attend = () => {
         setLoading(true);
         const response = await axios.get('http://localhost:8080/api/attend');
         
-        // เรียงลำดับจากล่าสุดไปเก่าสุด
         const sortedData = response.data.sort((a, b) => new Date(b.check_in_time) - new Date(a.check_in_time));
         setAttend(sortedData);
   
-        // คำนวณจำนวนเช็คอินวันนี้
         const today = new Date().toLocaleDateString();
         const todayCheckins = sortedData.filter(record => 
           new Date(record.check_in_time).toLocaleDateString() === today
@@ -70,13 +71,11 @@ const Attend = () => {
   
       alert('เช็คอินสำเร็จ!');
   
-      // อัปเดตรายการเช็คอินและเรียงลำดับ
       setAttend((prevAttend) => [
         response.data.newAttend, 
         ...prevAttend.sort((a, b) => new Date(b.check_in_time) - new Date(a.check_in_time))
       ]);
   
-      // อัปเดตสถิติ
       setStats(prev => ({
         ...prev,
         totalToday: prev.totalToday + 1
@@ -90,7 +89,18 @@ const Attend = () => {
       }
     }
   };
-  
+
+  // Pagination logic
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = attend.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(attend.length / recordsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   if (loading) {
     return (
@@ -193,7 +203,7 @@ const Attend = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {attend.map((record) => (
+                {currentRecords.map((record) => (
                   <tr key={record.attend_id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                       {record.employee_id}
@@ -212,6 +222,33 @@ const Attend = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {attend.length > recordsPerPage && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded-md bg-gray-100 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                ก่อนหน้า
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  หน้า {currentPage} จาก {totalPages}
+                </span>
+              </div>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded-md bg-gray-100 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                ถัดไป
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

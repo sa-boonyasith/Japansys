@@ -220,11 +220,11 @@ const Sidebar = ({ onToggleJobButtons }) => {
                       เพิ่มข้อมูลลูกค้า
                     </li>
                     <li
-                      className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                      className={getMenuItemClass(isRecruit)}
                       onClick={() => handleSubMenuClick("quotation")}
                       role="button"
                     >
-                      Quotaion/ใบเสนอราคา
+                      Quotation/ใบเสนอราคา
                     </li>
                     <li
                       className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
@@ -246,11 +246,6 @@ const Sidebar = ({ onToggleJobButtons }) => {
                       role="button"
                     >
                       นัดประชุมกับลูกค้า
-                    </li>
-                    <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                      <Link to="/register/feedback">
-                        ร่างเอกสารสัญญารักษาความลับ
-                      </Link>
                     </li>
                   </ul>
                 )}

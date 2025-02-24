@@ -18,6 +18,8 @@ const DashboardLayout = ({
   const [carBookings, setCarBookings] = useState([]);
   const [filteredCarBookings, setFilteredCarBookings] = useState([]);
 
+  
+
   useEffect(() => {
     const menuMapping = {
       "/dashboard/Job": "สมัครงาน",
@@ -34,14 +36,17 @@ const DashboardLayout = ({
       "/dashboard/editmeeting": "editmeeting",
       "/dashboard/expense-system": "expense-system",
       "/dashboard/editexpense": "editexpense",
+      "/dashboard/quotation": "quotation",
     };
-
+  
     const currentPath = Object.keys(menuMapping).find((key) =>
-      location.pathname.includes(key)
+      location.pathname.startsWith(key)
     );
 
+  
     setActiveButton(menuMapping[currentPath] || "");
   }, [location.pathname]);
+  
 
   useEffect(() => {
     if (activeMenu === "meeting") {
@@ -108,6 +113,7 @@ const DashboardLayout = ({
       editmeeting: "/dashboard/editmeeting",
       editexpense: "/dashboard/editexpense",
       "expense-system": "/dashboard/expense-system",
+      quotation: "/dashboard/quotation",
     };
 
     navigate(buttonMapping[button] || "/dashboard");

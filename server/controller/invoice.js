@@ -3,19 +3,24 @@ const prisma = require("../config/prisma");
 // 🟢 ดึงรายการสินค้าในใบแจ้งหนี้
 exports.list = async (req, res) => {
   try {
-    const { invoice_id } = req.params;
-
-    const items = await prisma.invoice_item.findMany({
-      where: { invoice_id: Number(invoice_id) },
-      include: { product: true }, // ดึงข้อมูลสินค้า
+    const invoices = await prisma.invoice.findMany({
+      include: {
+        customer: true, // ดึงข้อมูลลูกค้า
+        items: {
+          include: {
+            product: true, // ดึงข้อมูลสินค้าที่อยู่ในรายการ invoice_item
+          },
+        },
+      },
     });
 
-    res.json(items);
+    res.json(invoices);
   } catch (err) {
-    console.error("Error retrieving invoice items:", err);
-    res.status(500).json({ error: "Failed to retrieve invoice items" });
+    console.error("Error retrieving invoices:", err);
+    res.status(500).json({ error: "Failed to retrieve invoices" });
   }
 };
+
 
 exports.create = async (req, res) => {
   try {
