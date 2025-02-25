@@ -259,32 +259,53 @@ model customer {
 }
 
 model quotation {
-  quotation_id Int      @id @default(autoincrement())
-  customer     customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
-  customer_id  Int
+  quotation_id          Int             @id @default(autoincrement())
+  customer              customer        @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  customer_id           Int
+  date                  DateTime        @db.Date
+  expire_date           DateTime        @db.Date
+  confirm_price         Float
+  discount_rate         Float           // หน่วยเป็นเปอร์เซ็นต์
+  subtotal              Float
+  total_after_discount  Float
+  vat                   Float           @default(7.0) // หน่วยเป็นเปอร์เซ็นต์
+  vat_amount            Float
+  total_all             Float
+  total_inthai          String?
+  status                String          @default("pending")
+  credit_term           Int             // หน่วยเป็นวัน
 
-  cus_name         String
-  tax_id           String
-  address          String
-  date             DateTime @db.Date
-  credit_term      Int
-  contract_name    String
-  sale_name        String
-  project_name     String
-  no_item          Int
-  description      String
-  quantity         Int
-  price            Float
-  discount         Float
-  amount           Float
-  subtotal         Float
-  special_discount Float
-  after_discount   Float
-  vat              Float
-  total            Float
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  created_at            DateTime        @default(now())
+  updated_at            DateTime        @updatedAt
+
+  quotation_items       quotation_item[] // เชื่อมกับรายการสินค้า
 }
+
+model quotation_item {
+  quotation_item_id     Int             @id @default(autoincrement())
+  quotation             quotation       @relation(fields: [quotation_id], references: [quotation_id], onDelete: Cascade)
+  quotation_id          Int
+  product               product         @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  product_id            Int
+  quantity              Int
+  unit_price            Float
+  total                 Float
+  discount              Float
+
+  created_at            DateTime        @default(now())
+}
+
+model product {
+  product_id Int      @id @default(autoincrement())
+  name       String   @unique
+  price      Float // ราคาสินค้า
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  invoiceItems invoice_item[]
+  quotationitems quotation_item[]
+}
+
 
 model invoice {
   invoice_id  Int      @id @default(autoincrement())
@@ -302,22 +323,14 @@ model invoice {
   items invoice_item[] // รายการสินค้าในใบแจ้งหนี้
 }
 
-model product {
-  product_id Int      @id @default(autoincrement())
-  name       String   @unique
-  price      Float // ราคาสินค้า
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
 
-  invoiceItems invoice_item[]
-}
 
 model invoice_item {
   item_id    Int     @id @default(autoincrement())
   invoice_id Int // เชื่อมโยงกับใบแจ้งหนี้
-  invoice    invoice @relation(fields: [invoice_id], references: [invoice_id])
+  invoice    invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
   product_id Int // เชื่อมโยงกับสินค้า
-  product    product @relation(fields: [product_id], references: [product_id])
+  product    product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
   quantity   Int // จำนวนสินค้า
   discount   Float   @default(0) // ส่วนลดสำหรับแต่ละสินค้า
   total      Float
@@ -327,9 +340,9 @@ model invoice_item {
 }
 
 model meetingcus {
-  meeting_cus      Int      @id @default(autoincrement())
-  customer         customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
-  customer_id      Int
+  meeting_cus Int      @id @default(autoincrement())
+  customer    customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  customer_id Int
 
   cus_company_name String
   contact_name     String
@@ -347,7 +360,6 @@ model meetingcus {
 
   status String @default("Pending")
 }
-
 
 enum Attend {
   check_in
