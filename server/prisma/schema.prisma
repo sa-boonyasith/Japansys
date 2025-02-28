@@ -256,43 +256,44 @@ model customer {
   invoices   invoice[] // ความสัมพันธ์กับใบแจ้งหนี้
   meetingcus meetingcus[]
   quotation  quotation[]
+  receipt    receipt[]
 }
 
 model quotation {
-  quotation_id          Int             @id @default(autoincrement())
-  customer              customer        @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
-  customer_id           Int
-  date                  DateTime        @db.Date
-  expire_date           DateTime        @db.Date
-  confirm_price         Float
-  discount_rate         Float           // หน่วยเป็นเปอร์เซ็นต์
-  subtotal              Float
-  total_after_discount  Float
-  vat                   Float           @default(7.0) // หน่วยเป็นเปอร์เซ็นต์
-  vat_amount            Float
-  total_all             Float
-  total_inthai          String?
-  status                String          @default("pending")
-  credit_term           Int             // หน่วยเป็นวัน
+  quotation_id         Int      @id @default(autoincrement())
+  customer             customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  customer_id          Int
+  date                 DateTime @db.Date
+  expire_date          DateTime @db.Date
+  confirm_price        Float
+  discount_rate        Float // หน่วยเป็นเปอร์เซ็นต์
+  subtotal             Float
+  total_after_discount Float
+  vat                  Float    @default(7.0) // หน่วยเป็นเปอร์เซ็นต์
+  vat_amount           Float
+  total_all            Float
+  total_inthai         String?
+  status               String   @default("pending")
+  credit_term          Int // หน่วยเป็นวัน
 
-  created_at            DateTime        @default(now())
-  updated_at            DateTime        @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  quotation_items       quotation_item[] // เชื่อมกับรายการสินค้า
+  quotation_items quotation_item[] // เชื่อมกับรายการสินค้า
 }
 
 model quotation_item {
-  quotation_item_id     Int             @id @default(autoincrement())
-  quotation             quotation       @relation(fields: [quotation_id], references: [quotation_id], onDelete: Cascade)
-  quotation_id          Int
-  product               product         @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
-  product_id            Int
-  quantity              Int
-  unit_price            Float
-  total                 Float
-  discount              Float
+  quotation_item_id Int       @id @default(autoincrement())
+  quotation         quotation @relation(fields: [quotation_id], references: [quotation_id], onDelete: Cascade)
+  quotation_id      Int
+  product           product   @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  product_id        Int
+  quantity          Int
+  unit_price        Float
+  total             Float
+  discount          Float
 
-  created_at            DateTime        @default(now())
+  created_at DateTime @default(now())
 }
 
 model product {
@@ -302,28 +303,71 @@ model product {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  invoiceItems invoice_item[]
+  invoiceItems   invoice_item[]
   quotationitems quotation_item[]
+  receiptitems receipt_item[]
 }
 
+model receipt {
+  receipt_id           Int      @id @default(autoincrement())
+  customer_id          Int
+  customer             customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  date                 DateTime @db.Date
+  expire_date          DateTime @db.Date
+  confirm_price        Float
+  discount_rate        Float // หน่วยเป็นเปอร์เซ็นต์
+  subtotal             Float
+  total_after_discount Float
+  vat                  Float    @default(7.0) // หน่วยเป็นเปอร์เซ็นต์
+  vat_amount           Float
+  total_all            Float
+  total_inthai         String?
+  status               String   @default("pending")
+  credit_term          Int // หน่วยเป็นวัน
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  receipt_items receipt_item[]
+}
+
+model receipt_item {
+   item_id    Int     @id @default(autoincrement())
+  receipt_id Int // เชื่อมโยงกับใบแจ้งหนี้
+  receipt    receipt @relation(fields: [receipt_id], references: [receipt_id], onDelete: Cascade)
+  product_id Int // เชื่อมโยงกับสินค้า
+  product    product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  quantity   Int
+  unit_price Float
+  total      Float
+  discount   Float
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
 
 model invoice {
-  invoice_id  Int      @id @default(autoincrement())
-  date        DateTime @default(now())
-  customer_id Int
-  customer    customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade) // ดึงข้อมูลจาก customer
-  subtotal    Float // ยอดรวมก่อนภาษี
-  vat_rate    Float // อัตราภาษี เช่น 7.0
-  vat         Float // ภาษีมูลค่าเพิ่ม
-  discount    Float    @default(0) // ส่วนลด
-  total       Float // ยอดรวมทั้งหมด
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  invoice_id           Int      @id @default(autoincrement())
+  customer_id          Int
+  customer             customer @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade) // ดึงข้อมูลจาก customer
+  date                 DateTime @db.Date
+  expire_date          DateTime @db.Date
+  confirm_price        Float
+  discount_rate        Float // หน่วยเป็นเปอร์เซ็นต์
+  subtotal             Float
+  total_after_discount Float
+  vat                  Float    @default(7.0) // หน่วยเป็นเปอร์เซ็นต์
+  vat_amount           Float
+  total_all            Float
+  total_inthai         String?
+  status               String   @default("pending")
+  credit_term          Int // หน่วยเป็นวัน
 
-  items invoice_item[] // รายการสินค้าในใบแจ้งหนี้
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  invoice_items invoice_item[] // รายการสินค้าในใบแจ้งหนี้
 }
-
-
 
 model invoice_item {
   item_id    Int     @id @default(autoincrement())
@@ -331,9 +375,10 @@ model invoice_item {
   invoice    invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
   product_id Int // เชื่อมโยงกับสินค้า
   product    product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
-  quantity   Int // จำนวนสินค้า
-  discount   Float   @default(0) // ส่วนลดสำหรับแต่ละสินค้า
+  quantity   Int
+  unit_price Float
   total      Float
+  discount   Float
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

@@ -3,18 +3,17 @@ const thaiBaht = require("thai-baht-text");
 
 exports.list = async (req, res) => {
   try {
-    const listQuotation = await prisma.quotation.findMany({
+    const listReceipt = await prisma.receipt.findMany({
       include: {
-        quotation_items: true, // ดึงข้อมูล quotation_item มาด้วย
+        receipt_items: true, 
       },
     });
-    res.json({ listQuotation });
+    res.json({ listReceipt });
   } catch (err) {
-    console.error("Error retrieving Quotation records:", err);
-    res.status(500).json({ error: "Failed to retrieve Quotation records" });
+    console.error("Error retrieving Receipt records:", err);
+    res.status(500).json({ error: "Failed to retrieve Receipt records" });
   }
 };
-
 
 exports.create = async (req, res) => {
   try {
@@ -32,7 +31,7 @@ exports.create = async (req, res) => {
     if (!items || items.length === 0) {
       return res
         .status(400)
-        .json({ error: "Quotation must contain at least one item" });
+        .json({ error: "Receipt must contain at least one item" });
     }
 
     // ค้นหาข้อมูลลูกค้า
@@ -84,9 +83,9 @@ exports.create = async (req, res) => {
       processedItems.push({
         product_id,
         quantity,
-        unit_price: parseFloat(unit_price.toFixed(2)), // ปัดเศษราคาต่อหน่วย
+        unit_price: parseFloat(unit_price.toFixed(2)), 
         total: final_total,
-        discount: parseFloat(discount.toFixed(2)), // ปัดเศษส่วนลด
+        discount: parseFloat(discount.toFixed(2)),
       });
     }
 
@@ -99,7 +98,7 @@ exports.create = async (req, res) => {
     const total_inthai = thaiBaht(total_all);
 
     // บันทึกใบเสนอราคา
-    const newQuotation = await prisma.quotation.create({
+    const newReceipt = await prisma.receipt.create({
       data: {
         customer_id,
         date: startDate,
@@ -115,23 +114,23 @@ exports.create = async (req, res) => {
         credit_term,
 
         // บันทึกรายการสินค้า
-        quotation_items: {
+        receipt_items: {
           create: processedItems,
         },
       },
       include: {
-        quotation_items: true,
+        receipt_items: true,
         customer: true,
       },
     });
 
     res.status(201).json({
-      message: "Quotation created successfully",
-      data: newQuotation,
+      message: "Receipt created successfully",
+      data: newReceipt,
     });
   } catch (err) {
-    console.error("Error creating Quotation:", err);
-    res.status(500).json({ error: "Failed to create Quotation" });
+    console.error("Error creating Receipt:", err);
+    res.status(500).json({ error: "Failed to create Receipt" });
   }
 };
 
@@ -151,11 +150,11 @@ exports.update = async (req, res) => {
 
     const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) {
-      return res.status(402).json({ error: "Invalid quotation ID" });
+      return res.status(402).json({ error: "Invalid receipt ID" });
     }
 
     if (!items || items.length === 0) {
-      return res.status(400).json({ error: "Quotation must contain at least one item" });
+      return res.status(400).json({ error: "Receipt must contain at least one item" });
     }
 
     const validStatuses = ["pending", "approved", "rejected"];
@@ -163,12 +162,12 @@ exports.update = async (req, res) => {
       return res.status(400).json({ error: "Invalid status. Allowed values: pending, approved, rejected" });
     }
 
-    const existingQuotation = await prisma.quotation.findUnique({
-      where: { quotation_id: parsedId },
-      include: { quotation_items: true },
+    const existingReceipt = await prisma.receipt.findUnique({
+      where: { receipt_id: parsedId },
+      include: { receipt_items: true },
     });
 
-    if (!existingQuotation) {
+    if (!existingReceipt) {
       return res.status(404).json({ error: "Quotation not found" });
     }
 
@@ -219,12 +218,12 @@ exports.update = async (req, res) => {
     const total_all = total_after_discount + vat_amount;
     const total_inthai = thaiBaht(parseFloat(total_all.toFixed(2)));
 
-    await prisma.quotation_item.deleteMany({
-      where: { quotation_id: parsedId },
+    await prisma.receipt_item.deleteMany({
+      where: { receipt_id: parsedId },
     });
 
-    const updatedQuotation = await prisma.quotation.update({
-      where: { quotation_id: parsedId },
+    const updatedReceipt = await prisma.receipt.update({
+      where: { receipt_id: parsedId },
       data: {
         customer_id,
         date: startDate,
@@ -240,23 +239,23 @@ exports.update = async (req, res) => {
         credit_term,
         status,
       },
-      include: { quotation_items: true, customer: true },
+      include: { receipt_items: true, customer: true },
     });
 
-    await prisma.quotation_item.createMany({
+    await prisma.receipt_item.createMany({
       data: processedItems.map((item) => ({
         ...item,
-        quotation_id: parsedId,
+        receipt_id: parsedId,
       })),
     });
 
     res.status(200).json({
-      message: "Quotation updated successfully",
-      data: updatedQuotation,
+      message: "Receipt updated successfully",
+      data: updatedReceipt,
     });
   } catch (err) {
-    console.error("Error updating Quotation:", err);
-    res.status(500).json({ error: "Failed to update Quotation" });
+    console.error("Error updating Receipt:", err);
+    res.status(500).json({ error: "Failed to update Receipt" });
   }
 };
 
@@ -271,31 +270,31 @@ exports.remove = async (req, res) => {
     if (!id) {
       return res
         .status(400)
-        .json({ message: "Quotation ID is required for deletion" });
+        .json({ message: "Receipt ID is required for deletion" });
     }
 
     // ตรวจสอบว่ามีใบเสนอราคานี้อยู่หรือไม่
-    const existingQuotation = await prisma.quotation.findUnique({
-      where: { quotation_id: Number(id) },
+    const existingReceipt = await prisma.receipt.findUnique({
+      where: { receipt_id: Number(id) },
     });
 
-    if (!existingQuotation) {
-      return res.status(404).json({ message: "Quotation not found" });
+    if (!existingReceipt) {
+      return res.status(404).json({ message: "Receipt not found" });
     }
 
     // ลบใบเสนอราคา
-    const deleted = await prisma.quotation.delete({
-      where: { quotation_id: Number(id) },
+    const deleted = await prisma.receipt.delete({
+      where: { receipt_id: Number(id) },
     });
 
     res.status(200).json({
-      message: "Quotation deleted successfully",
+      message: "Receipt deleted successfully",
       data: deleted,
     });
   } catch (err) {
-    console.error("Error deleting Quotation:", err);
+    console.error("Error deleting Receipt:", err);
     res
       .status(500)
-      .json({ error: "Failed to delete Quotation", details: err.message });
+      .json({ error: "Failed to delete Receipt", details: err.message });
   }
 };
