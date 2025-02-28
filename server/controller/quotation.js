@@ -15,7 +15,6 @@ exports.list = async (req, res) => {
   }
 };
 
-
 exports.create = async (req, res) => {
   try {
     const {
@@ -72,7 +71,10 @@ exports.create = async (req, res) => {
       // คำนวณราคาสินค้าแต่ละรายการ
       const unit_price = product.price;
       const total_before_discount = unit_price * quantity;
-      const total_after_discount = Math.max(total_before_discount - discount, 0); // ป้องกันค่าติดลบ
+      const total_after_discount = Math.max(
+        total_before_discount - discount,
+        0
+      ); // ป้องกันค่าติดลบ
 
       // ปัดเศษทศนิยม 2 ตำแหน่ง
       const final_total = parseFloat(total_after_discount.toFixed(2));
@@ -90,12 +92,20 @@ exports.create = async (req, res) => {
       });
     }
 
-    const total_discount_rate = parseFloat((subtotal * (discount_rate / 100)).toFixed(2));
-    const total_after_discount = parseFloat((subtotal - total_discount_rate).toFixed(2));
+    const total_discount_rate = parseFloat(
+      (subtotal * (discount_rate / 100)).toFixed(2)
+    );
+    const total_after_discount = parseFloat(
+      (subtotal - total_discount_rate).toFixed(2)
+    );
 
     // คำนวณ VAT และราคารวมสุดท้าย
-    const vat_amount = parseFloat(((total_after_discount * vat) / 100).toFixed(2));
-    const total_all = parseFloat((total_after_discount + vat_amount).toFixed(2));
+    const vat_amount = parseFloat(
+      ((total_after_discount * vat) / 100).toFixed(2)
+    );
+    const total_all = parseFloat(
+      (total_after_discount + vat_amount).toFixed(2)
+    );
     const total_inthai = thaiBaht(total_all);
 
     // บันทึกใบเสนอราคา
@@ -155,12 +165,18 @@ exports.update = async (req, res) => {
     }
 
     if (!items || items.length === 0) {
-      return res.status(400).json({ error: "Quotation must contain at least one item" });
+      return res
+        .status(400)
+        .json({ error: "Quotation must contain at least one item" });
     }
 
     const validStatuses = ["pending", "approved", "rejected"];
     if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ error: "Invalid status. Allowed values: pending, approved, rejected" });
+      return res
+        .status(400)
+        .json({
+          error: "Invalid status. Allowed values: pending, approved, rejected",
+        });
     }
 
     const existingQuotation = await prisma.quotation.findUnique({
@@ -182,7 +198,9 @@ exports.update = async (req, res) => {
 
     const startDate = new Date(date);
     const endDate = new Date(expire_date);
-    const confirm_price = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    const confirm_price = Math.ceil(
+      (endDate - startDate) / (1000 * 60 * 60 * 24)
+    );
 
     let subtotal = 0;
     const processedItems = [];
@@ -190,22 +208,34 @@ exports.update = async (req, res) => {
     for (const item of items) {
       const { product_id, quantity, discount = 0 } = item;
 
+      const parsedProductId = parseInt(product_id, 10);
+      if (isNaN(parsedProductId)) {
+        return res
+          .status(400)
+          .json({ error: `Invalid product ID: ${product_id}` });
+      }
+
       const product = await prisma.product.findUnique({
-        where: { product_id },
+        where: { product_id: parsedProductId }, // ✅ Fixed syntax
       });
 
       if (!product) {
-        return res.status(404).json({ error: `Product with ID ${product_id} not found` });
+        return res
+          .status(404)
+          .json({ error: `Product with ID ${product_id} not found` });
       }
 
       const unit_price = product.price;
       const total_before_discount = unit_price * quantity;
-      const total_after_discount = Math.max(total_before_discount - discount, 0);
+      const total_after_discount = Math.max(
+        total_before_discount - discount,
+        0
+      );
 
       subtotal += total_after_discount;
 
       processedItems.push({
-        product_id,
+        product_id: parsedProductId,
         quantity,
         unit_price: parseFloat(unit_price.toFixed(2)),
         total: parseFloat(total_after_discount.toFixed(2)),
@@ -259,10 +289,6 @@ exports.update = async (req, res) => {
     res.status(500).json({ error: "Failed to update Quotation" });
   }
 };
-
-
-
-
 
 exports.remove = async (req, res) => {
   try {

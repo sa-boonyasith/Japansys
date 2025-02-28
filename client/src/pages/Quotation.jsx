@@ -1,5 +1,7 @@
 import React from "react";
 import logo from "../img/japanlogo.png";
+import { Edit, Trash2 } from "lucide-react";
+import axios from "axios";
 
 const Quotation = () => {
   const [quotations, setQuotations] = React.useState([]);
@@ -11,8 +13,11 @@ const Quotation = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = React.useState(false);
+  const [editQuotation, setEditQuotation] = React.useState(null);
+  const [showEditModal, setShowEditModal] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [user, setUser] = React.useState(null);
   const [newQuotation, setNewQuotation] = React.useState({
     customer_id: "",
     date: new Date().toISOString().split("T")[0],
@@ -25,13 +30,16 @@ const Quotation = () => {
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // เพิ่ม state สำหรับแสดงใบเสนอราคาใหม่
-  const [addedQuotation, setAddedQuotation] = React.useState(null);
-  const [showAddedQuotation, setShowAddedQuotation] = React.useState(false);
-
   // เพิ่ม state สำหรับ pagination
   const [currentPage, setCurrentPage] = React.useState(1);
   const quotationsPerPage = 5;
+
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   // ดึงข้อมูลลูกค้า, สินค้า และใบเสนอราคา
   React.useEffect(() => {
