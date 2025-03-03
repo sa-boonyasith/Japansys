@@ -1,24 +1,24 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import logo from "../img/japanlogo.png";
 import { Edit, Trash2 } from "lucide-react";
 import axios from "axios";
 
 const Quotation = () => {
-  const [quotations, setQuotations] = React.useState([]);
-  const [customers, setCustomers] = React.useState([]);
-  const [products, setProducts] = React.useState([]); // เพิ่ม state สำหรับข้อมูลสินค้า
-  const [quotationItems, setQuotationItems] = React.useState([]);
-  const [selectedCustomer, setSelectedCustomer] = React.useState(null);
-  const [selectedQuotation, setSelectedQuotation] = React.useState(null);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = React.useState(false);
-  const [editQuotation, setEditQuotation] = React.useState(null);
-  const [showEditModal, setShowEditModal] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [user, setUser] = React.useState(null);
-  const [newQuotation, setNewQuotation] = React.useState({
+  const [quotations, setQuotations] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [products, setProducts] = useState([]); // เพิ่ม state สำหรับข้อมูลสินค้า
+  const [quotationItems, setQuotationItems] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedQuotation, setSelectedQuotation] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [editQuotation, setEditQuotation] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [newQuotation, setNewQuotation] = useState({
     customer_id: "",
     date: new Date().toISOString().split("T")[0],
     expire_date: new Date(new Date().setDate(new Date().getDate() + 30))
@@ -28,21 +28,137 @@ const Quotation = () => {
     discount_rate: 0,
     items: [{ product_id: "", quantity: 1, discount: 0 }],
   });
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // เพิ่ม state สำหรับ pagination
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const quotationsPerPage = 5;
 
-  React.useEffect(() => {
+  useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
   }, []);
 
+  useEffect(() => {
+    if (showEditModal && editQuotation) {
+      // ถ้า items เป็น undefined ให้กำหนดค่าเริ่มต้น
+      if (!editQuotation.items) {
+        setEditQuotation(prev => ({
+          ...prev,
+          items: [{ product_id: "", quantity: 1, discount: 0 }]
+        }));
+      }
+    }
+  }, [showEditModal, editQuotation]);
+
+
+
+  // Handler for clicking outside the edit modal
+  const handleEditModalOutsideClick = (e) => {
+    if (e.target.classList.contains("modal-overlay")) {
+      setShowEditModal(false);
+    }
+  };
+
+  // When opening the edit modal
+  const openEditModal = (quotation) => {
+    // ตรวจสอบและจัดรูปแบบข้อมูลให้ถูกต้อง
+    const formattedQuotation = {
+      ...quotation,
+      items: Array.isArray(quotation.items)
+        ? quotation.items.map((item) => ({
+            ...item,
+            product_id: item.product_id || "", // ตรวจสอบว่า product_id มีค่าหรือไม่
+            quantity: item.quantity || 1, // ตรวจสอบว่า quantity มีค่าหรือไม่
+            discount: item.discount || 0, // ตรวจสอบว่า discount มีค่าหรือไม่
+          }))
+        : [{ product_id: "", quantity: 1, discount: 0 }], // หากไม่มี items ให้สร้าง array เปล่า
+    };
+
+    setEditQuotation(formattedQuotation);
+    setShowEditModal(true);
+  };
+
+  // Handler for adding a new item to the edit form
+  const addEditItem = () => {
+    // Check if items exists and is an array
+    if (!Array.isArray(editQuotation.items)) {
+      setEditQuotation({
+        ...editQuotation,
+        items: [{ product_id: "", quantity: 1, discount: 0 }],
+      });
+    } else {
+      setEditQuotation({
+        ...editQuotation,
+        items: [
+          ...editQuotation.items,
+          { product_id: "", quantity: 1, discount: 0 },
+        ],
+      });
+    }
+  };
+
+  // Handler for removing an item from the edit form
+  const removeEditItem = (index) => {
+    if (editQuotation.items.length > 1) {
+      const updatedItems = [...editQuotation.items];
+      updatedItems.splice(index, 1);
+      setEditQuotation({
+        ...editQuotation,
+        items: updatedItems,
+      });
+    }
+  };
+
+  const fetchQuotations = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/quotation");
+      if (!res.ok) throw new Error("Failed to fetch quotations");
+      const data = await res.json();
+      const quotationsList = data.listQuotation || [];
+      setQuotations(quotationsList);
+    } catch (err) {
+      console.error("Error fetching quotations:", err);
+    }
+  };
+
+  useEffect(() => {
+    // ดึงข้อมูลลูกค้าก่อน
+    fetch("http://localhost:8080/api/customer")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch customers");
+        return res.json();
+      })
+      .then((data) => {
+        const customerlist = data.listCustomer || [];
+        setCustomers(customerlist);
+  
+        // ดึงข้อมูลสินค้า
+        return fetch("http://localhost:8080/api/product");
+      })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
+      })
+      .then((data) => {
+        // รับข้อมูลสินค้าจากโครงสร้าง API
+        const productsList = data || [];
+        setProducts(productsList);
+  
+        // จากนั้นดึงข้อมูลใบเสนอราคา
+        return fetchQuotations(); // ใช้ฟังก์ชั่นที่สร้างขึ้นใหม่
+      })
+      .catch((err) => {
+        console.error("Error fetching data:", err);
+        setError(err.message);
+        setIsLoading(false);
+      });
+  }, []);
+
   // ดึงข้อมูลลูกค้า, สินค้า และใบเสนอราคา
-  React.useEffect(() => {
+  useEffect(() => {
     // ดึงข้อมูลลูกค้าก่อน
     fetch("http://localhost:8080/api/customer")
       .then((res) => {
@@ -85,6 +201,80 @@ const Quotation = () => {
       });
   }, []);
 
+  const handleDeleteQuotation = async () => {
+    const confirmDelete = window.confirm(
+      "คุณแน่ใจหรือไม่ว่าต้องการลบใบเสนอราคานี้?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const response = await axios.delete(
+        `http://localhost:8080/api/quotation/${selectedQuotation.quotation_id}`
+      );
+
+      if (response.status === 200) {
+        alert("ลบใบเสนอราคาสำเร็จ");
+        // อัปเดตรายการใบเสนอราคา
+        const updatedQuotations = quotations.filter(
+          (q) => q.quotation_id !== selectedQuotation.quotation_id
+        );
+        setQuotations(updatedQuotations);
+        closeModal(); // ปิดโมดัลหลังจากลบ
+      }
+    } catch (error) {
+      console.error("Error deleting quotation:", error);
+      alert("เกิดข้อผิดพลาดในการลบใบเสนอราคา");
+    }
+  };
+
+  const handleEditQuotationChange = (e) => {
+    const { name, value } = e.target;
+    setEditQuotation((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Handler for changing item values in the edit form
+  const handleEditItemChange = (index, field, value) => {
+    const updatedItems = [...editQuotation.items];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]:
+        field === "quantity" || field === "discount" ? Number(value) : value,
+    };
+    setEditQuotation({
+      ...editQuotation,
+      items: updatedItems,
+    });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+  
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/api/quotation/${editQuotation.quotation_id}`,
+        editQuotation
+      );
+  
+      if (response.status === 200) {
+        alert("แก้ไขใบเสนอราคาสำเร็จ");
+        
+        // เรียกใช้ฟังก์ชั่นดึงข้อมูลใหม่หลังจากอัพเดตสำเร็จ
+        await fetchQuotations();
+        
+        setShowEditModal(false); // ปิดโมดัลแก้ไข
+      }
+    } catch (error) {
+      console.error("Error updating quotation:", error);
+      alert("เกิดข้อผิดพลาดในการแก้ไขใบเสนอราคา");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -108,6 +298,27 @@ const Quotation = () => {
     return (
       customers.find((customer) => customer.customer_id === customerId) || {}
     );
+  };
+
+  // Function to format dates for input fields
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+
+    try {
+      // Convert the date string to a Date object
+      const date = new Date(dateString);
+
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return "";
+      }
+
+      // Format as YYYY-MM-DD
+      return date.toISOString().split("T")[0];
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "";
+    }
   };
 
   const findProductById = (productId) => {
@@ -430,7 +641,7 @@ const Quotation = () => {
       </div>
       {/* Customer List */}
       <div className="mb-8 p-4">
-        <h2 className="text-xl font-bold mb-4">รายการลูกค้าที่มีใบเสนอราคา</h2>
+        <h2 className="text-xl font-bold mb-4"></h2>
         {customersWithQuotations.length === 0 ? (
           <div className="p-4 border rounded-lg text-center">
             ไม่พบข้อมูลลูกค้าที่มีใบเสนอราคา
@@ -504,13 +715,17 @@ const Quotation = () => {
                         สถานะ:{" "}
                         <span
                           className={`font-bold ${
-                            quotation.status === "approved"
+                            invoice.status === "approved"
                               ? "text-green-600"
+                              : invoice.status === "rejected"
+                              ? "text-red-600"
                               : "text-yellow-600"
                           }`}
                         >
-                          {quotation.status === "approved"
+                          {invoice.status === "approved"
                             ? "อนุมัติแล้ว"
+                            : invoice.status === "rejected"
+                            ? "ปฏิเสธ"
                             : "รอการอนุมัติ"}
                         </span>
                       </p>
@@ -588,25 +803,47 @@ const Quotation = () => {
             {/* Modal Header with close button */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">รายละเอียดใบเสนอราคา</h2>
-              <button
-                onClick={closeModal}
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+              <div className="flex space-x-2">
+                {/* ปุ่มแก้ไข */}
+                <button
+                  onClick={() => {
+                    setEditQuotation(selectedQuotation);
+                    setShowEditModal(true);
+                  }}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
-              </button>
+                  <Edit className="inline-block mr-2" size={16} />
+                  แก้ไข
+                </button>
+                {/* ปุ่มลบ */}
+                <button
+                  onClick={handleDeleteQuotation}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                >
+                  <Trash2 className="inline-block mr-2" size={16} />
+                  ลบ
+                </button>
+                {/* ปุ่มปิด */}
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Quotation Content */}
@@ -663,13 +900,17 @@ const Quotation = () => {
                     สถานะ:{" "}
                     <span
                       className={`font-bold ${
-                        selectedQuotation.status === "approved"
-                          ? "text-black"
-                          : "text-black"
+                        selectedInvoice.status === "approved"
+                          ? "text-green-600"
+                          : selectedInvoice.status === "rejected"
+                          ? "text-red-600"
+                          : "text-yellow-600"
                       }`}
                     >
-                      {selectedQuotation.status === "approved"
+                      {selectedInvoice.status === "approved"
                         ? "อนุมัติแล้ว"
+                        : selectedInvoice.status === "rejected"
+                        ? "ปฏิเสธ"
                         : "รอการอนุมัติ"}
                     </span>
                   </p>
@@ -1077,6 +1318,284 @@ const Quotation = () => {
                 <button
                   type="button"
                   onClick={closeAddModal}
+                  className="px-4 py-2 border rounded mr-2 hover:bg-gray-100 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editQuotation && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal-overlay"
+          onClick={handleEditModalOutsideClick}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header with close button */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">แก้ไขใบเสนอราคา</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-500 hover:text-gray-700 focus:outline-none"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+
+            {/* Edit Quotation Form */}
+            <form onSubmit={handleEditSubmit}>
+              {/* ข้อมูลใบเสนอราคา */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block mb-1 font-medium">
+                    เลือกลูกค้า *
+                  </label>
+                  <select
+                    name="customer_id"
+                    value={editQuotation.customer_id || ""}
+                    onChange={handleEditQuotationChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  >
+                    <option value="">-- เลือกลูกค้า --</option>
+                    {customers && customers.length > 0
+                      ? customers.map((customer) => (
+                          <option
+                            key={customer.customer_id}
+                            value={customer.customer_id}
+                          >
+                            {customer.cus_company_name}
+                          </option>
+                        ))
+                      : null}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">วันที่ *</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formatDateForInput(editQuotation.date)}
+                    onChange={handleEditQuotationChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">วันหมดอายุ *</label>
+                  <input
+                    type="date"
+                    name="expire_date"
+                    value={formatDateForInput(editQuotation.expire_date)}
+                    onChange={handleEditQuotationChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">
+                    เครดิต (วัน) *
+                  </label>
+                  <input
+                    type="number"
+                    name="credit_term"
+                    value={editQuotation.credit_term || 0}
+                    onChange={handleEditQuotationChange}
+                    className="w-full p-2 border rounded"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">ส่วนลด (%) *</label>
+                  <input
+                    type="number"
+                    name="discount_rate"
+                    value={editQuotation.discount_rate || 0}
+                    onChange={handleEditQuotationChange}
+                    className="w-full p-2 border rounded"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">สถานะ</label>
+                  <select
+                    name="status"
+                    value={editQuotation.status || ""}
+                    onChange={handleEditQuotationChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  >
+                    <option value="pending">รออนุมัติ</option>
+                    <option value="approved">อนุมัติแล้ว</option>
+                    <option value="rejected">ปฏิเสธ</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* รายการสินค้า */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold">รายการสินค้า</h3>
+                  <button
+                    type="button"
+                    onClick={addEditItem}
+                    className="px-2 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+                  >
+                    + เพิ่มรายการ
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="p-2 border text-left">สินค้า *</th>
+                        <th className="p-2 border text-center">จำนวน *</th>
+                        <th className="p-2 border text-center">ส่วนลด</th>
+                        <th className="p-2 border text-center w-16">จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.isArray(editQuotation.items) &&
+                      editQuotation.items.length > 0 ? (
+                        editQuotation.items.map((item, index) => (
+                          <tr key={index}>
+                            <td className="p-2 border">
+                              <select
+                                value={item.product_id || ""}
+                                onChange={(e) =>
+                                  handleEditItemChange(
+                                    index,
+                                    "product_id",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full p-1 border rounded"
+                                required
+                              >
+                                <option value="">-- เลือกสินค้า --</option>
+                                {products && products.length > 0
+                                  ? products.map((product) => (
+                                      <option
+                                        key={product.product_id}
+                                        value={product.product_id}
+                                      >
+                                        {product.name}
+                                      </option>
+                                    ))
+                                  : null}
+                              </select>
+                            </td>
+                            <td className="p-2 border">
+                              <input
+                                type="number"
+                                value={item.quantity || 1}
+                                onChange={(e) =>
+                                  handleEditItemChange(
+                                    index,
+                                    "quantity",
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-full p-1 border rounded text-center"
+                                min="1"
+                                required
+                              />
+                            </td>
+                            <td className="p-2 border">
+                              <input
+                                type="number"
+                                value={item.discount || 0}
+                                onChange={(e) =>
+                                  handleEditItemChange(
+                                    index,
+                                    "discount",
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-full p-1 border rounded text-center"
+                                min="0"
+                              />
+                            </td>
+                            <td className="p-2 border text-center">
+                              <button
+                                type="button"
+                                onClick={() => removeEditItem(index)}
+                                className="text-red-500 hover:text-red-700"
+                                disabled={
+                                  !Array.isArray(editQuotation.items) ||
+                                  editQuotation.items.length <= 1
+                                }
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="p-2 border text-center">
+                            ไม่มีรายการสินค้า
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
                   className="px-4 py-2 border rounded mr-2 hover:bg-gray-100 transition-colors"
                   disabled={isSubmitting}
                 >

@@ -208,8 +208,15 @@ exports.update = async (req, res) => {
     for (const item of items) {
       const { product_id, quantity, discount = 0 } = item;
 
+      const parsedProductId = parseInt(product_id, 10);
+      if (isNaN(parsedProductId)) {
+        return res
+          .status(400)
+          .json({ error: `Invalid product ID: ${product_id}` });
+      }
+
       const product = await prisma.product.findUnique({
-        where: { product_id },
+        where: { product_id: parsedProductId }, // ✅ Fixed syntax
       });
 
       if (!product) {
@@ -228,23 +235,27 @@ exports.update = async (req, res) => {
       subtotal += total_after_discount;
 
       processedItems.push({
-        product_id,
+        product_id: parsedProductId,
         quantity,
         unit_price: parseFloat(unit_price.toFixed(2)),
         total: parseFloat(total_after_discount.toFixed(2)),
         discount: parseFloat(discount.toFixed(2)),
       });
     }
+    const parsedDiscountRate = Number(discount_rate) || 0;
 
     const total_discount_rate = subtotal * (discount_rate / 100);
     const total_after_discount = subtotal - total_discount_rate;
     const vat_amount = (total_after_discount * vat) / 100;
     const total_all = total_after_discount + vat_amount;
     const total_inthai = thaiBaht(parseFloat(total_all.toFixed(2)));
+    
 
     await prisma.invoice_item.deleteMany({
       where: { invoice_id: parsedId },
     });
+
+    
 
     const updatedInvoice = await prisma.invoice.update({
       where: { invoice_id: parsedId },
@@ -253,7 +264,7 @@ exports.update = async (req, res) => {
         date: startDate,
         expire_date: endDate,
         confirm_price,
-        discount_rate: parseFloat(discount_rate.toFixed(2)),
+        discount_rate: parseFloat(parsedDiscountRate.toFixed(2)),
         subtotal: parseFloat(subtotal.toFixed(2)),
         total_after_discount: parseFloat(total_after_discount.toFixed(2)),
         vat,

@@ -29,8 +29,8 @@ const AddCustomer = () => {
     cus_address: "",
     cus_phone: "",
     cus_tax_id: "",
-    cus_bankname:"",
-    cus_banknumber:"",
+    cus_bankname: "",
+    cus_banknumber: "",
   };
 
   const [formData, setFormData] = useState(initialFormData);

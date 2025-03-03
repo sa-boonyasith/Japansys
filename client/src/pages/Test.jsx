@@ -3,22 +3,22 @@ import logo from "../img/japanlogo.png";
 import { Edit, Trash2 } from "lucide-react";
 import axios from "axios";
 
-const Quotation = () => {
-  const [quotations, setQuotations] = useState([]);
+const Receipt = () => {
+  const [receipts, setReceipts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]); // เพิ่ม state สำหรับข้อมูลสินค้า
-  const [quotationItems, setQuotationItems] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [selectedQuotation, setSelectedQuotation] = useState(null);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
-  const [editQuotation, setEditQuotation] = useState(null);
+  const [editReceipt, setEditReceipt] = useState({ items: [] });
   const [showEditModal, setShowEditModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [newQuotation, setNewQuotation] = useState({
+
+  const [newReceipt, setNewReceipt] = useState({
     customer_id: "",
     date: new Date().toISOString().split("T")[0],
     expire_date: new Date(new Date().setDate(new Date().getDate() + 30))
@@ -32,7 +32,7 @@ const Quotation = () => {
 
   // เพิ่ม state สำหรับ pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const quotationsPerPage = 5;
+  const ReceiptsPerPage = 5;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -41,6 +41,18 @@ const Quotation = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (showEditModal && editReceipt) {
+      // ถ้า items เป็น undefined ให้กำหนดค่าเริ่มต้น
+      if (!editReceipt.items) {
+        setEditReceipt((prev) => ({
+          ...prev,
+          items: [{ product_id: "", quantity: 1, discount: 0 }],
+        }));
+      }
+    }
+  }, [showEditModal, editReceipt]);
+
   // Handler for clicking outside the edit modal
   const handleEditModalOutsideClick = (e) => {
     if (e.target.classList.contains("modal-overlay")) {
@@ -48,58 +60,100 @@ const Quotation = () => {
     }
   };
 
-  
-
   // When opening the edit modal
-  const openEditModal = (quotation) => {
-    // Format the dates before setting the state
-    const formattedQuotation = {
-      ...quotation,
-      // Make sure the items array is properly initialized
-      items: Array.isArray(quotation.items) ? 
-        quotation.items.map(item => ({
-          ...item,
-          product_id: item.product_id || '',
-          quantity: item.quantity || 1,
-          discount: item.discount || 0
-        })) : 
-        [{ product_id: '', quantity: 1, discount: 0 }]
+  const openEditModal = (receipt) => {
+    // ตรวจสอบและจัดรูปแบบข้อมูลให้ถูกต้อง
+    const formattedReceipt = {
+      ...receipt,
+      items: Array.isArray(receipt.items)
+        ? receipt.items.map((item) => ({
+            ...item,
+            product_id: item.product_id ? item.product_id.toString() : "", // ตรวจสอบว่า product_id มีค่าหรือไม่
+            quantity: item.quantity || 1, // ตรวจสอบว่า quantity มีค่าหรือไม่
+            discount: item.discount || 0, // ตรวจสอบว่า discount มีค่าหรือไม่
+          }))
+        : [{ product_id: "", quantity: 1, discount: 0 }], // หากไม่มี items ให้สร้าง array เปล่า
     };
-    
-    setEditQuotation(formattedQuotation);
+
+    setEditReceipt(formattedReceipt);
     setShowEditModal(true);
   };
 
   // Handler for adding a new item to the edit form
   const addEditItem = () => {
     // Check if items exists and is an array
-    if (!Array.isArray(editQuotation.items)) {
-      setEditQuotation({
-        ...editQuotation,
-        items: [{ product_id: '', quantity: 1, discount: 0 }]
+    if (!Array.isArray(editReceipt.items)) {
+      setEditReceipt({
+        ...editReceipt,
+        items: [{ product_id: "", quantity: 1, discount: 0 }],
       });
     } else {
-      setEditQuotation({
-        ...editQuotation,
+      setEditReceipt({
+        ...editReceipt,
         items: [
-          ...editQuotation.items,
-          { product_id: '', quantity: 1, discount: 0 }
-        ]
+          ...editReceipt.items,
+          { product_id: "", quantity: 1, discount: 0 },
+        ],
       });
     }
   };
 
   // Handler for removing an item from the edit form
   const removeEditItem = (index) => {
-    if (editQuotation.items.length > 1) {
-      const updatedItems = [...editQuotation.items];
+    if (editReceipt.items.length > 1) {
+      const updatedItems = [...editReceipt.items];
       updatedItems.splice(index, 1);
-      setEditQuotation({
-        ...editQuotation,
+      setEditReceipt({
+        ...editReceipt,
         items: updatedItems,
       });
     }
   };
+
+  const fetchReceipt = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/receipt");
+      if (!res.ok) throw new Error("Failed to fetch invoices");
+      const data = await res.json();
+      const ReceiptList = data.listReceipt || [];
+      setReceipts(ReceiptList);
+    } catch (err) {
+      console.error("Error fetching receipts:", err);
+    }
+  };
+
+  useEffect(() => {
+    // ดึงข้อมูลลูกค้าก่อน
+    fetch("http://localhost:8080/api/customer")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch customers");
+        return res.json();
+      })
+      .then((data) => {
+        const customerlist = data.listCustomer || [];
+        setCustomers(customerlist);
+
+        // ดึงข้อมูลสินค้า
+        return fetch("http://localhost:8080/api/product");
+      })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
+      })
+      .then((data) => {
+        // รับข้อมูลสินค้าจากโครงสร้าง API
+        const productsList = data || [];
+        setProducts(productsList);
+
+        // จากนั้นดึงข้อมูลใบเสนอราคา
+        return fetchReceipt(); // ใช้ฟังก์ชั่นที่สร้างขึ้นใหม่
+      })
+      .catch((err) => {
+        console.error("Error fetching data:", err);
+        setError(err.message);
+        setIsLoading(false);
+      });
+  }, []);
 
   // ดึงข้อมูลลูกค้า, สินค้า และใบเสนอราคา
   useEffect(() => {
@@ -126,16 +180,16 @@ const Quotation = () => {
         setProducts(productsList);
 
         // จากนั้นดึงข้อมูลใบเสนอราคา
-        return fetch("http://localhost:8080/api/quotation");
+        return fetch("http://localhost:8080/api/receipt");
       })
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch quotations");
+        if (!res.ok) throw new Error("Failed to fetch invoices");
         return res.json();
       })
       .then((data) => {
         // รับข้อมูลใบเสนอราคาจากโครงสร้าง API
-        const quotationsList = data.listQuotation || [];
-        setQuotations(quotationsList);
+        const receiptList = data.listReceipt || [];
+        setReceipts(receiptList);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -145,35 +199,62 @@ const Quotation = () => {
       });
   }, []);
 
-  const handleDeleteQuotation = async () => {
+  const handleDeleteReceipt = async () => {
     const confirmDelete = window.confirm(
-      "คุณแน่ใจหรือไม่ว่าต้องการลบใบเสนอราคานี้?"
+      "คุณแน่ใจหรือไม่ว่าต้องการลบใบแจ้งหนี้นี้?"
     );
     if (!confirmDelete) return;
 
     try {
       const response = await axios.delete(
-        `http://localhost:8080/api/quotation/${selectedQuotation.quotation_id}`
+        `http://localhost:8080/api/receipt/${selectedReceipt.receipt_id}`
       );
 
       if (response.status === 200) {
-        alert("ลบใบเสนอราคาสำเร็จ");
+        alert("ลบใบแจ้งหนี้สำเร็จ");
         // อัปเดตรายการใบเสนอราคา
-        const updatedQuotations = quotations.filter(
-          (q) => q.quotation_id !== selectedQuotation.quotation_id
+        const updatedReceipts = receipts.filter(
+          (q) => q.receipt_id !== selectedReceipt.receipt_id
         );
-        setQuotations(updatedQuotations);
+        setReceipts(updatedReceipts);
         closeModal(); // ปิดโมดัลหลังจากลบ
       }
     } catch (error) {
-      console.error("Error deleting quotation:", error);
-      alert("เกิดข้อผิดพลาดในการลบใบเสนอราคา");
+      console.error("Error deleting receipt:", error);
+      alert("เกิดข้อผิดพลาดในการลบใบแจ้งหนี้");
     }
   };
 
-  const handleEditQuotationChange = (e) => {
+  const handleEditClick = async (receiptId) => {
+    try {
+      // ดึงข้อมูลใบเสร็จที่ต้องการแก้ไข
+      const response = await axios.get(`/api/receipts/${receiptId}`);
+
+      // ตรวจสอบให้แน่ใจว่ามีการส่งรายการสินค้ากลับมาด้วย
+      // อาจต้องเพิ่ม endpoint ให้ดึงรายการสินค้ามาพร้อมกับใบเสร็จ
+      const receiptData = response.data;
+
+      // ตรวจสอบว่ามีรายการสินค้า (items) หรือไม่
+      if (!receiptData.items || receiptData.items.length === 0) {
+        // ถ้าไม่มีรายการสินค้า ให้ดึงรายการสินค้าแยก
+        const itemsResponse = await axios.get(
+          `/api/receipts/${receiptId}/items`
+        );
+        receiptData.items = itemsResponse.data;
+      }
+
+      // กำหนดค่าให้ editReceipt พร้อมรายการสินค้า
+      setEditReceipt(receiptData);
+      setShowEditModal(true);
+    } catch (error) {
+      console.error("Error fetching receipt data:", error);
+      toast.error("ไม่สามารถดึงข้อมูลใบเสร็จได้");
+    }
+  };
+
+  const handleEditReceiptChange = (e) => {
     const { name, value } = e.target;
-    setEditQuotation((prev) => ({
+    setEditReceipt((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -181,14 +262,15 @@ const Quotation = () => {
 
   // Handler for changing item values in the edit form
   const handleEditItemChange = (index, field, value) => {
-    const updatedItems = [...editQuotation.items];
+    const updatedItems = [...editReceipt.items];
     updatedItems[index] = {
       ...updatedItems[index],
-      [field]: field === 'quantity' || field === 'discount' ? Number(value) : value
+      [field]:
+        field === "quantity" || field === "discount" ? Number(value) : value,
     };
-    setEditQuotation({
-      ...editQuotation,
-      items: updatedItems
+    setEditReceipt({
+      ...editReceipt,
+      items: updatedItems,
     });
   };
 
@@ -198,22 +280,21 @@ const Quotation = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/quotation/${editQuotation.quotation_id}`,
-        editQuotation
+        `http://localhost:8080/api/receipt/${editReceipt.receipt_id}`,
+        editReceipt
       );
 
       if (response.status === 200) {
-        alert("แก้ไขใบเสนอราคาสำเร็จ");
-        // อัปเดตรายการใบเสนอราคา
-        const updatedQuotations = quotations.map((q) =>
-          q.quotation_id === editQuotation.quotation_id ? editQuotation : q
-        );
-        setQuotations(updatedQuotations);
+        alert("แก้ไขใบแจ้งหนี้สำเร็จ");
+
+        // เรียกใช้ฟังก์ชั่นดึงข้อมูลใหม่หลังจากอัพเดตสำเร็จ
+        await fetchReceipt();
+
         setShowEditModal(false); // ปิดโมดัลแก้ไข
       }
     } catch (error) {
-      console.error("Error updating quotation:", error);
-      alert("เกิดข้อผิดพลาดในการแก้ไขใบเสนอราคา");
+      console.error("Error updating receipt:", error);
+      alert("เกิดข้อผิดพลาดในการแก้ไขใบแจ้งหนี้");
     } finally {
       setIsSubmitting(false);
     }
@@ -245,25 +326,25 @@ const Quotation = () => {
   };
 
   // Function to format dates for input fields
-const formatDateForInput = (dateString) => {
-  if (!dateString) return '';
-  
-  try {
-    // Convert the date string to a Date object
-    const date = new Date(dateString);
-    
-    // Check if the date is valid
-    if (isNaN(date.getTime())) {
-      return '';
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+
+    try {
+      // Convert the date string to a Date object
+      const date = new Date(dateString);
+
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return "";
+      }
+
+      // Format as YYYY-MM-DD
+      return date.toISOString().split("T")[0];
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "";
     }
-    
-    // Format as YYYY-MM-DD
-    return date.toISOString().split('T')[0];
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return '';
-  }
-};
+  };
 
   const findProductById = (productId) => {
     const product = products.find(
@@ -288,24 +369,24 @@ const formatDateForInput = (dateString) => {
     setCurrentPage(1); // รีเซ็ตหน้าเมื่อเลือกลูกค้าใหม่
 
     // หาใบเสนอราคาของลูกค้ารายนี้
-    const customerQuotations = quotations.filter(
-      (quotation) => quotation.customer_id === customer.customer_id
+    const customerReceipt = receipts.filter(
+      (receipt) => receipt.customer_id === receipt.customer_id
     );
 
-    if (customerQuotations.length === 1) {
-      setSelectedQuotation(customerQuotations[0]);
+    if (customerReceipt.length === 1) {
+      setSelectedReceipt(customerReceipt[0]);
       setIsModalOpen(true);
-    } else if (customerQuotations.length > 1) {
+    } else if (customerReceipt.length > 1) {
       // ถ้ามีหลายใบเสนอราคา เปิด modal ให้เลือกใบเสนอราคาก่อน
       setIsCustomerModalOpen(true);
     } else {
       // ไม่มีใบเสนอราคา
-      alert("ไม่พบใบเสนอราคาสำหรับลูกค้ารายนี้");
+      alert("ไม่พบใบแจ้งหนี้สำหรับลูกค้ารายนี้");
     }
   };
 
-  const handleQuotationSelect = (quotation) => {
-    setSelectedQuotation(quotation);
+  const handleReceiptSelect = (receipt) => {
+    setSelectedReceipt(receipt);
     setIsCustomerModalOpen(false);
     setIsModalOpen(true);
   };
@@ -317,7 +398,7 @@ const formatDateForInput = (dateString) => {
   const closeAddModal = () => {
     setIsAddModalOpen(false);
 
-    setNewQuotation({
+    setNewReceipt({
       customer_id: "",
       date: new Date().toISOString().split("T")[0],
       expire_date: new Date(new Date().setDate(new Date().getDate() + 30))
@@ -337,9 +418,9 @@ const formatDateForInput = (dateString) => {
     setIsCustomerModalOpen(false);
   };
 
-  const closeAddedQuotationModal = () => {
-    setShowAddedQuotation(false);
-    setAddedQuotation(null);
+  const closeAddedReceiptModal = () => {
+    setShowAddedReceipt(false);
+    setAddedReceipt(null);
   };
 
   // ปิด modal เมื่อคลิกพื้นที่ด้านนอก
@@ -361,44 +442,44 @@ const formatDateForInput = (dateString) => {
     }
   };
 
-  const handleAddedQuotationOutsideClick = (e) => {
+  const handleAddedReceiptOutsideClick = (e) => {
     if (e.target.classList.contains("modal-overlay")) {
-      closeAddedQuotationModal();
+      closeAddedReceiptModal();
     }
   };
 
-  const handleNewQuotationChange = (e) => {
+  const handleNewReceiptChange = (e) => {
     const { name, value } = e.target;
-    setNewQuotation((prev) => ({
+    setNewReceipt((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleItemChange = (index, field, value) => {
-    const updatedItems = [...newQuotation.items];
+    const updatedItems = [...newReceipt.items];
     updatedItems[index][field] =
       field === "product_id" || field === "quantity"
         ? parseFloat(value, 10) || ""
         : parseFloat(value) || 0;
 
-    setNewQuotation((prev) => ({
+    setNewReceipt((prev) => ({
       ...prev,
       items: updatedItems,
     }));
   };
 
   const addNewItem = () => {
-    setNewQuotation((prev) => ({
+    setNewReceipt((prev) => ({
       ...prev,
       items: [...prev.items, { product_id: "", quantity: 1, discount: 0 }],
     }));
   };
 
   const removeItem = (index) => {
-    if (newQuotation.items.length > 1) {
-      const updatedItem = newQuotation.items.filter((item, i) => i !== index);
-      setNewQuotation((prev) => ({
+    if (newReceipt.items.length > 1) {
+      const updatedItem = newReceipt.items.filter((item, i) => i !== index);
+      setNewReceipt((prev) => ({
         ...prev,
         items: updatedItem,
       }));
@@ -411,14 +492,14 @@ const formatDateForInput = (dateString) => {
 
     try {
       // ตรวจสอบข้อมูลก่อนส่ง
-      if (!newQuotation.customer_id) {
+      if (!newReceipt.customer_id) {
         alert("กรุณาเลือกลูกค้า");
         setIsSubmitting(false);
         return;
       }
 
       // ตรวจสอบรายการสินค้า
-      for (const item of newQuotation.items) {
+      for (const item of newReceipt.items) {
         if (!item.product_id) {
           alert("กรุณาเลือกสินค้าให้ครบทุกรายการ");
           setIsSubmitting(false);
@@ -428,12 +509,12 @@ const formatDateForInput = (dateString) => {
 
       // เตรียมข้อมูลสำหรับส่ง API
       const payload = {
-        customer_id: parseInt(newQuotation.customer_id, 10),
-        date: newQuotation.date,
-        expire_date: newQuotation.expire_date,
-        credit_term: parseInt(newQuotation.credit_term, 10),
-        discount_rate: parseFloat(newQuotation.discount_rate),
-        items: newQuotation.items.map((item) => ({
+        customer_id: parseInt(newReceipt.customer_id, 10),
+        date: newReceipt.date,
+        expire_date: newReceipt.expire_date,
+        credit_term: parseInt(newReceipt.credit_term, 10),
+        discount_rate: parseFloat(newReceipt.discount_rate),
+        items: newReceipt.items.map((item) => ({
           product_id: parseInt(item.product_id, 10),
           quantity: parseInt(item.quantity, 10),
           discount: parseFloat(item.discount),
@@ -441,7 +522,7 @@ const formatDateForInput = (dateString) => {
       };
 
       // ส่งข้อมูลไปยัง API
-      const response = await fetch("http://localhost:8080/api/quotation", {
+      const response = await fetch("http://localhost:8080/api/receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -450,59 +531,57 @@ const formatDateForInput = (dateString) => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add quotation");
+        throw new Error("Failed to add receipt");
       }
 
       const result = await response.json();
 
       // ถ้าเพิ่มสำเร็จ ดึงข้อมูลใบเสนอราคาล่าสุด
-      const quotationResponse = await fetch(
-        "http://localhost:8080/api/quotation"
-      );
-      const quotationData = await quotationResponse.json();
-      setQuotations(quotationData.listQuotation || []);
+      const ReceiptResponse = await fetch("http://localhost:8080/api/receipt");
+      const ReceiptData = await ReceiptResponse.json();
+      setReceipts(ReceiptData.listReceipt || []);
 
       // หาใบเสนอราคาที่เพิ่งเพิ่ม
-      const newlyAddedQuotation = quotationData.listQuotation.find(
+      const newlyAddedReceipt = ReceiptData.listReceipt.find(
         (q) =>
-          q.customer_id === parseInt(newQuotation.customer_id, 10) &&
-          q.date === newQuotation.date
+          q.customer_id === parseInt(newReceipt.customer_id, 10) &&
+          q.date === newReceipt.date
       );
 
-      if (newlyAddedQuotation) {
-        setAddedQuotation(newlyAddedQuotation);
+      if (newlyAddedReceipt) {
+        setAddedReceipt(newlyAddedReceipt);
         setIsAddModalOpen(false);
-        setShowAddedQuotation(true);
+        setShowAddedReceipt(true);
       } else {
-        alert("เพิ่มใบเสนอราคาสำเร็จ");
+        alert("เพิ่มใบแจ้งหนี้สำเร็จ");
         closeAddModal();
       }
     } catch (error) {
-      console.error("Error adding quotation:", error);
+      console.error("Error adding invoice:", error);
       alert(`เกิดข้อผิดพลาด: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   // จัดกลุ่มใบเสนอราคาตามลูกค้า
-  const getCustomersWithQuotations = () => {
+  const getCustomersWithReceipts = () => {
     const customerMap = {};
 
-    quotations.forEach((quotation) => {
-      const customerId = quotation.customer_id;
+    receipts.forEach((receipt) => {
+      const customerId = receipt.customer_id;
 
       if (!customerMap[customerId]) {
         const customerData = findCustomerById(customerId);
         customerMap[customerId] = {
           ...customerData,
-          quotationCount: 1,
-          totalAmount: parseFloat(quotation.total_all || 0),
+          receiptCount: 1,
+          totalAmount: parseFloat(receipt.total_all || 0),
         };
       } else {
-        customerMap[customerId].quotationCount += 1;
+        customerMap[customerId].receiptCount += 1;
         customerMap[customerId].totalAmount += parseFloat(
-          quotation.total_all || 0
+          receipt.total_all || 0
         );
       }
     });
@@ -511,23 +590,20 @@ const formatDateForInput = (dateString) => {
   };
 
   // คำนวณข้อมูลสำหรับ pagination
-  const getPaginatedQuotations = () => {
+  const getPaginatedReceipts = () => {
     if (!selectedCustomer) return [];
 
     // กรองใบเสนอราคาของลูกค้าที่เลือก
-    const customerQuotations = quotations.filter(
-      (quotation) => quotation.customer_id === selectedCustomer.customer_id
+    const customerReceipts = receipts.filter(
+      (receipt) => receipt.customer_id === selectedCustomer.customer_id
     );
 
     // คำนวณ offset
-    const indexOfLastQuotation = currentPage * quotationsPerPage;
-    const indexOfFirstQuotation = indexOfLastQuotation - quotationsPerPage;
+    const indexOfLastReceipt = currentPage * ReceiptsPerPage;
+    const indexOfFirstReceipt = indexOfLastReceipt - ReceiptsPerPage;
 
     // ส่งคืนเฉพาะรายการในหน้าปัจจุบัน
-    return customerQuotations.slice(
-      indexOfFirstQuotation,
-      indexOfLastQuotation
-    );
+    return customerReceipts.slice(indexOfFirstReceipt, indexOfLastReceipt);
   };
 
   // เปลี่ยนหน้า
@@ -537,15 +613,15 @@ const formatDateForInput = (dateString) => {
   const getPageCount = () => {
     if (!selectedCustomer) return 0;
 
-    const customerQuotations = quotations.filter(
-      (quotation) => quotation.customer_id === selectedCustomer.customer_id
+    const customerReceipts = receipts.filter(
+      (receipt) => receipt.customer_id === selectedCustomer.customer_id
     );
 
-    return Math.ceil(customerQuotations.length / quotationsPerPage);
+    return Math.ceil(customerReceipts.length / ReceiptsPerPage);
   };
 
-  const customersWithQuotations = getCustomersWithQuotations();
-  const paginatedQuotations = getPaginatedQuotations();
+  const customersWithReceipts = getCustomersWithReceipts();
+  const paginatedReceipts = getPaginatedReceipts();
   const totalPages = getPageCount();
 
   if (isLoading) {
@@ -563,7 +639,7 @@ const formatDateForInput = (dateString) => {
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-4 p-4">
-        <h2 className="text-xl font-bold">รายการลูกค้าที่มีใบเสนอราคา</h2>
+        <h2 className="text-xl font-bold">รายการลูกค้าที่มีใบแจ้งหนี้</h2>
         <button
           onClick={openAddModal}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors flex items-center"
@@ -580,19 +656,19 @@ const formatDateForInput = (dateString) => {
               clipRule="evenodd"
             />
           </svg>
-          เพิ่มใบเสนอราคา
+          เพิ่มใบแจ้งหนี้
         </button>
       </div>
       {/* Customer List */}
       <div className="mb-8 p-4">
-        <h2 className="text-xl font-bold mb-4">รายการลูกค้าที่มีใบเสนอราคา</h2>
-        {customersWithQuotations.length === 0 ? (
+        <h2 className="text-xl font-bold mb-4"></h2>
+        {customersWithReceipts.length === 0 ? (
           <div className="p-4 border rounded-lg text-center">
-            ไม่พบข้อมูลลูกค้าที่มีใบเสนอราคา
+            ไม่พบข้อมูลลูกค้าที่มีใบแจ้งหนี้
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {customersWithQuotations.map((customer) => (
+            {customersWithReceipts.map((customer) => (
               <div
                 key={customer.customer_id}
                 className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
@@ -600,7 +676,7 @@ const formatDateForInput = (dateString) => {
               >
                 <p className="font-bold text-lg">{customer.cus_company_name}</p>
                 <p>รหัสลูกค้า: {customer.customer_id}</p>
-                <p>จำนวนใบเสนอราคา: {customer.quotationCount} ใบ</p>
+                <p>จำนวนใบแจ้งหนี้: {customer.receiptCount} ใบ</p>
                 <p>ยอดรวมทั้งสิ้น: {formatNumber(customer.totalAmount)} บาท</p>
               </div>
             ))}
@@ -618,7 +694,7 @@ const formatDateForInput = (dateString) => {
             {/* Modal Header with close button */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
-                รายการใบเสนอราคาของ {selectedCustomer.cus_company_name}
+                รายการใบแจ้งหนี้ของ {selectedCustomer.cus_company_name}
               </h2>
               <button
                 onClick={closeCustomerModal}
@@ -643,36 +719,40 @@ const formatDateForInput = (dateString) => {
 
             {/* Quotation List for this customer - แสดงเฉพาะหน้าปัจจุบัน */}
             <div className="divide-y">
-              {paginatedQuotations.map((quotation) => (
+              {paginatedReceipts.map((receipt) => (
                 <div
-                  key={quotation.quotation_id}
+                  key={receipt.receipt_id}
                   className="py-4 hover:bg-gray-50 cursor-pointer transition-colors px-3 rounded-lg"
-                  onClick={() => handleQuotationSelect(quotation)}
+                  onClick={() => handleReceiptSelect(receipt)}
                 >
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium">
-                        เลขใบเสนอราคา: {quotation.quotation_id}
+                        เลขใบแจ้งหนี้: {receipt.receipt_id}
                       </p>
-                      <p>วันที่: {formatDate(quotation.date)}</p>
+                      <p>วันที่: {formatDate(receipt.date)}</p>
                       <p>
                         สถานะ:{" "}
                         <span
                           className={`font-bold ${
-                            quotation.status === "approved"
+                            receipt.status === "approved"
                               ? "text-green-600"
+                              : receipt.status === "rejected"
+                              ? "text-red-600"
                               : "text-yellow-600"
                           }`}
                         >
-                          {quotation.status === "approved"
+                          {receipt.status === "approved"
                             ? "อนุมัติแล้ว"
+                            : receipt.status === "rejected"
+                            ? "ปฏิเสธ"
                             : "รอการอนุมัติ"}
                         </span>
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-lg">
-                        {formatNumber(quotation.total_all)} บาท
+                        {formatNumber(receipt.total_all)} บาท
                       </p>
                     </div>
                   </div>
@@ -734,7 +814,7 @@ const formatDateForInput = (dateString) => {
       )}
 
       {/* Quotation Detail Modal */}
-      {isModalOpen && selectedQuotation && (
+      {isModalOpen && selectedReceipt && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal-overlay"
           onClick={handleOutsideClick}
@@ -742,12 +822,12 @@ const formatDateForInput = (dateString) => {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto p-6">
             {/* Modal Header with close button */}
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">รายละเอียดใบเสนอราคา</h2>
+              <h2 className="text-xl font-bold">รายละเอียดใบเสร็จ</h2>
               <div className="flex space-x-2">
                 {/* ปุ่มแก้ไข */}
                 <button
                   onClick={() => {
-                    setEditQuotation(selectedQuotation);
+                    setEditReceipt(selectedReceipt);
                     setShowEditModal(true);
                   }}
                   className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
@@ -757,7 +837,7 @@ const formatDateForInput = (dateString) => {
                 </button>
                 {/* ปุ่มลบ */}
                 <button
-                  onClick={handleDeleteQuotation}
+                  onClick={handleDeleteReceipt}
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                 >
                   <Trash2 className="inline-block mr-2" size={16} />
@@ -790,8 +870,8 @@ const formatDateForInput = (dateString) => {
             <div className="bg-white">
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-xl font-bold">ใบเสนอราคา</h1>
-                  <h2 className="text-lg">Quotation</h2>
+                  <h1 className="text-xl font-bold">ใบเสร็จ</h1>
+                  <h2 className="text-lg">Receipt</h2>
                   <div className="mt-4">
                     {selectedCustomer && (
                       <>
@@ -830,23 +910,25 @@ const formatDateForInput = (dateString) => {
                   )}
                 </div>
                 <div className="p-4 border-l border-gray-300">
-                  <p>เลขที่ใบเสนอราคา: {selectedQuotation.quotation_id}</p>
-                  <p>วันที่ {formatDate(selectedQuotation.date)}</p>
-                  <p>
-                    วันที่หมดอายุ {formatDate(selectedQuotation.expire_date)}
-                  </p>
-                  <p>เครดิต {selectedQuotation.credit_term} วัน</p>
+                  <p>เลขที่ใบเสร็จ: {selectedReceipt.invoice_id}</p>
+                  <p>วันที่ {formatDate(selectedReceipt.date)}</p>
+                  <p>วันที่หมดอายุ {formatDate(selectedReceipt.expire_date)}</p>
+                  <p>เครดิต {selectedReceipt.credit_term} วัน</p>
                   <p>
                     สถานะ:{" "}
                     <span
                       className={`font-bold ${
-                        selectedQuotation.status === "approved"
-                          ? "text-black"
-                          : "text-black"
+                        selectedReceipt.status === "approved"
+                          ? "text-green-600"
+                          : selectedReceipt.status === "rejected"
+                          ? "text-red-600"
+                          : "text-yellow-600"
                       }`}
                     >
-                      {selectedQuotation.status === "approved"
+                      {selectedReceipt.status === "approved"
                         ? "อนุมัติแล้ว"
+                        : selectedReceipt.status === "rejected"
+                        ? "ปฏิเสธ"
                         : "รอการอนุมัติ"}
                     </span>
                   </p>
@@ -875,9 +957,9 @@ const formatDateForInput = (dateString) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedQuotation.quotation_items &&
-                  selectedQuotation.quotation_items.length > 0 ? (
-                    selectedQuotation.quotation_items.map((item, index) => (
+                  {selectedReceipt.receipt_items &&
+                  selectedReceipt.receipt_items.length > 0 ? (
+                    selectedReceipt.receipt_items.map((item, index) => (
                       <tr key={item.item_id || index}>
                         <td className="border border-gray-300 p-2 text-left">
                           {index + 1}
@@ -919,7 +1001,7 @@ const formatDateForInput = (dateString) => {
                       รวมเป็นเงิน
                     </td>
                     <td className="border border-gray-300 p-2 text-right">
-                      {formatNumber(selectedQuotation.subtotal)}
+                      {formatNumber(selectedReceipt.subtotal)}
                     </td>
                   </tr>
 
@@ -928,12 +1010,12 @@ const formatDateForInput = (dateString) => {
                       colSpan="5"
                       className="border border-gray-300 p-2 text-right"
                     >
-                      ส่วนลด {selectedQuotation.discount_rate}%
+                      ส่วนลด {selectedReceipt.discount_rate}%
                     </td>
                     <td className="border border-gray-300 p-2 text-right">
                       {formatNumber(
-                        selectedQuotation.subtotal -
-                          selectedQuotation.total_after_discount
+                        selectedReceipt.subtotal -
+                          selectedReceipt.total_after_discount
                       )}
                     </td>
                   </tr>
@@ -946,7 +1028,7 @@ const formatDateForInput = (dateString) => {
                       ยอดรวมหลังหักส่วนลด
                     </td>
                     <td className="border border-gray-300 p-2 text-right">
-                      {formatNumber(selectedQuotation.total_after_discount)}
+                      {formatNumber(selectedReceipt.total_after_discount)}
                     </td>
                   </tr>
 
@@ -955,10 +1037,10 @@ const formatDateForInput = (dateString) => {
                       colSpan="5"
                       className="border border-gray-300 p-2 text-right"
                     >
-                      ภาษีมูลค่าเพิ่ม {selectedQuotation.vat}%
+                      ภาษีมูลค่าเพิ่ม {selectedReceipt.vat}%
                     </td>
                     <td className="border border-gray-300 p-2 text-right">
-                      {formatNumber(selectedQuotation.vat_amount)}
+                      {formatNumber(selectedReceipt.vat_amount)}
                     </td>
                   </tr>
                   <tr>
@@ -969,7 +1051,7 @@ const formatDateForInput = (dateString) => {
                       จำนวนเงินทั้งสิ้น
                     </td>
                     <td className="border border-gray-300 p-2 text-right font-bold">
-                      {formatNumber(selectedQuotation.total_all)}
+                      {formatNumber(selectedReceipt.total_all)}
                     </td>
                   </tr>
                   <tr>
@@ -977,7 +1059,7 @@ const formatDateForInput = (dateString) => {
                       colSpan="5"
                       className="border border-gray-300 p-2 text-center"
                     >
-                      {selectedQuotation.total_inthai}
+                      {selectedReceipt.total_inthai}
                     </td>
                   </tr>
                 </tfoot>
@@ -987,14 +1069,14 @@ const formatDateForInput = (dateString) => {
                 <h3 className="font-bold mb-2">เงื่อนไขการเสนอราคา</h3>
                 <ul className="list-disc pl-6">
                   <li>
-                    ใบเสนอราคานี้มีผลบังคับใช้ถึงวันที่{" "}
-                    {formatDate(selectedQuotation.expire_date)}
+                    ใบแจ้งหนี้นี้มีผลบังคับใช้ถึงวันที่{" "}
+                    {formatDate(selectedReceipt.expire_date)}
                   </li>
                   <li>
                     ราคาไม่รวมค่าขนส่ง ค่าติดตั้ง และค่าบริการอื่นๆ เพิ่มเติม
                   </li>
                   <li>
-                    เงื่อนไขการชำระเงิน: เครดิต {selectedQuotation.credit_term}{" "}
+                    เงื่อนไขการชำระเงิน: เครดิต {selectedReceipt.credit_term}{" "}
                     วัน
                   </li>
                 </ul>
@@ -1017,7 +1099,7 @@ const formatDateForInput = (dateString) => {
                   onClick={() => window.print()}
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                 >
-                  พิมพ์ใบเสนอราคา
+                  พิมพ์ใบแจ้งหนี้
                 </button>
               </div>
             </div>
@@ -1036,7 +1118,7 @@ const formatDateForInput = (dateString) => {
           >
             {/* Modal Header with close button */}
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">เพิ่มใบเสนอราคา</h2>
+              <h2 className="text-xl font-bold">เพิ่มใบแจ้งหนี้</h2>
               <button
                 onClick={closeAddModal}
                 className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -1060,7 +1142,6 @@ const formatDateForInput = (dateString) => {
 
             {/* Add Quotation Form */}
             <form onSubmit={handleSubmit}>
-              {/* ข้อมูลใบเสนอราคา */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block mb-1 font-medium">
@@ -1068,8 +1149,8 @@ const formatDateForInput = (dateString) => {
                   </label>
                   <select
                     name="customer_id"
-                    value={newQuotation.customer_id}
-                    onChange={handleNewQuotationChange}
+                    value={newReceipt.customer_id}
+                    onChange={handleNewReceiptChange}
                     className="w-full p-2 border rounded"
                     required
                   >
@@ -1090,8 +1171,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="date"
                     name="date"
-                    value={newQuotation.date}
-                    onChange={handleNewQuotationChange}
+                    value={newReceipt.date}
+                    onChange={handleNewReceiptChange}
                     className="w-full p-2 border rounded"
                     required
                   />
@@ -1102,8 +1183,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="date"
                     name="expire_date"
-                    value={newQuotation.expire_date}
-                    onChange={handleNewQuotationChange}
+                    value={newReceipt.expire_date}
+                    onChange={handleNewReceiptChange}
                     className="w-full p-2 border rounded"
                     required
                   />
@@ -1116,8 +1197,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="number"
                     name="credit_term"
-                    value={newQuotation.credit_term}
-                    onChange={handleNewQuotationChange}
+                    value={newReceipt.credit_term}
+                    onChange={handleNewReceiptChange}
                     className="w-full p-2 border rounded"
                     min="0"
                     required
@@ -1129,8 +1210,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="number"
                     name="discount_rate"
-                    value={newQuotation.discount_rate}
-                    onChange={handleNewQuotationChange}
+                    value={newReceipt.discount_rate}
+                    onChange={handleNewReceiptChange}
                     className="w-full p-2 border rounded"
                     min="0"
                     max="100"
@@ -1164,7 +1245,7 @@ const formatDateForInput = (dateString) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {newQuotation.items.map((item, index) => (
+                      {newReceipt.items.map((item, index) => (
                         <tr key={index}>
                           <td className="p-2 border">
                             <select
@@ -1226,7 +1307,7 @@ const formatDateForInput = (dateString) => {
                               type="button"
                               onClick={() => removeItem(index)}
                               className="text-red-500 hover:text-red-700"
-                              disabled={newQuotation.items.length === 1}
+                              disabled={newReceipt.items.length === 1}
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -1272,7 +1353,7 @@ const formatDateForInput = (dateString) => {
         </div>
       )}
 
-{showEditModal && editQuotation && (
+      {showEditModal && editReceipt && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal-overlay"
           onClick={handleEditModalOutsideClick}
@@ -1283,7 +1364,7 @@ const formatDateForInput = (dateString) => {
           >
             {/* Modal Header with close button */}
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">แก้ไขใบเสนอราคา</h2>
+              <h2 className="text-xl font-bold">แก้ไขใบเสร็จ</h2>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -1315,20 +1396,22 @@ const formatDateForInput = (dateString) => {
                   </label>
                   <select
                     name="customer_id"
-                    value={editQuotation.customer_id || ''}
-                    onChange={handleEditQuotationChange}
+                    value={editReceipt.customer_id || ""}
+                    onChange={handleEditReceiptChange}
                     className="w-full p-2 border rounded"
                     required
                   >
                     <option value="">-- เลือกลูกค้า --</option>
-                    {customers && customers.length > 0 ? customers.map((customer) => (
-                      <option
-                        key={customer.customer_id}
-                        value={customer.customer_id}
-                      >
-                        {customer.cus_company_name}
-                      </option>
-                    )) : null}
+                    {customers && customers.length > 0
+                      ? customers.map((customer) => (
+                          <option
+                            key={customer.customer_id}
+                            value={customer.customer_id}
+                          >
+                            {customer.cus_company_name}
+                          </option>
+                        ))
+                      : null}
                   </select>
                 </div>
 
@@ -1337,8 +1420,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="date"
                     name="date"
-                    value={formatDateForInput(editQuotation.date)}
-                    onChange={handleEditQuotationChange}
+                    value={formatDateForInput(editReceipt.date)}
+                    onChange={handleEditReceiptChange}
                     className="w-full p-2 border rounded"
                     required
                   />
@@ -1349,8 +1432,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="date"
                     name="expire_date"
-                    value={formatDateForInput(editQuotation.expire_date)}
-                    onChange={handleEditQuotationChange}
+                    value={formatDateForInput(editReceipt.expire_date)}
+                    onChange={handleEditReceiptChange}
                     className="w-full p-2 border rounded"
                     required
                   />
@@ -1363,8 +1446,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="number"
                     name="credit_term"
-                    value={editQuotation.credit_term || 0}
-                    onChange={handleEditQuotationChange}
+                    value={editReceipt.credit_term || 0}
+                    onChange={handleEditReceiptChange}
                     className="w-full p-2 border rounded"
                     min="0"
                     required
@@ -1376,8 +1459,8 @@ const formatDateForInput = (dateString) => {
                   <input
                     type="number"
                     name="discount_rate"
-                    value={editQuotation.discount_rate || 0}
-                    onChange={handleEditQuotationChange}
+                    value={editReceipt.discount_rate || 0}
+                    onChange={handleEditReceiptChange}
                     className="w-full p-2 border rounded"
                     min="0"
                     max="100"
@@ -1385,17 +1468,16 @@ const formatDateForInput = (dateString) => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block mb-1 font-medium">สถานะ</label>
                   <select
                     name="status"
-                    value={editQuotation.status || ''}
-                    onChange={handleEditQuotationChange}
+                    value={editReceipt.status || ""}
+                    onChange={handleEditReceiptChange}
                     className="w-full p-2 border rounded"
                     required
                   >
-                    <option value="draft">ร่าง</option>
                     <option value="pending">รออนุมัติ</option>
                     <option value="approved">อนุมัติแล้ว</option>
                     <option value="rejected">ปฏิเสธ</option>
@@ -1427,86 +1509,95 @@ const formatDateForInput = (dateString) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {Array.isArray(editQuotation.items) && editQuotation.items.length > 0 ? editQuotation.items.map((item, index) => (
-                        <tr key={index}>
-                          <td className="p-2 border">
-                            <select
-                              value={item.product_id || ''}
-                              onChange={(e) =>
-                                handleEditItemChange(
-                                  index,
-                                  "product_id",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full p-1 border rounded"
-                              required
-                            >
-                              <option value="">-- เลือกสินค้า --</option>
-                              {products && products.length > 0 ? products.map((product) => (
-                                <option
-                                  key={product.product_id}
-                                  value={product.product_id}
-                                >
-                                  {product.name}
-                                </option>
-                              )) : null}
-                            </select>
-                          </td>
-                          <td className="p-2 border">
-                            <input
-                              type="number"
-                              value={item.quantity || 1}
-                              onChange={(e) =>
-                                handleEditItemChange(
-                                  index,
-                                  "quantity",
-                                  Number(e.target.value)
-                                )
-                              }
-                              className="w-full p-1 border rounded text-center"
-                              min="1"
-                              required
-                            />
-                          </td>
-                          <td className="p-2 border">
-                            <input
-                              type="number"
-                              value={item.discount || 0}
-                              onChange={(e) =>
-                                handleEditItemChange(
-                                  index,
-                                  "discount",
-                                  Number(e.target.value)
-                                )
-                              }
-                              className="w-full p-1 border rounded text-center"
-                              min="0"
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <button
-                              type="button"
-                              onClick={() => removeEditItem(index)}
-                              className="text-red-500 hover:text-red-700"
-                              disabled={!Array.isArray(editQuotation.items) || editQuotation.items.length <= 1}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
+                      {editReceipt.items &&
+                      Array.isArray(editReceipt.items) &&
+                      editReceipt.items.length > 0 ? (
+                        editReceipt.items.map((item, index) => (
+                          <tr key={index}>
+                            <td className="p-2 border">
+                              <select
+                                value={item.product_id || ""}
+                                onChange={(e) =>
+                                  handleEditItemChange(
+                                    index,
+                                    "product_id",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full p-1 border rounded"
+                                required
                               >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      )) : (
+                                <option value="">-- เลือกสินค้า --</option>
+                                {products && products.length > 0
+                                  ? products.map((product) => (
+                                      <option
+                                        key={product.product_id}
+                                        value={product.product_id}
+                                      >
+                                        {product.name}
+                                      </option>
+                                    ))
+                                  : null}
+                              </select>
+                            </td>
+                            <td className="p-2 border">
+                              <input
+                                type="number"
+                                value={item.quantity || 1}
+                                onChange={(e) =>
+                                  handleEditItemChange(
+                                    index,
+                                    "quantity",
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-full p-1 border rounded text-center"
+                                min="1"
+                                required
+                              />
+                            </td>
+                            <td className="p-2 border">
+                              <input
+                                type="number"
+                                value={item.discount || 0}
+                                onChange={(e) =>
+                                  handleEditItemChange(
+                                    index,
+                                    "discount",
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-full p-1 border rounded text-center"
+                                min="0"
+                              />
+                            </td>
+                            <td className="p-2 border text-center">
+                              <button
+                                type="button"
+                                onClick={() => removeEditItem(index)}
+                                className="text-red-500 hover:text-red-700"
+                                disabled={
+                                  !Array.isArray(editReceipt.items) ||
+                                  editReceipt.items.length <= 1
+                                }
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
                         <tr>
                           <td colSpan="4" className="p-2 border text-center">
                             ไม่มีรายการสินค้า
@@ -1544,4 +1635,4 @@ const formatDateForInput = (dateString) => {
   );
 };
 
-export default Quotation;
+export default Receipt;

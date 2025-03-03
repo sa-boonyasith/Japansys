@@ -242,16 +242,20 @@ exports.update = async (req, res) => {
         discount: parseFloat(discount.toFixed(2)),
       });
     }
+    const parsedDiscountRate = Number(discount_rate) || 0;
 
     const total_discount_rate = subtotal * (discount_rate / 100);
     const total_after_discount = subtotal - total_discount_rate;
     const vat_amount = (total_after_discount * vat) / 100;
     const total_all = total_after_discount + vat_amount;
     const total_inthai = thaiBaht(parseFloat(total_all.toFixed(2)));
+    
 
     await prisma.quotation_item.deleteMany({
       where: { quotation_id: parsedId },
     });
+
+    
 
     const updatedQuotation = await prisma.quotation.update({
       where: { quotation_id: parsedId },
@@ -260,7 +264,7 @@ exports.update = async (req, res) => {
         date: startDate,
         expire_date: endDate,
         confirm_price,
-        discount_rate: parseFloat(discount_rate.toFixed(2)),
+        discount_rate: parseFloat(parsedDiscountRate.toFixed(2)),
         subtotal: parseFloat(subtotal.toFixed(2)),
         total_after_discount: parseFloat(total_after_discount.toFixed(2)),
         vat,
