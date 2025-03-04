@@ -16,6 +16,7 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  UserCog,
 } from "lucide-react";
 
 const EmployeeList = () => {
@@ -32,12 +33,52 @@ const EmployeeList = () => {
   const [editForm, setEditForm] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false);
+  const [changeRoleForm, setChangeRoleForm] = useState({
+    username: "",
+    role: "",
+  });
+
   const [currentPage, setCurrentPage] = useState(1);
   const employeesPerPage = 6;
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleChangeRole = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:8080/api/change-role", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(changeRoleForm),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to change user role");
+      }
+  
+      // แสดง alert เมื่อสำเร็จ
+      alert("User role changed successfully");
+      setIsChangeRoleModalOpen(false);
+      fetchData(); // Refresh the data
+  
+      // รีเซ็ตฟอร์ม
+      setChangeRoleForm({
+        username: "",
+        role: "",
+      });
+  
+    } catch (err) {
+      // แสดง error เมื่อล้มเหลว
+      alert("Failed to change user role. Please try again.");
+      console.error(err);
+    }
+  };
+  
 
   const fetchData = async () => {
     try {
@@ -228,7 +269,6 @@ const EmployeeList = () => {
     return users.filter((user) => user.employee_id === employeeId);
   };
 
-
   // Calculate pagination
   const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
   const indexOfLastEmployee = currentPage * employeesPerPage;
@@ -270,6 +310,13 @@ const EmployeeList = () => {
               Manage and view employee information
             </p>
           </div>
+          <button
+            onClick={() => setIsChangeRoleModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <UserCog className="w-5 h-5" />
+            Change User Role
+          </button>
         </div>
 
         <div className="mb-8 relative">
@@ -338,8 +385,8 @@ const EmployeeList = () => {
           ))}
         </div>
 
-         {/* Pagination Controls */}
-         {totalPages > 1 && (
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-8">
             <button
               onClick={prevPage}
@@ -358,6 +405,80 @@ const EmployeeList = () => {
             >
               <ChevronRight className="w-5 h-5" />
             </button>
+          </div>
+        )}
+
+        {isChangeRoleModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-xl">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold text-gray-800">
+                    Change User Role
+                  </h3>
+                  <button
+                    onClick={() => setIsChangeRoleModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={handleChangeRole}>
+                  <div className="mb-4">
+                    <label
+                      htmlFor="username"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      id="username"
+                      value={changeRoleForm.username}
+                      onChange={(e) =>
+                        setChangeRoleForm({
+                          ...changeRoleForm,
+                          username: e.target.value,
+                        })
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      htmlFor="role"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      New Role
+                    </label>
+                    <select
+                      id="role"
+                      value={changeRoleForm.role}
+                      onChange={(e) =>
+                        setChangeRoleForm({
+                          ...changeRoleForm,
+                          role: e.target.value,
+                        })
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    >
+                      <option value="">Select a role</option>
+                      <option value="admin">Admin</option>
+                      <option value="employee">Employee</option>
+                      <option value="recruit">Recruit</option>
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Change Role
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         )}
 

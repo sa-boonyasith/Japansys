@@ -715,16 +715,16 @@ const Quotation = () => {
                         สถานะ:{" "}
                         <span
                           className={`font-bold ${
-                            invoice.status === "approved"
+                            quotation.status === "approved"
                               ? "text-green-600"
-                              : invoice.status === "rejected"
+                              : quotation.status === "rejected"
                               ? "text-red-600"
                               : "text-yellow-600"
                           }`}
                         >
-                          {invoice.status === "approved"
+                          {quotation.status === "approved"
                             ? "อนุมัติแล้ว"
-                            : invoice.status === "rejected"
+                            : quotation.status === "rejected"
                             ? "ปฏิเสธ"
                             : "รอการอนุมัติ"}
                         </span>
@@ -900,16 +900,16 @@ const Quotation = () => {
                     สถานะ:{" "}
                     <span
                       className={`font-bold ${
-                        selectedInvoice.status === "approved"
+                        selectedQuotation.status === "approved"
                           ? "text-green-600"
-                          : selectedInvoice.status === "rejected"
+                          : selectedQuotation.status === "rejected"
                           ? "text-red-600"
                           : "text-yellow-600"
                       }`}
                     >
-                      {selectedInvoice.status === "approved"
+                      {selectedQuotation.status === "approved"
                         ? "อนุมัติแล้ว"
-                        : selectedInvoice.status === "rejected"
+                        : selectedQuotation.status === "rejected"
                         ? "ปฏิเสธ"
                         : "รอการอนุมัติ"}
                     </span>

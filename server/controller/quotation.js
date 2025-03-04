@@ -271,7 +271,7 @@ exports.update = async (req, res) => {
         vat_amount: parseFloat(vat_amount.toFixed(2)),
         total_all: parseFloat(total_all.toFixed(2)),
         total_inthai,
-        credit_term,
+        credit_term: parseFloat(credit_term),
         status,
       },
       include: { quotation_items: true, customer: true },

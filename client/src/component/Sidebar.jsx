@@ -72,6 +72,10 @@ const Sidebar = ({ onToggleJobButtons }) => {
         navigate("/dashboard/receipt");
       } else if (menu === "meetingcustomer") {
         navigate("/dashboard/meetingcustomer");
+      } else if (menu === "pro") {
+        navigate("/dashboard/product");
+      } else if (menu === "role") {
+        navigate("/dashboard/role");
       } else {
         onToggleJobButtons(null);
       }
@@ -179,14 +183,23 @@ const Sidebar = ({ onToggleJobButtons }) => {
                     >
                       ระบบเงินเดือน
                     </li>
-                    {user?.role === 'admin' &&(
-                    <li
-                      className={getMenuItemClass(isRecruit)}
-                      onClick={() => handleSubMenuClick("employee")}
-                      role="button"
-                    >
-                      พนักงาน
-                    </li>
+                    {user?.role === 'admin' && (
+                      <>
+                        <li
+                          className={getMenuItemClass(isRecruit)}
+                          onClick={() => handleSubMenuClick("employee")}
+                          role="button"
+                        >
+                          พนักงาน
+                        </li>
+                        {/* <li
+                          className={getMenuItemClass(isRecruit)}
+                          onClick={() => handleSubMenuClick("role")}
+                          role="button"
+                        >
+                          เปลี่ยน role พนักงาน
+                        </li> */}
+                      </>
                     )}
                   </>
                 )}
@@ -218,6 +231,13 @@ const Sidebar = ({ onToggleJobButtons }) => {
                       role="button"
                     >
                       เพิ่มข้อมูลลูกค้า
+                    </li>
+                    <li
+                      className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                      onClick={() => handleSubMenuClick("pro")}
+                      role="button"
+                    >
+                      Product/สินค้า
                     </li>
                     <li
                       className={getMenuItemClass(isRecruit)}
