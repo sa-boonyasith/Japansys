@@ -194,6 +194,9 @@ const AddCustomer = () => {
               <thead>
                 <tr className="bg-gray-50 rounded-lg">
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                    No
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
                     ชื่อบริษัท
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
@@ -217,6 +220,9 @@ const AddCustomer = () => {
                       key={customer.customer_id}
                       className="hover:bg-gray-50 transition-colors duration-150"
                     >
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {customer.customer_id}
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {customer.cus_company_name}
                       </td>

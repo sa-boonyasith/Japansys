@@ -76,6 +76,10 @@ const Sidebar = ({ onToggleJobButtons }) => {
         navigate("/dashboard/product");
       } else if (menu === "role") {
         navigate("/dashboard/role");
+      } else if (menu === "monthlyincome") {
+        navigate("/dashboard/income");
+      } else if (menu === "payment") {
+        navigate("/dashboard/payment");
       } else {
         onToggleJobButtons(null);
       }
@@ -285,17 +289,22 @@ const Sidebar = ({ onToggleJobButtons }) => {
                   <b>Financial System</b>
                 </div>
                 {activeSection === "financialSystem" && (
-                  <ul className="text-center text-sm text-white">
-                    <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                      <Link to="/register/reports">Reports</Link>
-                    </li>
-                    <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                      <Link to="/register/invoices">Invoices</Link>
-                    </li>
-                    <li className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition">
-                      <Link to="/register/budgets">Budgets</Link>
-                    </li>
-                  </ul>
+                   <ul className="text-center text-sm text-white">
+                   <li
+                     className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                     onClick={() => handleSubMenuClick("monthlyincome")}
+                     role="button"
+                   >
+                     บันทึกรายได้ต่อเดือน
+                   </li>
+                   <li
+                     className="block p-2 border-b bg-buttonnonactive hover:bg-buttonactive transition cursor-pointer"
+                     onClick={() => handleSubMenuClick("payment")}
+                     role="button"
+                   >
+                     บันทึกรายจ่ายต่อเดือน
+                   </li>
+                 </ul>
                 )}
               </li>
             </>

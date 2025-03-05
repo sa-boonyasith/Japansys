@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Product = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
-    name: '',
-    price: ''
+    name: "",
+    price: "",
   });
   const [editingId, setEditingId] = useState(null);
-  const [message, setMessage] = useState('');
-  
+  const [message, setMessage] = useState("");
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 5;
@@ -25,11 +25,14 @@ const Product = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8080/api/product');
+      const response = await axios.get("http://localhost:8080/api/product");
       setProducts(response.data);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch products: ' + (err.response?.data?.error || err.message));
+      setError(
+        "Failed to fetch products: " +
+          (err.response?.data?.error || err.message)
+      );
     } finally {
       setLoading(false);
     }
@@ -43,9 +46,9 @@ const Product = () => {
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -54,13 +57,16 @@ const Product = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      await axios.post('http://localhost:8080/api/product', formData);
-      setMessage('Product created successfully');
-      setFormData({ name: '', price: '' });
+      await axios.post("http://localhost:8080/api/product", formData);
+      setMessage("Product created successfully");
+      setFormData({ name: "", price: "" });
       fetchProducts();
       setShowModal(false);
     } catch (err) {
-      setError('Failed to create product: ' + (err.response?.data?.error || err.message));
+      setError(
+        "Failed to create product: " +
+          (err.response?.data?.error || err.message)
+      );
     } finally {
       setLoading(false);
     }
@@ -71,7 +77,7 @@ const Product = () => {
     setEditingId(product.product_id);
     setFormData({
       name: product.name,
-      price: product.price.toString()
+      price: product.price.toString(),
     });
     setShowModal(true);
   };
@@ -80,17 +86,23 @@ const Product = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!editingId) return;
-    
+
     try {
       setLoading(true);
-      await axios.put(`http://localhost:8080/api/product/${editingId}`, formData);
-      setMessage('Product updated successfully');
-      setFormData({ name: '', price: '' });
+      await axios.put(
+        `http://localhost:8080/api/product/${editingId}`,
+        formData
+      );
+      setMessage("Product updated successfully");
+      setFormData({ name: "", price: "" });
       setEditingId(null);
       fetchProducts();
       setShowModal(false);
     } catch (err) {
-      setError('Failed to update product: ' + (err.response?.data?.error || err.message));
+      setError(
+        "Failed to update product: " +
+          (err.response?.data?.error || err.message)
+      );
     } finally {
       setLoading(false);
     }
@@ -98,15 +110,19 @@ const Product = () => {
 
   // Delete product
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-    
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
+
     try {
       setLoading(true);
       await axios.delete(`http://localhost:8080/api/product/${id}`);
-      setMessage('Product deleted successfully');
+      setMessage("Product deleted successfully");
       fetchProducts();
     } catch (err) {
-      setError('Failed to delete product: ' + (err.response?.data?.error || err.message));
+      setError(
+        "Failed to delete product: " +
+          (err.response?.data?.error || err.message)
+      );
     } finally {
       setLoading(false);
     }
@@ -115,14 +131,14 @@ const Product = () => {
   // Cancel editing
   const handleCancel = () => {
     setEditingId(null);
-    setFormData({ name: '', price: '' });
+    setFormData({ name: "", price: "" });
     setShowModal(false);
   };
 
   // Open modal for adding a new product
   const handleAddNew = () => {
     setEditingId(null);
-    setFormData({ name: '', price: '' });
+    setFormData({ name: "", price: "" });
     setShowModal(true);
   };
 
@@ -130,7 +146,7 @@ const Product = () => {
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => {
-        setMessage('');
+        setMessage("");
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -139,25 +155,29 @@ const Product = () => {
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+  const currentProducts = products.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
   const totalPages = Math.ceil(products.length / productsPerPage);
 
   // Page navigation
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const nextPage = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Product Management</h1>
-      
+
       {/* Notification message */}
       {message && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
           {message}
         </div>
       )}
-      
+
       {/* Error message */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -167,9 +187,9 @@ const Product = () => {
 
       {/* Button to add new product */}
       <div className="mb-6">
-        <button 
+        <button
           onClick={handleAddNew}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 ml-[920px] -mt-[50px] bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           Add New Product
         </button>
@@ -194,10 +214,14 @@ const Product = () => {
               <tbody>
                 {currentProducts.map((product) => (
                   <tr key={product.product_id}>
-                    <td className="py-2 px-4 border-b">{product.product_id}</td>
-                    <td className="py-2 px-4 border-b">{product.name}</td>
-                    <td className="py-2 px-4 border-b">${product.price.toFixed(2)}</td>
-                    <td className="py-2 px-4 border-b">
+                    <td className="py-2 px-4 border-b text-center">
+                      {product.product_id}
+                    </td>
+                    <td className="py-2 px-4 text-center border-b">{product.name}</td>
+                    <td className="py-2 px-4 text-center border-b">
+                      ${product.price.toFixed(2)}
+                    </td>
+                    <td className="py-2 px-4 text-center border-b">
                       <button
                         onClick={() => handleEdit(product)}
                         className="mr-2 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
@@ -227,21 +251,21 @@ const Product = () => {
                   >
                     Previous
                   </button>
-                  
-                  {[...Array(totalPages).keys()].map(number => (
+
+                  {[...Array(totalPages).keys()].map((number) => (
                     <button
                       key={number + 1}
                       onClick={() => paginate(number + 1)}
                       className={`px-3 py-1 border-t border-b border-gray-300 ${
                         currentPage === number + 1
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'bg-white text-gray-500 hover:bg-gray-50'
+                          ? "bg-blue-50 text-blue-600"
+                          : "bg-white text-gray-500 hover:bg-gray-50"
                       }`}
                     >
                       {number + 1}
                     </button>
                   ))}
-                  
+
                   <button
                     onClick={nextPage}
                     disabled={currentPage === totalPages}
@@ -264,16 +288,16 @@ const Product = () => {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold">
-                {editingId ? 'Edit Product' : 'Add New Product'}
+                {editingId ? "Edit Product" : "Add New Product"}
               </h3>
-              <button 
+              <button
                 onClick={handleCancel}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 "
               >
                 &times;
               </button>
             </div>
-            
+
             <form onSubmit={editingId ? handleUpdate : handleCreate}>
               <div className="mb-4">
                 <label className="block text-gray-700 mb-2" htmlFor="name">
@@ -315,10 +339,14 @@ const Product = () => {
                 </button>
                 <button
                   type="submit"
-                  className={`px-4 py-2 rounded text-white ${editingId ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                  className={`px-4 py-2 rounded text-white ${
+                    editingId
+                      ? "bg-yellow-500 hover:bg-yellow-600"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  }`}
                   disabled={loading}
                 >
-                  {editingId ? 'Update' : 'Create'}
+                  {editingId ? "Update" : "Create"}
                 </button>
               </div>
             </form>

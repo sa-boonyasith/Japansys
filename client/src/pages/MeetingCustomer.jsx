@@ -9,11 +9,12 @@ import {
   Edit,
   Trash2,
   X,
-  ChevronLeft ,
-  ChevronRight
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const MeetingCustomer = () => {
+  const [customers, setCustomers] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [filteredMeetings, setFilteredMeetings] = useState([]);
   const [filters, setFilters] = useState({
@@ -37,23 +38,33 @@ const MeetingCustomer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [currentPage,setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(4)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(4);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredMeetings.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredMeetings.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(filteredMeetings.length / itemsPerPage);
 
-  const handlePageChange = (pageNumber) =>{
+  const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
-  }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+  }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/customer") // เปลี่ยนเป็น URL ของ API จริง
+      .then((response) => response.json())
+      .then((data) => setCustomers(data.listCustomer)) // ใช้ listCustomer
+      .catch((error) => console.error("Error fetching customers:", error));
   }, []);
 
   const fetchMeetings = async () => {
@@ -197,8 +208,37 @@ const MeetingCustomer = () => {
         "http://localhost:8080/api/meetingcus",
         newMeeting
       );
+
       if (response.data && response.data.newmeetingroom) {
-        await fetchMeetings();
+        const newMeetingData = response.data.newmeetingroom;
+
+        // Add color-coding for status
+        newMeetingData.status = newMeetingData.status || "Pending";
+
+        // Update meetings and filtered meetings
+        setMeetings((prevMeetings) => {
+          const updatedMeetings = [...prevMeetings, newMeetingData];
+          // Sort meetings by proximity to today's date
+          const today = new Date();
+          return updatedMeetings.sort((a, b) => {
+            const diffA = Math.abs(new Date(a.startdate) - today);
+            const diffB = Math.abs(new Date(b.startdate) - today);
+            return diffA - diffB;
+          });
+        });
+
+        setFilteredMeetings((prevMeetings) => {
+          const updatedMeetings = [...prevMeetings, newMeetingData];
+          // Sort filtered meetings by proximity to today's date
+          const today = new Date();
+          return updatedMeetings.sort((a, b) => {
+            const diffA = Math.abs(new Date(a.startdate) - today);
+            const diffB = Math.abs(new Date(b.startdate) - today);
+            return diffA - diffB;
+          });
+        });
+
+        // Reset the add modal and form
         setShowAddModal(false);
         setNewMeeting({
           customer_id: "",
@@ -228,9 +268,19 @@ const MeetingCustomer = () => {
         editMeeting
       );
 
+      // Close modal first
+      setShowEditModal(false);
+
       if (response.status === 200) {
-        await fetchMeetings();
-        setShowEditModal(false);
+        // Update meetings state directly instead of re-fetching
+        const updatedMeetings = meetings.map((meeting) =>
+          meeting.meeting_cus === editMeeting.meeting_cus
+            ? editMeeting
+            : meeting
+        );
+
+        setMeetings(updatedMeetings);
+        setFilteredMeetings(updatedMeetings);
         setEditMeeting(null);
       } else {
         alert("Unexpected response from the server. Please check your data.");
@@ -247,14 +297,18 @@ const MeetingCustomer = () => {
   const handleDeleteMeeting = async (meetingcus) => {
     if (window.confirm("Are you sure you want to delete this meeting?")) {
       try {
-        const response = await axios.delete(
+        // Fix: Don't check for response.data.deleted since it's not reliable
+        await axios.delete(
           `http://localhost:8080/api/meetingcus/${meetingcus}`
         );
-        if (response.data && response.data.deleted) {
-          await fetchMeetings();
-        } else {
-          alert("Unexpected response from the server.");
-        }
+
+        // Update meetings state directly instead of re-fetching
+        const updatedMeetings = meetings.filter(
+          (meeting) => meeting.meeting_cus !== meetingcus
+        );
+
+        setMeetings(updatedMeetings);
+        setFilteredMeetings(updatedMeetings);
       } catch (error) {
         console.error("Failed to delete meeting:", error);
         alert("Error deleting meeting. Please try again.");
@@ -531,17 +585,26 @@ const MeetingCustomer = () => {
 
             <form className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Customer ID
-                </label>
-                <input
-                  type="text"
+                <label className="block mb-1 font-medium">เลือกลูกค้า *</label>
+                <select
                   name="customer_id"
-                  placeholder="Enter customer id"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={newMeeting.customer_id}
+                  value={newMeeting.customer_id || ""}
                   onChange={handleModalChange}
-                />
+                  className="w-full p-2 border rounded"
+                  required
+                >
+                  <option value="">-- เลือกลูกค้า --</option>
+                  {customers && customers.length > 0
+                    ? customers.map((customer) => (
+                        <option
+                          key={customer.customer_id}
+                          value={customer.customer_id}
+                        >
+                          {customer.cus_company_name}
+                        </option>
+                      ))
+                    : null}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -637,15 +700,25 @@ const MeetingCustomer = () => {
             <form className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Customer ID
+                  เลือกลูกค้า *
                 </label>
-                <input
-                  type="text"
+                <select
                   name="customer_id"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={editMeeting.customer_id}
+                  value={editMeeting.customer_id || ""}
                   onChange={handleEditModalChange}
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">-- เลือกลูกค้า --</option>
+                  {customers.map((customer) => (
+                    <option
+                      key={customer.customer_id}
+                      value={customer.customer_id}
+                    >
+                      {customer.cus_company_name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

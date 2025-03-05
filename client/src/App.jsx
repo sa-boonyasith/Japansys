@@ -34,6 +34,8 @@ import Receipt from "./pages/Receipt";
 import MeetingCustomer from "./pages/MeetingCustomer";
 import Product from "./pages/Product";
 import Changerole from "./pages/Changerole";
+import Income from "./pages/Income";
+import Payment from "./pages/Payment";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -319,6 +321,22 @@ const App = () => {
               element={
                 <PrivateRoute allowedRoles={["admin", "employee"]}>
                   <Product />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="income"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <Income />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="payment"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <Payment />
                 </PrivateRoute>
               }
             />
