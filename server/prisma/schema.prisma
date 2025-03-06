@@ -210,6 +210,8 @@ model Salary {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  payments Payment[]
 }
 
 model Expense {
@@ -329,6 +331,7 @@ model receipt {
   updated_at DateTime @updatedAt
 
   receipt_items receipt_item[]
+  incomes       Income[]
 }
 
 model receipt_item {
@@ -362,12 +365,12 @@ model invoice {
   total_inthai         String?
   status               String   @default("pending")
   credit_term          Int // หน่วยเป็นวัน
-  
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   invoice_items invoice_item[] // รายการสินค้าในใบแจ้งหนี้
+  incomes       Income[]
 }
 
 model invoice_item {
@@ -408,21 +411,42 @@ model meetingcus {
 }
 
 model Income {
-  income_id  Int      @id @default(autoincrement())
-  desc       String
-  money      Float
-  total      Float
+  income_id        Int      @id @default(autoincrement())
+  desc             String
+  money            Float
+  total            Float
+  date             DateTime @db.Date
+  income_startdate DateTime @db.Date
+  income_enddate   DateTime @db.Date
+
+  source     String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  // Relationships with invoice and receipt
+  invoice_id Int?
+  invoice    invoice? @relation(fields: [invoice_id], references: [invoice_id], onDelete: SetNull)
+
+  receipt_id Int?
+  receipt    receipt? @relation(fields: [receipt_id], references: [receipt_id], onDelete: SetNull)
 }
 
 model Payment {
-  payment_id Int      @id @default(autoincrement())
-  desc       String
-  money      Float
-  total      Float
+  payment_id        Int      @id @default(autoincrement())
+  desc             String
+  money            Float
+  total            Float
+  date             DateTime @db.Date
+  payment_startdate DateTime @db.Date
+  payment_enddate   DateTime @db.Date
+
+  source     String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  // New relationship with Salary
+  salary_id Int?
+  salary    Salary? @relation(fields: [salary_id], references: [salary_id], onDelete: SetNull)
 }
 
 enum Attend {

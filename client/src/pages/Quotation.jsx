@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useCallback } from "react";
 import logo from "../img/japanlogo.png";
 import { Edit, Trash2 } from "lucide-react";
 import axios from "axios";
@@ -41,18 +41,20 @@ const Quotation = () => {
     }
   }, []);
 
+  const updateEditQuotation = useCallback((newQuotation) => {
+    setEditQuotation(prev => ({ ...prev, ...newQuotation }));
+  }, []);
+
   useEffect(() => {
     if (showEditModal && editQuotation) {
       // ถ้า items เป็น undefined ให้กำหนดค่าเริ่มต้น
       if (!editQuotation.items) {
-        setEditQuotation(prev => ({
-          ...prev,
+        updateEditQuotation({
           items: [{ product_id: "", quantity: 1, discount: 0 }]
-        }));
+        });
       }
     }
-  }, [showEditModal, editQuotation]);
-
+  }, [showEditModal, editQuotation, updateEditQuotation]);
 
 
   // Handler for clicking outside the edit modal

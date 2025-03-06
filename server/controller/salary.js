@@ -406,13 +406,6 @@ exports.update = async (req, res) => {
       },
     });
     
-    
-
-    console.log("รายได้รวม : ", annualIncome);
-    console.log("ค่าใช้จ่าย : ", salary50);
-    console.log("รายได้สุทธิ : ", netIncome);
-    console.log("ภาษี : ", taxyear);
-
     res.status(200).json({
       message: "Salary updated successfully",
       updatedSalary,
