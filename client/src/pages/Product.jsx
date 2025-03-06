@@ -19,7 +19,7 @@ const Product = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 5;
+  const productsPerPage = 4;
 
   // Fetch all products
   const fetchProducts = async () => {

@@ -172,11 +172,9 @@ exports.update = async (req, res) => {
 
     const validStatuses = ["pending", "approved", "rejected"];
     if (status && !validStatuses.includes(status)) {
-      return res
-        .status(400)
-        .json({
-          error: "Invalid status. Allowed values: pending, approved, rejected",
-        });
+      return res.status(400).json({
+        error: "Invalid status. Allowed values: pending, approved, rejected",
+      });
     }
 
     const existingQuotation = await prisma.quotation.findUnique({
@@ -249,13 +247,55 @@ exports.update = async (req, res) => {
     const vat_amount = (total_after_discount * vat) / 100;
     const total_all = total_after_discount + vat_amount;
     const total_inthai = thaiBaht(parseFloat(total_all.toFixed(2)));
-    
 
+    if (status === "approved") {
+      // 1. สร้าง Receipt
+      const receipt = await prisma.receipt.create({
+        data: {
+          customer_id,
+          date: startDate,
+          expire_date: endDate,
+          confirm_price,
+          discount_rate: parseFloat(discount_rate.toFixed(2)),
+          subtotal: parseFloat(subtotal.toFixed(2)),
+          total_after_discount: parseFloat(total_after_discount.toFixed(2)),
+          vat,
+          vat_amount: parseFloat(vat_amount.toFixed(2)),
+          total_all: parseFloat(total_all.toFixed(2)),
+          total_inthai,
+          credit_term,
+          status: "pending", // สามารถปรับตามสถานะที่ต้องการ
+        },
+      });
+
+      // 2. สร้างรายการใน Receipt Item
+      const receiptItems = processedItems.map((item) => ({
+        receipt_id: receipt.receipt_id,
+        ...item,
+      }));
+
+      await prisma.receipt_item.createMany({
+        data: receiptItems,
+      });
+
+      // 3. ลบ Quotation และ Quotation Item
+      await prisma.quotation_item.deleteMany({
+        where: { quotation_id: parsedId },
+      });
+
+      await prisma.quotation.delete({
+        where: { quotation_id: parsedId },
+      });
+
+      return res.status(200).json({
+        message: "Quotation approved and moved to receipt successfully",
+      });
+    }
+
+    // หากไม่ใช่สถานะ approved ทำการอัปเดต Quotation ตามปกติ
     await prisma.quotation_item.deleteMany({
       where: { quotation_id: parsedId },
     });
-
-    
 
     const updatedQuotation = await prisma.quotation.update({
       where: { quotation_id: parsedId },

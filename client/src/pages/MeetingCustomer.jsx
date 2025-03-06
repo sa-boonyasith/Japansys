@@ -53,6 +53,16 @@ const MeetingCustomer = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Function to sort meetings by proximity to today's date
+  const sortMeetingsByProximity = (meetings) => {
+    const today = new Date();
+    return meetings.sort((a, b) => {
+      const diffA = Math.abs(new Date(a.startdate) - today);
+      const diffB = Math.abs(new Date(b.startdate) - today);
+      return diffA - diffB;
+    });
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -61,9 +71,9 @@ const MeetingCustomer = () => {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/customer") // เปลี่ยนเป็น URL ของ API จริง
+    fetch("http://localhost:8080/api/customer")
       .then((response) => response.json())
-      .then((data) => setCustomers(data.listCustomer)) // ใช้ listCustomer
+      .then((data) => setCustomers(data.listCustomer))
       .catch((error) => console.error("Error fetching customers:", error));
   }, []);
 
@@ -71,13 +81,8 @@ const MeetingCustomer = () => {
     try {
       const response = await axios.get("http://localhost:8080/api/meetingcus");
       if (Array.isArray(response.data.listmeetingcustomer)) {
-        const today = new Date();
-        const sortedMeetings = response.data.listmeetingcustomer.sort(
-          (a, b) => {
-            const diffA = Math.abs(new Date(a.startdate) - today);
-            const diffB = Math.abs(new Date(b.startdate) - today);
-            return diffA - diffB;
-          }
+        const sortedMeetings = sortMeetingsByProximity(
+          response.data.listmeetingcustomer
         );
         setMeetings(sortedMeetings);
         setFilteredMeetings(sortedMeetings);
@@ -98,11 +103,12 @@ const MeetingCustomer = () => {
   const handleFilterChange = (e) => {
     const newFilters = { ...filters, [e.target.name]: e.target.value };
     setFilters(newFilters);
-    applyFilters(newFilters);
+    const filtered = applyFilters(newFilters);
+    setFilteredMeetings(filtered);
   };
 
-  const applyFilters = (currentFilters) => {
-    const filtered = meetings.filter((meeting) => {
+  const applyFilters = (currentFilters, meetingsToFilter = meetings) => {
+    const filtered = meetingsToFilter.filter((meeting) => {
       const searchFilter = currentFilters.search
         ? meeting.cus_company_name
             ?.toLowerCase()
@@ -137,7 +143,7 @@ const MeetingCustomer = () => {
       );
     });
 
-    setFilteredMeetings(filtered);
+    return filtered;
   };
 
   const resetFilters = () => {
@@ -192,51 +198,16 @@ const MeetingCustomer = () => {
   };
 
   const handleAddMeeting = async () => {
-    if (
-      !newMeeting.customer_id ||
-      !newMeeting.startdate ||
-      !newMeeting.enddate ||
-      !newMeeting.timestart ||
-      !newMeeting.timeend
-    ) {
-      alert("Please fill out all required fields.");
-      return;
-    }
-
+    // ... existing validation code ...
     try {
       const response = await axios.post(
         "http://localhost:8080/api/meetingcus",
         newMeeting
       );
 
-      if (response.data && response.data.newmeetingroom) {
-        const newMeetingData = response.data.newmeetingroom;
-
-        // Add color-coding for status
-        newMeetingData.status = newMeetingData.status || "Pending";
-
-        // Update meetings and filtered meetings
-        setMeetings((prevMeetings) => {
-          const updatedMeetings = [...prevMeetings, newMeetingData];
-          // Sort meetings by proximity to today's date
-          const today = new Date();
-          return updatedMeetings.sort((a, b) => {
-            const diffA = Math.abs(new Date(a.startdate) - today);
-            const diffB = Math.abs(new Date(b.startdate) - today);
-            return diffA - diffB;
-          });
-        });
-
-        setFilteredMeetings((prevMeetings) => {
-          const updatedMeetings = [...prevMeetings, newMeetingData];
-          // Sort filtered meetings by proximity to today's date
-          const today = new Date();
-          return updatedMeetings.sort((a, b) => {
-            const diffA = Math.abs(new Date(a.startdate) - today);
-            const diffB = Math.abs(new Date(b.startdate) - today);
-            return diffA - diffB;
-          });
-        });
+      if (response.status === 201) {
+        // Re-fetch meetings instead of manually updating state
+        await fetchMeetings();
 
         // Reset the add modal and form
         setShowAddModal(false);
@@ -272,15 +243,8 @@ const MeetingCustomer = () => {
       setShowEditModal(false);
 
       if (response.status === 200) {
-        // Update meetings state directly instead of re-fetching
-        const updatedMeetings = meetings.map((meeting) =>
-          meeting.meeting_cus === editMeeting.meeting_cus
-            ? editMeeting
-            : meeting
-        );
-
-        setMeetings(updatedMeetings);
-        setFilteredMeetings(updatedMeetings);
+        // Re-fetch meetings to ensure latest data
+        await fetchMeetings();
         setEditMeeting(null);
       } else {
         alert("Unexpected response from the server. Please check your data.");

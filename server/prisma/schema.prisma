@@ -305,7 +305,7 @@ model product {
 
   invoiceItems   invoice_item[]
   quotationitems quotation_item[]
-  receiptitems receipt_item[]
+  receiptitems   receipt_item[]
 }
 
 model receipt {
@@ -332,7 +332,7 @@ model receipt {
 }
 
 model receipt_item {
-   item_id    Int     @id @default(autoincrement())
+  item_id    Int     @id @default(autoincrement())
   receipt_id Int // เชื่อมโยงกับใบแจ้งหนี้
   receipt    receipt @relation(fields: [receipt_id], references: [receipt_id], onDelete: Cascade)
   product_id Int // เชื่อมโยงกับสินค้า
@@ -362,6 +362,7 @@ model invoice {
   total_inthai         String?
   status               String   @default("pending")
   credit_term          Int // หน่วยเป็นวัน
+  
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -404,6 +405,24 @@ model meetingcus {
   timeend   String // เก็บเป็น String (HH:mm:ss)
 
   status String @default("Pending")
+}
+
+model Income {
+  income_id  Int      @id @default(autoincrement())
+  desc       String
+  money      Float
+  total      Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Payment {
+  payment_id Int      @id @default(autoincrement())
+  desc       String
+  money      Float
+  total      Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 enum Attend {
