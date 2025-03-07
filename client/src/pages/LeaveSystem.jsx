@@ -26,6 +26,7 @@ const LeaveStatus = () => {
     leavetype: "",
     startdate: "",
     enddate: "",
+    desc: "",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -64,7 +65,6 @@ const LeaveStatus = () => {
 
     fetchLeaves();
   }, []);
-  
 
   const handleFilterChange = (e) => {
     const newFilters = { ...filters, [e.target.name]: e.target.value };
@@ -144,6 +144,7 @@ const LeaveStatus = () => {
         setNewLeave({
           employee_id: "",
           leavetype: "",
+          desc:"",
           startdate: new Date().toISOString().split("T")[0], // Reset with today's date
           enddate: "",
         });
@@ -352,6 +353,9 @@ const LeaveStatus = () => {
                     Leave Type
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                    Desc
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Date Range
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
@@ -377,6 +381,9 @@ const LeaveStatus = () => {
                     </td>
                     <td className="px-6 py-4 text-gray-500">
                       {leave.leavetype}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {leave.desc}
                     </td>
                     <td className="px-6 py-4 text-gray-500">
                       {formatDate(leave.startdate)} -{" "}
@@ -513,6 +520,20 @@ const LeaveStatus = () => {
                     <option value="Annual Leave">Annual Leave</option>
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  หมายเหตุ
+                </label>
+                <input
+                  type="text"
+                  name="desc"
+                  placeholder="เขียนหมายเหตุ"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={newLeave.desc}
+                  onChange={handleAddChange}
+                  required
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

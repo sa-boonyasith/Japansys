@@ -31,6 +31,7 @@ const CarBooking = () => {
     timeend: "",
     place: "",
     car: "",
+    license_plate: "",
     status: "Pending",
   });
   const [editRentCar, setEditRentCar] = useState(null);
@@ -188,6 +189,7 @@ const CarBooking = () => {
           timeend: "",
           place: "",
           car: "",
+          license_plate: "",
           status: "Pending",
         });
       } else {
@@ -404,6 +406,9 @@ const CarBooking = () => {
                     Vehicle
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
+                  License_plate
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
                     Status
                   </th>
                   {user?.role === "admin" && (
@@ -426,7 +431,7 @@ const CarBooking = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
-                        {new Date(car.startdate).toLocaleDateString()}
+                        {new Date(car.startdate).toLocaleDateString()} - {new Date(car.enddate).toLocaleDateString()} 
                       </div>
                       <div className="text-sm text-gray-500">
                         {car.timestart} - {car.timeend}
@@ -444,6 +449,12 @@ const CarBooking = () => {
                       <div className="flex items-center">
                         <Car className="w-4 h-4 text-gray-400 mr-2" />
                         <span className="text-sm text-gray-900">{car.car}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center">
+                        <Car className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-900">{car.license_plate}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -611,6 +622,19 @@ const CarBooking = () => {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  license_plate
+                  </label>
+                  <input
+                    type="text"
+                    name="license_plate"
+                    value={newRentCar.license_plate}
+                    onChange={handleModalChange}
+                    className="w-full rounded-lg border h-9 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="mt-8 flex justify-end gap-3">
@@ -757,6 +781,19 @@ const CarBooking = () => {
                     type="text"
                     name="car"
                     value={editRentCar.car}
+                    onChange={handleEditModalChange}
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  license_plate
+                  </label>
+                  <input
+                    type="text"
+                    name="license_plate"
+                    value={editRentCar.license_plate}
                     onChange={handleEditModalChange}
                     className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-shadow duration-200"
                     required

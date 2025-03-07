@@ -118,6 +118,7 @@ model LeaveRequest {
   firstname String   @db.VarChar(100)
   lastname  String   @db.VarChar(100)
   leavetype String
+  desc      String
   startdate DateTime @db.Date
   enddate   DateTime @db.Date
   action    Action   @default(pending)
@@ -146,15 +147,16 @@ model Rentcar {
   employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
   employee_id Int
 
-  firstname String   @db.VarChar(100)
-  lastname  String   @db.VarChar(100)
-  startdate DateTime @db.Date
-  enddate   DateTime @db.Date
-  timestart String
-  timeend   String
-  place     String
-  car       String
-  status    Status   @default(Pending)
+  firstname     String   @db.VarChar(100)
+  lastname      String   @db.VarChar(100)
+  startdate     DateTime @db.Date
+  enddate       DateTime @db.Date
+  timestart     String
+  timeend       String
+  place         String
+  car           String
+  license_plate String
+  status        Status   @default(Pending)
 }
 
 model Project {
@@ -433,10 +435,10 @@ model Income {
 
 model Payment {
   payment_id        Int      @id @default(autoincrement())
-  desc             String
-  money            Float
-  total            Float
-  date             DateTime @db.Date
+  desc              String
+  money             Float
+  total             Float
+  date              DateTime @db.Date
   payment_startdate DateTime @db.Date
   payment_enddate   DateTime @db.Date
 

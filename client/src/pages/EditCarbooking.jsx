@@ -31,6 +31,7 @@ const CarBooking = () => {
     timeend: "",
     place: "",
     car: "",
+    license_plate: "",
     status: "pending",
   });
   const [editRentCar, setEditRentCar] = useState(null);

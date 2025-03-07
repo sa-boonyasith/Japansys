@@ -10,7 +10,7 @@ exports.list = async (req, res) => {
 };
 exports.create = async (req, res) => {
   try {
-    const { employee_id, leavetype, startdate, enddate } = req.body;
+    const { employee_id, leavetype, startdate, enddate,desc } = req.body;
 
     // Validate employee_id
     if (!employee_id || isNaN(Number(employee_id))) {
@@ -56,6 +56,7 @@ exports.create = async (req, res) => {
         leavetype,
         startdate: formattedStartDate,
         enddate: formattedEndDate,
+        desc,
       },
     });
 
@@ -89,6 +90,7 @@ exports.update = async (req, res) => {
       enddate,
       action,
       status,
+      desc,
     } = req.body;
 
 
@@ -141,6 +143,7 @@ exports.update = async (req, res) => {
         enddate: formattedEndDate,
         action,
         status,
+        desc,
       },
     });
 

@@ -1,518 +1,792 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {
-  Calendar,
-  Search,
-  Plus,
-  Clock,
-  ChevronDown,
-  X,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { PlusCircle, Edit2, Trash2, X, Printer } from "lucide-react";
 
-const EditCustomerMeeting = () => {
-  const [meetings, setMeetings] = useState([]);
-  const [filteredMeetings, setFilteredMeetings] = useState([]);
-  const [filters, setFilters] = useState({
-    search: "",
-    startDate: "",
-    endDate: "",
-    startTime: "",
-    endTime: "",
-  });
-  const [newMeeting, setNewMeeting] = useState({
-    customer_id: "",
-    startdate: "",
-    enddate: "",
-    timestart: "",
-    timeend: "",
-  });
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editMeeting, setEditMeeting] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [customers, setCustomers] = useState([]);
-
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await axios.get("http://localhost:8080/api/customer");
-        setCustomers(response.data.listCustomer);
-      } catch (error) {
-        console.error("Failed to fetch customers:", error);
-      }
-    };
-    fetchCustomers();
-  }, []);
-
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:8080/api/meetingcus"
-        );
-        if (response.data && Array.isArray(response.data.listmeetingcustomer)) {
-          const today = new Date();
-          const sortedMeetings = response.data.listmeetingcustomer.sort(
-            (a, b) => {
-              const diffA = Math.abs(new Date(a.startdate) - today);
-              const diffB = Math.abs(new Date(b.startdate) - today);
-              return diffA - diffB;
-            }
-          );
-          setMeetings(sortedMeetings);
-          setFilteredMeetings(sortedMeetings);
-        } else {
-          setError("Expected an array of meetings, but got something else.");
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setError("Failed to fetch customer meetings.");
-        setLoading(false);
-      }
-    };
-    fetchMeetings();
-  }, []);
-
-  const handleFilterChange = (e) => {
-    const newFilters = { ...filters, [e.target.name]: e.target.value };
-    setFilters(newFilters);
-    applyFilters(newFilters);
-  };
-
-  const applyFilters = (currentFilters) => {
-    const filtered = meetings.filter((meeting) => {
-      const searchFilter = currentFilters.search
-        ? meeting.customername
-            ?.toLowerCase()
-            .includes(currentFilters.search.toLowerCase())
-        : true;
-      const startDateFilter = currentFilters.startDate
-        ? new Date(meeting.startdate) >= new Date(currentFilters.startDate)
-        : true;
-      const endDateFilter = currentFilters.endDate
-        ? new Date(meeting.enddate) <= new Date(currentFilters.endDate)
-        : true;
-      const startTimeFilter = currentFilters.startTime
-        ? meeting.timestart >= currentFilters.startTime
-        : true;
-      const endTimeFilter = currentFilters.endTime
-        ? meeting.timeend <= currentFilters.endTime
-        : true;
-
-      return (
-        searchFilter &&
-        startDateFilter &&
-        endDateFilter &&
-        startTimeFilter &&
-        endTimeFilter
-      );
-    });
-
-    setFilteredMeetings(filtered);
-  };
-
-  const resetFilters = () => {
-    setFilters({
-      search: "",
-      startDate: "",
-      endDate: "",
-      startTime: "",
-      endTime: "",
-    });
-    setFilteredMeetings(meetings);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString)
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "-");
-  };
-
-  const formatInputDate = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const handleModalChange = (e) => {
-    setNewMeeting({ ...newMeeting, [e.target.name]: e.target.value });
-  };
-
-  const handleEditModalChange = (e) => {
-    setEditMeeting({ ...editMeeting, [e.target.name]: e.target.value });
-  };
-
-  const handleAddMeeting = async () => {
-    if (
-      !newMeeting.customer_id ||
-      !newMeeting.startdate ||
-      !newMeeting.enddate ||
-      !newMeeting.timestart ||
-      !newMeeting.timeend
-    ) {
-      alert("Please fill out all required fields.");
-      return;
-    }
-
-    try {
-      const payload = {
-        ...newMeeting,
-        customer_id: parseInt(newMeeting.customer_id, 10),
-      };
-
-      const response = await axios.post(
-        "http://localhost:8080/api/meetingcus",
-        payload
-      );
-      if (response.data) {
-        setMeetings([...meetings, response.data]);
-        setFilteredMeetings([...filteredMeetings, response.data]);
-        setShowAddModal(false);
-        setNewMeeting({
-          customer_id: "",
-          startdate: "",
-          enddate: "",
-          timestart: "",
-          timeend: "",
-        });
-      } else {
-        alert("Unexpected response from the server.");
-      }
-    } catch (error) {
-      console.error("Failed to add customer meeting:", error);
-      alert("Error adding customer meeting. Please try again.");
-    }
-  };
-
-  const handleEditMeeting = async () => {
-    if (!editMeeting) {
-      alert("Please select a meeting to edit.");
-      return;
-    }
-
-    try {
-      const response = await axios.put(
-        `http://localhost:8080/api/meetingcus/${editMeeting.meetingcus_id}`,
-        editMeeting
-      );
-
-      if (response.status === 200 && response.data) {
-        const updatedMeetings = meetings.map((meeting) =>
-          meeting.meetingcus === editMeeting.meetingcus
-            ? { ...meeting, ...response.data }
-            : meeting
-        );
-        setMeetings(updatedMeetings);
-        setFilteredMeetings(updatedMeetings);
-        setShowEditModal(false);
-        setEditMeeting(null);
-      } else {
-        alert("Unexpected response from the server. Please check your data.");
-      }
-    } catch (error) {
-      console.error("Failed to edit customer meeting:", error);
-      const errorMessage =
-        error.response?.data?.error ||
-        "An error occurred while editing the meeting.";
-      alert(errorMessage);
-    }
-  };
-
-  const handleDeleteMeeting = async (meetingId) => {
-    if (
-      window.confirm("Are you sure you want to delete this customer meeting?")
-    ) {
-      try {
-        const response = await axios.delete(
-          `http://localhost:8080/api/meetingcus/${meetingId}`
-        );
-        if (response.data) {
-          const updatedMeetings = meetings.filter(
-            (meeting) => meeting.meetingcus !== meetingId
-          );
-          setMeetings(updatedMeetings);
-          setFilteredMeetings(updatedMeetings);
-        } else {
-          alert("Unexpected response from the server.");
-        }
-      } catch (error) {
-        console.error("Failed to delete customer meeting:", error);
-        alert("Error deleting customer meeting. Please try again.");
-      }
-    }
-  };
-
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+const PrintablePayslip = ({ item }) => {
+  return (
+    <div className="p-8 bg-white">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold mb-2">ใบแจ้งเงินเดือน</h1>
+        <p className="text-gray-600">
+          งวดวันที่{" "}
+          {new Date(item.payroll_startdate).toLocaleDateString("th-TH")} ถึง{" "}
+          {new Date(item.payroll_enddate).toLocaleDateString("th-TH")}
+        </p>
       </div>
-    );
 
-  if (error)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-red-50 text-red-800 p-4 rounded-lg shadow flex items-center gap-2">
-          <X className="w-5 h-5" />
-          {error}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">ข้อมูลพนักงาน</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p>
+              <strong>ชื่อ-นามสกุล:</strong> {item.firstname} {item.lastname}
+            </p>
+            <p>
+              <strong>รหัสพนักงาน:</strong> {item.employee_id}
+            </p>
+          </div>
+          <div>
+            <p>
+              <strong>ตำแหน่ง:</strong> {item.position}
+            </p>
+            <p>
+              <strong>สถานะ:</strong>{" "}
+              {item.status === "Paid" ? "จ่ายแล้ว" : "รออนุมัติ"}
+            </p>
+          </div>
         </div>
       </div>
-    );
+
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">รายละเอียดการจ่ายเงิน</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h3 className="font-bold mb-2 text-green-600">รายได้</h3>
+            <p>
+              เงินเดือน:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.salary)}
+            </p>
+            <p>
+              ค่าล่วงเวลา:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.overtime)}
+            </p>
+            <p>
+              โบนัส:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.bonus)}
+            </p>
+          </div>
+          <div>
+            <h3 className="font-bold mb-2 text-red-600">รายการหัก</h3>
+            <p>
+              ขาด/สาย:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.absent_late)}
+            </p>
+            <p>
+              ค่าเบิกเงิน:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.expense)}
+            </p>
+            <p>
+              ภาษี:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.tax)}
+            </p>
+            <p>
+              กองทุน:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.providentfund)}
+            </p>
+            <p>
+              ประกันสังคม:{" "}
+              {new Intl.NumberFormat("th-TH", {
+                style: "currency",
+                currency: "THB",
+              }).format(item.socialsecurity)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 border-t pt-4">
+        <div className="text-right">
+          <h3 className="text-xl font-bold">
+            รายได้สุทธิ:{" "}
+            {new Intl.NumberFormat("th-TH", {
+              style: "currency",
+              currency: "THB",
+            }).format(item.salary_total)}
+          </h3>
+        </div>
+      </div>
+
+      <div className="mt-8 text-sm text-gray-500">
+        <p>โอนเข้าบัญชี: {item.banking}</p>
+        <p>เลขที่บัญชี: {item.banking_id}</p>
+        <p>
+          วันที่จ่าย:{" "}
+          {item.payment_date
+            ? new Date(item.payment_date).toLocaleDateString("th-TH")
+            : "รอดำเนินการ"}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const Salary = () => {
+  const [salaryData, setSalaryData] = useState([]);
+  const [error, setError] = useState(null);
+  const [employeeId, setEmployeeId] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const itemsPerPage = 4;
+  const [employees, setEmployees] = useState([]); // New state for employees
+
+  const initialFormData = {
+    employee_id: "",
+    firstname: "",
+    lastname: "",
+    position: "",
+    banking: "",
+    banking_id: "",
+    salary: 0,
+    overtime: 0,
+    bonus: 0,
+    absent_late: 0,
+    expense: 0,
+    tax: 0,
+    providentfund: 0,
+    socialsecurity: 0,
+    status: "Pending",
+    payroll_startdate: "",
+    payroll_enddate: "",
+    payment_date: "",
+  };
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // แปลง JSON เป็น Object
+    }
+  }, []);
+  const [formData, setFormData] = useState(initialFormData);
+
+  const months = [
+    { value: "01", label: "มกราคม" },
+    { value: "02", label: "กุมภาพันธ์" },
+    { value: "03", label: "มีนาคม" },
+    { value: "04", label: "เมษายน" },
+    { value: "05", label: "พฤษภาคม" },
+    { value: "06", label: "มิถุนายน" },
+    { value: "07", label: "กรกฎาคม" },
+    { value: "08", label: "สิงหาคม" },
+    { value: "09", label: "กันยายน" },
+    { value: "10", label: "ตุลาคม" },
+    { value: "11", label: "พฤศจิกายน" },
+    { value: "12", label: "ธันวาคม" },
+  ];
+
+  const years = Array.from(
+    { length: 5 },
+    (_, i) => new Date().getFullYear() - i
+  );
+
+  // Fetch Data
+  const fetchSalaryData = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/salary");
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+      setSalaryData(data.listSalary);
+      setFilteredItems(data.listSalary);
+    } catch (err) {
+      setError("Failed to fetch salary data.");
+      console.error(err);
+    }
+  };
+
+  // Fetch Employees
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/employees"); // Replace with your actual endpoint
+      if (!response.ok) {
+        throw new Error("Failed to fetch employees");
+      }
+      const data = await response.json();
+      setEmployees(data); // Assuming the API returns an array of employees
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+      setError("Failed to fetch employees.");
+    }
+  };
+
+  useEffect(() => {
+    fetchSalaryData();
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  // CRUD Operations
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:8080/api/salary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Failed to add salary record");
+
+      await fetchSalaryData();
+      setIsModalOpen(false);
+      setFormData(initialFormData);
+    } catch (err) {
+      setError("Failed to add salary record.");
+      console.error(err);
+    }
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+
+    if (!selectedItem || !selectedItem.salary_id) {
+      console.error("Error: selectedItem หรือ selectedItem.id เป็น undefined");
+      setError("เกิดข้อผิดพลาด: ไม่พบ ID ของเงินเดือนที่ต้องแก้ไข");
+      return;
+    }
+
+    console.log("Updating salary with ID:", selectedItem.salary_id);
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/salary/${selectedItem.salary_id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update salary record");
+
+      await fetchSalaryData();
+      setIsModalOpen(false);
+      setSelectedItem(null);
+      setFormData(initialFormData);
+      setIsEditing(false);
+    } catch (err) {
+      setError("Failed to update salary record.");
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/salary/${selectedItem.salary_id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete salary record");
+
+      await fetchSalaryData();
+      setIsDeleteModalOpen(false);
+      setSelectedItem(null);
+    } catch (err) {
+      setError("Failed to delete salary record.");
+      console.error(err);
+    }
+  };
+
+  const openEditModal = (item) => {
+    setSelectedItem(item);
+    setFormData(item);
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const openDeleteModal = (item) => {
+    setSelectedItem(item);
+    setIsDeleteModalOpen(true);
+  };
+
+  useEffect(() => {
+    let filtered = [...salaryData];
+
+    if (employeeId) {
+      filtered = filtered.filter((item) =>
+        item.employee_id.toString().includes(employeeId.trim())
+      );
+    }
+
+    if (selectedMonth) {
+      filtered = filtered.filter((item) => {
+        const payrollMonth = new Date(item.payroll_startdate).getMonth() + 1;
+        return payrollMonth.toString().padStart(2, "0") === selectedMonth;
+      });
+    }
+
+    if (selectedYear) {
+      filtered = filtered.filter((item) => {
+        const payrollYear = new Date(item.payroll_startdate).getFullYear();
+        return payrollYear === selectedYear;
+      });
+    }
+    setFilteredItems(filtered);
+    setCurrentPage(1);
+  }, [employeeId, selectedMonth, selectedYear, salaryData]);
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  useEffect(() => {
+    // When editing, set the month input value based on payroll_startdate
+    if (isEditing && formData.payroll_startdate) {
+      const date = new Date(formData.payroll_startdate);
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const monthInputValue = `${year}-${month}`;
+
+      // Update the month input value
+      const monthInput = document.querySelector('input[type="month"]');
+      if (monthInput) {
+        monthInput.value = monthInputValue;
+      }
+    }
+  }, [isEditing, formData.payroll_startdate]);
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("th-TH", {
+      style: "currency",
+      currency: "THB",
+    }).format(amount);
+  };
+
+  const getStatusDisplay = (status) => {
+    if (status === "Paid") {
+      return (
+        <div className="flex items-center">
+          <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+          <span className="text-green-700">จ่ายแล้ว</span>
+        </div>
+      );
+    } else if (status === "Pending") {
+      return (
+        <div className="flex items-center">
+          <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+          <span className="text-yellow-700">รออนุมัติ</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const handleEmployeeChange = (e) => {
+    const selectedEmployeeId = e.target.value;
+    setFormData({ ...formData, employee_id: selectedEmployeeId });
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                name="search"
-                placeholder="Search by customer name"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filters.search}
-                onChange={handleFilterChange}
-              />
-            </div>
+    <div className="w-full">
+      <div className="bg-white rounded-lg ">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 className="text-2xl font-bold">Salary Data</h2>
+            <div className="flex flex-col md:flex-row gap-4">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value="">เลือกเดือน</option>
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
 
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="date"
-                name="startDate"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filters.startDate}
-                onChange={handleFilterChange}
-              />
-            </div>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year + 543}
+                  </option>
+                ))}
+              </select>
 
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="date"
-                name="endDate"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filters.endDate}
-                onChange={handleFilterChange}
-              />
-            </div>
+              {/* Employee Select Dropdown */}
+              <select
+                value={formData.employee_id}
+                onChange={handleEmployeeChange}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value="">Select Employee</option>
+                {employees.map((employee) => (
+                  <option key={employee.employee_id} value={employee.employee_id}>
+                    {employee.firstname} {employee.lastname} ({employee.employee_id})
+                  </option>
+                ))}
+              </select>
 
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="time"
-                name="startTime"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filters.startTime}
-                onChange={handleFilterChange}
-              />
+              {user?.role === "admin" && (
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData(initialFormData);
+                    setIsModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  <PlusCircle size={20} />
+                  เพิ่มข้อมูล
+                </button>
+              )}
             </div>
-
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="time"
-                name="endTime"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filters.endTime}
-                onChange={handleFilterChange}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-between mt-4 pt-4 border-t border-gray-100">
-            <button
-              onClick={resetFilters}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Reset Filters
-            </button>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              New Customer Meeting
-            </button>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    Customer
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    Date Range
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    Time
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredMeetings.map((meeting) => (
-                  <tr
-                    key={meeting.meetingcus}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">
-                        {meeting.cus_company_name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      {formatDate(meeting.startdate)} -{" "}
-                      {formatDate(meeting.enddate)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      {meeting.timestart} - {meeting.timeend}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setEditMeeting(meeting);
-                            setShowEditModal(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDeleteMeeting(meeting.meetingcus)
-                          }
-                          className="text-red-600 hover:text-red-700 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="p-6">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+          {salaryData.length === 0 ? (
+            <div className="flex items-center justify-center p-8">
+              <svg
+                className="animate-spin h-8 w-8 text-gray-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span className="ml-2 text-gray-500">Loading data...</span>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <div className="min-w-max">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="p-3 text-left font-semibold">งวด</th>
+                        <th className="p-3 text-left font-semibold">รหัสพนักงาน</th>
+                        <th className="p-3 text-left font-semibold">ชื่อ</th>
+                        <th className="p-3 text-left font-semibold">ตำแหน่ง</th>
+                        <th className="p-3 text-left font-semibold">เงินเดือน</th>
+                        <th className="p-3 text-left font-semibold">สถานะ</th>
+                        <th className="p-3 text-center font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentItems.map((item) => (
+                        <tr key={item.salary_id} className="hover:bg-gray-50">
+                          <td className="p-3">
+                            {new Date(item.payroll_startdate).toLocaleDateString("th-TH")} -{" "}
+                            {new Date(item.payroll_enddate).toLocaleDateString("th-TH")}
+                          </td>
+                          <td className="p-3">{item.employee_id}</td>
+                          <td className="p-3">
+                            {item.firstname} {item.lastname}
+                          </td>
+                          <td className="p-3">{item.position}</td>
+                          <td className="p-3">{formatCurrency(item.salary_total)}</td>
+                          <td className="p-3">{getStatusDisplay(item.status)}</td>
+                          <td className="p-3 flex justify-center gap-2">
+                            {user?.role === "admin" && (
+                              <>
+                                <button
+                                  onClick={() => openEditModal(item)}
+                                  className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                                <button
+                                  onClick={() => openDeleteModal(item)}
+                                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </>
+                            )}
+                            <PrintablePayslip item={item} />
+                            <button
+                              onClick={() => window.print()}
+                              className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800"
+                            >
+                              <Printer size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Pagination */}
+              {filteredItems.length > itemsPerPage && (
+                <div className="flex justify-center mt-6">
+                  <div className="flex gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                      <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`px-4 py-2 rounded-lg ${
+                          currentPage === pageNumber
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 hover:bg-gray-300"
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              New Customer Meeting
+      {/* Add/Edit Modal */}
+      {isModalOpen && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">
+              {isEditing ? "แก้ไขข้อมูลเงินเดือน" : "เพิ่มข้อมูลเงินเดือน"}
             </h2>
+            <form onSubmit={isEditing ? handleEdit : handleAdd} className="flex flex-col gap-4">
+              {/* Employee Select Dropdown in Modal */}
+              <label htmlFor="employee_id" className="block text-gray-700 text-sm font-bold">
+                Employee:
+              </label>
+              <select
+                id="employee_id"
+                value={formData.employee_id}
+                onChange={handleEmployeeChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                <option value="">Select Employee</option>
+                {employees.map((employee) => (
+                  <option key={employee.employee_id} value={employee.employee_id}>
+                    {employee.firstname} {employee.lastname} ({employee.employee_id})
+                  </option>
+                ))}
+              </select>
 
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Customer ID
-                </label>
-                <input
-                  type="text"
-                  name="customer_id"
-                  placeholder="Enter customer ID"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={newMeeting.customer_id}
-                  onChange={handleModalChange}
-                />
-              </div>
+              <label htmlFor="firstname">First Name:</label>
+              <input
+                type="text"
+                id="firstname"
+                value={formData.firstname}
+                onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter first name"
+              />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    name="startdate"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={newMeeting.startdate}
-                    onChange={handleModalChange}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    name="enddate"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={newMeeting.enddate}
-                    onChange={handleModalChange}
-                  />
-                </div>
-              </div>
+              <label htmlFor="lastname">Last Name:</label>
+              <input
+                type="text"
+                id="lastname"
+                value={formData.lastname}
+                onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter last name"
+              />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    name="timestart"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={newMeeting.timestart}
-                    onChange={handleModalChange}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    name="timeend"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={newMeeting.timeend}
-                    onChange={handleModalChange}
-                  />
-                </div>
-              </div>
+              <label htmlFor="position">Position:</label>
+              <input
+                type="text"
+                id="position"
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter position"
+              />
 
-              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+              <label htmlFor="banking">Banking:</label>
+              <input
+                type="text"
+                id="banking"
+                value={formData.banking}
+                onChange={(e) => setFormData({ ...formData, banking: e.target.value })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter banking"
+              />
+
+              <label htmlFor="banking_id">Banking ID:</label>
+              <input
+                type="text"
+                id="banking_id"
+                value={formData.banking_id}
+                onChange={(e) => setFormData({ ...formData, banking_id: e.target.value })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter banking ID"
+              />
+
+              <label htmlFor="salary">Salary:</label>
+              <input
+                type="number"
+                id="salary"
+                value={formData.salary}
+                onChange={(e) => setFormData({ ...formData, salary: Number(e.target.value) })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter salary"
+              />
+
+              <label htmlFor="overtime">Overtime:</label>
+              <input
+                type="number"
+                id="overtime"
+                value={formData.overtime}
+                onChange={(e) => setFormData({ ...formData, overtime: Number(e.target.value) })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter overtime"
+              />
+
+              <label htmlFor="bonus">Bonus:</label>
+              <input
+                type="number"
+                id="bonus"
+                value={formData.bonus}
+                onChange={(e) => setFormData({ ...formData, bonus: Number(e.target.value) })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter bonus"
+              />
+
+              <label htmlFor="absent_late">Absent/Late:</label>
+              <input
+                type="number"
+                id="absent_late"
+                value={formData.absent_late}
+                onChange={(e) => setFormData({ ...formData, absent_late: Number(e.target.value) })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter absent/late"
+              />
+
+              <label htmlFor="expense">Expense:</label>
+              <input
+                type="number"
+                id="expense"
+                value={formData.expense}
+                onChange={(e) => setFormData({ ...formData, expense: Number(e.target.value) })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter expense"
+              />
+
+              <label htmlFor="tax">Tax:</label>
+              <input
+                type="number"
+                id="tax"
+                value={formData.tax}
+                onChange={(e) => setFormData({ ...formData, tax: Number(e.target.value) })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter tax"
+              />
+
+              <label htmlFor="providentfund">Provident Fund:</label>
+              <input
+                type="number"
+                id="providentfund"
+                value={formData.providentfund}
+                onChange={(e) =>
+                  setFormData({ ...formData, providentfund: Number(e.target.value) })
+                }
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter provident fund"
+              />
+
+              <label htmlFor="socialsecurity">Social Security:</label>
+              <input
+                type="number"
+                id="socialsecurity"
+                value={formData.socialsecurity}
+                onChange={(e) =>
+                  setFormData({ ...formData, socialsecurity: Number(e.target.value) })
+                }
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder="Enter social security"
+              />
+
+              <label htmlFor="payroll_startdate">Payroll Start Date:</label>
+              <input
+                type="date"
+                id="payroll_startdate"
+                value={formData.payroll_startdate}
+                onChange={(e) =>
+                  setFormData({ ...formData, payroll_startdate: e.target.value })
+                }
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+
+              <label htmlFor="payroll_enddate">Payroll End Date:</label>
+              <input
+                type="date"
+                id="payroll_enddate"
+                value={formData.payroll_enddate}
+                onChange={(e) =>
+                  setFormData({ ...formData, payroll_enddate: e.target.value })
+                }
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+
+              <label htmlFor="payment_date">Payment Date:</label>
+              <input
+                type="date"
+                id="payment_date"
+                value={formData.payment_date}
+                onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+
+              <div className="flex justify-end gap-4">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={() => setIsModalOpen(false)}
+                  className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400"
                 >
                   Cancel
                 </button>
                 <button
-                  type="button"
-                  onClick={handleAddMeeting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  type="submit"
+                  className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
                 >
-                  Add Meeting
+                  {isEditing ? "Update" : "Save"}
                 </button>
               </div>
             </form>
@@ -520,107 +794,26 @@ const EditCustomerMeeting = () => {
         </div>
       )}
 
-      {/* Edit Meeting Modal */}
-      {showEditModal && editMeeting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
-            <button
-              onClick={() => setShowEditModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              Edit Customer Meeting
-            </h2>
-
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Customer ID
-                </label>
-                <input
-                  type="text"
-                  name="customer_id"
-                  placeholder="Enter customer ID"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={editMeeting.customer_id}
-                  onChange={handleEditModalChange}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    name="startdate"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={formatInputDate(editMeeting.startdate)}
-                    onChange={handleEditModalChange}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    name="enddate"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={formatInputDate(editMeeting.enddate)}
-                    onChange={handleEditModalChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    name="timestart"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={editMeeting.timestart}
-                    onChange={handleEditModalChange}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    name="timeend"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={editMeeting.timeend}
-                    onChange={handleEditModalChange}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleEditMeeting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">ยืนยันการลบ</h2>
+            <p>คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลเงินเดือนนี้?</p>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -628,4 +821,4 @@ const EditCustomerMeeting = () => {
   );
 };
 
-export default EditCustomerMeeting;
+export default Salary;

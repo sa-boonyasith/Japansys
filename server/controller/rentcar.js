@@ -19,6 +19,7 @@ exports.create = async (req, res) => {
       timeend,
       place,
       car,
+      license_plate,
     } = req.body;
 
     const validStartDate =
@@ -57,6 +58,7 @@ exports.create = async (req, res) => {
         timeend,
         place,
         car,
+        license_plate,
       },
     });
 
@@ -81,6 +83,7 @@ exports.update = async (req, res) => {
       place,
       car,
       status,
+      license_plate,
     } = req.body;
 
     // ตรวจสอบว่า id เป็นตัวเลข
@@ -130,6 +133,7 @@ exports.update = async (req, res) => {
         place,
         car,
         status,
+        license_plate,
       },
     });
 
