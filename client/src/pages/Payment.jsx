@@ -18,7 +18,7 @@ const Payment = () => {
     const [year, month] = monthYearValue.split('-');
     const selectedDate = new Date(year, month - 1, 1);
     const monthName = format(selectedDate, 'MMMM yyyy', { locale: th });
-    return `รายได้ประจำเดือน${monthName}`;
+    return `การจ่ายเงินเดือนประจำเดือน${monthName}`;
   };
 
   const fetchPayments = async () => {
@@ -134,12 +134,12 @@ const Payment = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">รายการรายรับ</h1>
+        <h1 className="text-2xl font-bold">รายการจ่ายเงินเดือน</h1>
         <button 
           onClick={() => openModal()} 
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
         >
-          + สร้างรายรับใหม่
+          + สร้างรายการจ่ายเงินใหม่
         </button>
       </div>
 
@@ -186,7 +186,7 @@ const Payment = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="py-4 px-4 text-center">ไม่พบข้อมูลรายรับ</td>
+                <td colSpan="5" className="py-4 px-4 text-center">ไม่พบข้อมูลการจ่ายเงิน</td>
               </tr>
             )}
           </tbody>
@@ -198,7 +198,7 @@ const Payment = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">
-              {isEditing ? 'แก้ไขรายรับ' : 'สร้างรายรับใหม่'}
+              {isEditing ? 'แก้ไขรายการจ่ายเงิน' : 'สร้างรายการจ่ายเงินใหม่'}
             </h2>
             
             <form onSubmit={handleSubmit}>
@@ -213,7 +213,7 @@ const Payment = () => {
                   required
                 />
                 <p className="text-gray-500 text-sm mt-1">
-                  * ระบบจะคำนวณรายรับจาก Salary ในเดือนนี้
+                  * ระบบจะคำนวณการจ่ายเงินจากรายการเงินเดือนที่มีสถานะ "Paid" ในเดือนนี้
                 </p>
               </div>
               
@@ -235,7 +235,7 @@ const Payment = () => {
                   type="submit" 
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
                 >
-                  {isEditing ? 'บันทึกการแก้ไข' : 'สร้างรายรับ'}
+                  {isEditing ? 'บันทึกการแก้ไข' : 'สร้างรายการจ่ายเงิน'}
                 </button>
               </div>
             </form>
