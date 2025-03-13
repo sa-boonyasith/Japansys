@@ -282,7 +282,7 @@ const DashboardLayout = ({
                 }`}
                 onClick={() => handleButtonClick("carbooking")}
               >
-                รายชื่อการยืมรถ
+                รายชื่อการเช่ารถ
               </button>
               {/* <button
                 className={`p-2 ml-2 rounded-t-lg ${
