@@ -1038,7 +1038,7 @@ const Invoice = () => {
               </table>
 
               <div className="mt-8 p-4 border border-gray-300 rounded">
-                <h3 className="font-bold mb-2">เงื่อนไขการเสนอราคา</h3>
+                <h3 className="font-bold mb-2">เงื่อนไขใบแจ้งหนี้</h3>
                 <ul className="list-disc pl-6">
                   <li>
                     ใบแจ้งหนี้นี้มีผลบังคับใช้ถึงวันที่{" "}
